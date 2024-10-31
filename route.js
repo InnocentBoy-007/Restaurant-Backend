@@ -7,7 +7,8 @@ route.post("/placeOrder/:id", placeOrder);
 
 
 //adminPanel
-import { addProduct } from './adminPanel/addDeleteProducts.js';
+import { addProduct, updateProduct } from './adminPanel/addDeleteProducts.js';
 route.post("/addProduct", addProduct);
+route.patch("/updateProduct/:id", updateProduct);
 
 export default route;
