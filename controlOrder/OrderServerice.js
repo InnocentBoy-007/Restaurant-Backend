@@ -40,12 +40,13 @@ class OrderService {
                 orderTime: orderDetails.orderTime
             }
         }
-        // Call postOrderResponseToAdmin to send the order to the admin panel
-        // Creating an instance method
-        /**
-         * Send order response to admin panel awaiting the result
-         */
+
         await this.postOrderResponseToAdmin(orderResponse)
+        /**
+         * use this if you don't want to wait for the result -rapid fire for return
+         * // this.postOrderResponseToAdmin(orderResponse)
+         */
+
 
         return orderResponse;
     }
