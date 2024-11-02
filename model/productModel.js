@@ -16,6 +16,10 @@ const productSchema = new mongoose.Schema({
     productAddedOn:{
         type:String,
         required:true
+    },
+    productUpdatedOn:{
+        type:String,
+        default:null // set to null if not updated
     }
 })
 
