@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import products from '../model/productModel.js'
+import OrderDetails from "../model/orderDetailsModel.js";
 import axios from "axios";
 import dotenv from 'dotenv'
 
@@ -28,37 +29,19 @@ class OrderService {
             throw error;
         }
 
-        const orderResponse = {
-            message: "Order successfully!",
-            Order: {
-                orderName: orderDetails.orderName,
-                orderProductName: product.productName,
-                orderPrice: product.productPrice,
-                orderQuantity: orderDetails.orderQuantity,
-                orderAddress: orderDetails.orderAddress,
-                orderPhoneNo: orderDetails.orderPhoneNo,
-                orderTime: orderDetails.orderTime
-            }
-        }
+        const orderResponse = await OrderDetails.create({
+            orderName: orderDetails.orderName,
+            orderProductName: product.productName,
+            orderPrice: product.productPrice,
+            orderQuantity: orderDetails.orderQuantity,
+            orderAddress: orderDetails.orderAddress,
+            orderPhoneNo: orderDetails.orderPhoneNo,
+            orderTime: orderDetails.orderTime
+        })
 
-        await this.postOrderResponseToAdmin(orderResponse)
-        /**
-         * use this if you don't want to wait for the result -rapid fire for return
-         * // this.postOrderResponseToAdmin(orderResponse)
-         */
-
-
-        return orderResponse;
-    }
-
-    // posting the orderRespond to the admin Panel (use another server)
-    async postOrderResponseToAdmin(orderResponse) {
-        try {
-            const adminEndpoint = process.env.ADMIN_ENDPOINT;
-            const response = await axios.post(adminEndpoint, orderResponse);
-            console.log('Admin notified successfully:', response.data);
-        } catch (error) {
-            console.log(`Failed to notify the admin panel: ${error.message}`);
+        return {
+            message:"Order succesfully!",
+            orderResponse
         }
     }
 }
