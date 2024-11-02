@@ -8,8 +8,8 @@ route.post("/placeOrder/:id", placeOrder);
 
 
 //adminPanel
-import { addProduct, updateProduct } from './adminPanel/addDeleteProducts.js';
+import { addProduct } from './adminPanel/adminControl.js';
 route.post("/addProduct", addProduct);
-route.patch("/updateProduct/:id", updateProduct);
+// route.patch("/updateProduct/:id", updateProduct);
 
 export default route;
