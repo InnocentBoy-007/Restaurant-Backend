@@ -1,9 +1,6 @@
 import mongoose from "mongoose";
 import products from '../model/productModel.js'
 import OrderDetails from "../model/orderDetailsModel.js";
-import dotenv from 'dotenv'
-
-dotenv.config();
 
 class OrderService {
     async placeOrder(id, orderDetails) {
@@ -38,28 +35,42 @@ class OrderService {
             orderQuantity: orderDetails.orderQuantity,
             orderAddress: orderDetails.orderAddress,
             orderPhoneNo: orderDetails.orderPhoneNo,
-            orderTime: timestamp
+            orderTime: timestamp,
+            status: 'pending' // set initial status to pending
         })
 
         return {
-            message:"Order succesfully!",
+            message: "Order succesfully!",
             orderResponse
         }
     }
-}
 
-export const placeOrder = async (req, res) => {
-    const { id } = req.params;
-    const { orderDetails } = req.body;
-    const orderService = new OrderService();
+    // method to accept the placed order
+    async acceptOrder(orderId) {
+        // Update the order status directly in the database
+        const order = await OrderDetails.findByIdAndUpdate(
+            orderId,
+            { status: 'accepted' }, // Update object
+            { new: true } // Return the updated document
+        );
 
-    try {
-        const response = await orderService.placeOrder(id, orderDetails);
-        return res.status(200).json(response)
+        if (!order) {
+            throw new Error("Order not found!");
+        }
 
-    } catch (error) {
-        res.status(error.errorCode || 500).json({
-            error: error.message || "Internal server error! - backend"
-        })
+        return order;
+    }
+
+    async rejectOrder(orderId) {
+        const order = await OrderDetails.findById(orderId);
+        if (!order) {
+            throw new Error("Order not found!");
+        }
+
+        // Optionally: Delete the order if rejected
+        await OrderDetails.deleteOne({ _id: orderId });
+        return { message: "Order rejected successfully." };
     }
 }
+
+export default OrderService;

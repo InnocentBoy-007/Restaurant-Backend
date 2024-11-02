@@ -75,10 +75,10 @@ export const addProduct = async (req, res) => {
 export const updateProduct = async (req, res) => {
     const { id } = req.params;
     const { productDetails } = req.body;
-    const { productName, productPrice, productQuantity } = productDetails; // Destructure properties from productDetails
+
     const adminControl = new AdminControl();
     try {
-        const response = await adminControl.updateProduct(id, { productName, productPrice, productQuantity });
+        const response = await adminControl.updateProduct(id, productDetails);
         return res.status(200).json(response);
     } catch (error) {
         res.status(error.errorCode || 500).json({
