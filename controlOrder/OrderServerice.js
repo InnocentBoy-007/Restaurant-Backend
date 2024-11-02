@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
 import products from '../model/productModel.js'
 import OrderDetails from "../model/orderDetailsModel.js";
-import axios from "axios";
 import dotenv from 'dotenv'
 
 dotenv.config();
@@ -29,6 +28,9 @@ class OrderService {
             throw error;
         }
 
+        // when the order is place, automatically track the order time
+        const timestamp = new Date().toLocaleString();
+
         const orderResponse = await OrderDetails.create({
             orderName: orderDetails.orderName,
             orderProductName: product.productName,
@@ -36,7 +38,7 @@ class OrderService {
             orderQuantity: orderDetails.orderQuantity,
             orderAddress: orderDetails.orderAddress,
             orderPhoneNo: orderDetails.orderPhoneNo,
-            orderTime: orderDetails.orderTime
+            orderTime: timestamp
         })
 
         return {
@@ -53,7 +55,8 @@ export const placeOrder = async (req, res) => {
 
     try {
         const response = await orderService.placeOrder(id, orderDetails);
-        res.status(200).json(response);
+        return res.status(200).json(response)
+
     } catch (error) {
         res.status(error.errorCode || 500).json({
             error: error.message || "Internal server error! - backend"
