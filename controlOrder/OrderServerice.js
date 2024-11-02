@@ -62,13 +62,10 @@ class OrderService {
     }
 
     async rejectOrder(orderId) {
-        const order = await OrderDetails.findById(orderId);
+        const order = await OrderDetails.findByIdAndDelete(orderId);
         if (!order) {
             throw new Error("Order not found!");
         }
-
-        // Optionally: Delete the order if rejected
-        await OrderDetails.deleteOne({ _id: orderId });
         return { message: "Order rejected successfully." };
     }
 }
