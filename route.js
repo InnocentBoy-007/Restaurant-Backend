@@ -9,7 +9,7 @@ route.post("/placeOrder/:id", placeOrder);
 
 
 //adminPanel - add or edit the product
-import { addProduct, updateProduct } from './adminPanel/adminControl.js';
+import { addProduct, updateProduct } from './adminPanel/adminProductControl.js';
 route.post("/addProduct", addProduct);
 route.patch("/updateProduct/:id", updateProduct);
 
@@ -17,3 +17,7 @@ route.patch("/updateProduct/:id", updateProduct);
 route.patch("/acceptOrder/:id", acceptOrder);
 route.patch("/rejectOrder/:id", rejectOrder);
 export default route;
+
+//admin Signup-SignIn
+import { adminSignUp } from './adminPanel/adminService.js';
+route.post("/adminSignUp", adminSignUp);
