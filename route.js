@@ -19,5 +19,6 @@ route.patch("/rejectOrder/:id", rejectOrder);
 export default route;
 
 //admin Signup-SignIn
-import { adminSignUp } from './adminPanel/adminService.js';
+import { adminSignUp, adminSignIn } from './adminPanel/adminService.js';
 route.post("/adminSignUp", adminSignUp);
+route.post("/adminSignIn", adminSignIn);
