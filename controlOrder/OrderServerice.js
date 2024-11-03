@@ -28,6 +28,7 @@ class OrderService {
         // when the order is place, automatically track the order time
         const timestamp = new Date().toLocaleString();
 
+        // This response will be first appear to the client after he placed an order
         const orderResponse = await OrderDetails.create({
             orderName: orderDetails.orderName,
             orderProductName: product.productName,
@@ -47,7 +48,6 @@ class OrderService {
 
     // method to accept the placed order
     async acceptOrder(orderId) {
-        // Update the order status directly in the database
         const order = await OrderDetails.findByIdAndUpdate(
             orderId,
             { status: 'accepted' }, // Update object

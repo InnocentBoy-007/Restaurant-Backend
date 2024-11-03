@@ -44,7 +44,8 @@ class AdminControl {
         }
 
         if (productDetails.productQuantity) {
-            product.productQuantity = productDetails.productQuantity;
+            // add product quantity on top of the existing quantity
+            product.productQuantity += productDetails.productQuantity;
         }
 
         // the productUpdatedOn field must be updated everytime there is an update on the product details
