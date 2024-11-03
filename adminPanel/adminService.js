@@ -2,12 +2,24 @@ import AdminModel from '../model/adminModel.js'
 
 class AdminService {
     async adminSignUp(adminDetails) {
-        if(!adminDetails) {
+        if(!adminDetails || typeof adminDetails !== 'object') {
             throw new Error("All fields required! - backend");
         }
 
-        const response = await AdminModel.create(adminDetails)
-        return response;
+        //check if there's any duplicate account in the database
+        const isDuplicate = await AdminModel.findOne({adminName:adminDetails.adminName});
+        if(isDuplicate) {
+            throw {message:"Account already exist", errorCode:409}
+        }
+
+        // create an admin account with adminDetails
+        const account = await AdminModel.create(adminDetails)
+        // if the account cannot be created, throw an error
+        if(!account) {
+            throw {message:"Account cannot be created! - backend", errorCode:500}
+        }
+
+        return account;
     }
 }
 
@@ -16,19 +28,6 @@ export const adminSignUp = async(req, res) => {
     const adminService = new AdminService();
     try {
         const response = await adminService.adminSignUp(adminDetails);
-        if(!response) return res.status(400).json({
-            message:"Cannot signup! - backend"
-        })
-
-        const adminCheck = await AdminModel.findOne({adminName:response.adminName});
-        if(!adminCheck) {
-            console.log("Admin not created! - backend");
-            return res.status(400).json({
-                message:"Admin not found after creation! - backend"
-            })
-        } else {
-            console.log("Admin found! - backend");
-        }
 
         return res.status(201).json({
             message:"Signup successfully! - backend",
