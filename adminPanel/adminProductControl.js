@@ -1,14 +1,14 @@
 import mongoose from 'mongoose';
 import Product from '../model/productModel.js'
 
-class CustomError extends Error{
+export class CustomError extends Error {
     constructor(message, errorCode) {
         super(message);
         this.errorCode = errorCode;
     }
 }
 
-class AdminControl {
+export class AdminControl {
     async addProduct(productDetails) {
         try {
             if (!productDetails || typeof productDetails !== 'object') {
@@ -68,35 +68,5 @@ class AdminControl {
         } catch (error) {
             throw error;
         }
-
-
-    }
-}
-
-export const addProduct = async (req, res) => {
-    const { productDetails } = req.body;
-    const adminControl = new AdminControl();
-    try {
-        const response = await adminControl.addProduct(productDetails);
-        return res.status(201).json(response)
-    } catch (error) {
-        res.status(error.errorCode || 500).json({
-            error: error.message || "Internal server error! - backend"
-        })
-    }
-}
-
-export const updateProduct = async (req, res) => {
-    const { id } = req.params;
-    const { productDetails } = req.body;
-
-    const adminControl = new AdminControl();
-    try {
-        const response = await adminControl.updateProduct(id, productDetails);
-        return res.status(200).json(response);
-    } catch (error) {
-        res.status(error.errorCode || 500).json({
-            error: error.message || "Internal server error! - backend"
-        })
     }
 }

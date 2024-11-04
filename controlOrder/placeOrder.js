@@ -1,5 +1,7 @@
 import OrderService from "./OrderServerice.js";
+import { CustomError } from "./OrderServerice.js";
 
+// Controller function of OrderService class (standalone functions)
 export const placeOrder = async (req, res) => {
     const { id } = req.params;
     const { orderDetails } = req.body;

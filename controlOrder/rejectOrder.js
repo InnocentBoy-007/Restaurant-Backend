@@ -1,4 +1,5 @@
 import OrderService from "./OrderServerice.js";
+import { CustomError } from "./OrderServerice.js";
 export const rejectOrder = async(req, res) => {
     const {id} = req.params;
     const orderService = new OrderService();

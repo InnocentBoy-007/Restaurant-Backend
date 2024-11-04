@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import products from '../model/productModel.js'
 import OrderDetails from "../model/orderDetailsModel.js";
 
-class CustomError extends Error {
+export class CustomError extends Error {
     constructor(message, errorCode) {
         super(message);
         this.errorCode = errorCode

@@ -94,7 +94,6 @@ class AdminService {
 }
 
 // Controller functions (standalone functions)
-
 export const adminSignUp = async (req, res) => {
     const { adminDetails } = req.body;
     const adminService = new AdminService(); // Creating an instance of AdminService class
