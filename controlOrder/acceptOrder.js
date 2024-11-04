@@ -15,8 +15,9 @@ export const acceptOrder = async(req, res) => {
             dispatchTime:timestamp
         })
     } catch (error) {
-        res.status(error.statusCode || 500).json({
-            message:error.message || "Internal server error! - backend"
-        })
+        if(error instanceof CustomError) {
+            res.status(error.errorCode).json({message:error.message});
+        }
+        res.status(500).json({message:"Internal server error - backend"})
     }
 }

@@ -1,0 +1,4 @@
+COD - payment method
+Add to cart
+client authentication
+client product received confirmation

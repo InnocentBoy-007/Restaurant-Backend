@@ -60,23 +60,23 @@ class AdminService {
     async adminSignIn(id, adminDetails) {
         try {
             if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-                throw { message: "Invalid id - backend", errorCode: 400 };
+                throw new CustomError("Invalid Id", 400);
             }
             if (!adminDetails || typeof adminDetails !== 'object') {
-                throw { message: "All fields required! - backend", errorCode: 400 };
+                throw new CustomError("All fields required! - backend", 400);
             }
 
             // have to use .select("+password") since, 'select:false' in database
             const account = await AdminModel.findById(id).select("+password");
             if (!account) {
-                throw { message: "Account does not exist! - backend", errorCode: 404 };
+                throw new CustomError("Account does not exist! - backend", 404);
             }
 
             // compare passwords(enterPassword, storedPassword)
             const comparePassword = await bcryt.compare(adminDetails.password, account.password);
 
             if (!comparePassword) {
-                throw { message: "Incorrect password! - backend", errorCode: 409 }
+                throw new CustomError("IncorrectPassword! - backend", 409);
             }
 
             // track the time of an account login
@@ -101,14 +101,12 @@ export const adminSignUp = async (req, res) => {
     try {
         const response = await adminService.adminSignUp(adminDetails); // Calling the instance method, adminSignUp
 
-        return res.status(201).json({
-            message: "Signup successfully! - backend",
-            response
-        })
+        return res.status(201).json({ message: "Signup successfully! - backend", response })
     } catch (error) {
-        res.status(error.errorCode || 500).json({
-            message: error.message || "Internal server error!"
-        })
+        if (error instanceof CustomError) {
+            res.status(error.errorCode).json({ message: error.message })
+        }
+        res.status(500).json({ message: "Internal server error! - backend" })
     }
 }
 
@@ -119,13 +117,11 @@ export const adminSignIn = async (req, res) => {
     try {
         const response = await adminService.adminSignIn(id, adminDetails);
 
-        return res.status(200).json({
-            message: "Sign in successfully! - backend",
-            response
-        })
+        return res.status(200).json({ message: "Sign in successfully! - backend", response })
     } catch (error) {
-        res.status(error.errorCode || 500).json({
-            message: error.message || "Internal server error! - backend"
-        })
+        if (error instanceof CustomError) {
+            res.status(error.errorCode).json({ message: error.message });
+        }
+        res.status(500).json({ message: "Internal server error! - backend" })
     }
 }

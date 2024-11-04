@@ -10,8 +10,11 @@ export const placeOrder = async (req, res) => {
         return res.status(200).json(response)
 
     } catch (error) {
-        res.status(error.errorCode || 500).json({
-            error: error.message || "Internal server error! - backend"
-        })
+        // Handle the error based on its type or properties
+        if (error instanceof CustomError) {
+            return res.status(error.errorCode).json({ message: error.message });
+        }
+        // For unexpected errors, return a generic message
+        return res.status(500).json({ message: "Internal server error! - backend" });
     }
 }
