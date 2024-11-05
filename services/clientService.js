@@ -1,44 +1,84 @@
 import mongoose from "mongoose";
-import products from '../model/productModel.js'
+import Products from '../model/productModel.js'
 import OrderDetails from "../model/orderDetailsModel.js";
 import { CustomError } from "../components/CustomError.js";
+import Otp from "../model/otp.js";
+import bcrypt from 'bcrypt'
 
 export class OrderService {
-    /**
-     * Inside OrderService
-     *
-     * // placeOrder (place order features for clients)
-     * // cancelOrder (cancel the placed order)
-     *
-     */
-    async placeOrder(id, orderDetails) {
-        try {
-            if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new CustomError("Invalid Id", 400);
+    constructor() {
+        this.OTP_EXPIRATION_TIME = 60 * 1000;
+    }
 
-            if (!orderDetails || typeof orderDetails !== 'object') {
+    async clientVerification(productId, phoneNo) {
+        try {
+            if (!productId || !mongoose.Types.ObjectId.isValid(productId)) throw new CustomError("Invalid product Id", 400);
+
+            if (!phoneNo || typeof phoneNo !== 'number') throw new CustomError("Please enter a valid phone number! - backend", 400);
+
+            const generateOTP = Math.floor(100000 + Math.random() * 900000).toString(); // generate a random 6 digit number
+            const hashOTP = await bcrypt.hash(generateOTP, 10); // hash the password for more security
+            const expirationCountDown = new Date(Date.now() + this.OTP_EXPIRATION_TIME);
+
+            await Otp.create({
+                OTP: hashOTP,
+                phoneNo: phoneNo,
+                productId: productId,
+                expiresAt: expirationCountDown
+            })
+            console.log(`Your OTP: ${generateOTP}`); // the OPT should be 'generateOTP' since it hasn't been hashed yet
+
+            return { message: "Your OTP expires in 60 seconds..."}; // it has to return the generateOTP since it hasn't been hashed yet
+
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    // Need to make changes in the controller functions (hayengi thabk)
+    async placeOrder(otpCode, clientDetails) {
+        try {
+            if (!otpCode || typeof otpCode !== 'string') throw new CustomError("Invalid OTP", 400);
+
+            if (!clientDetails || typeof clientDetails !== 'object') {
                 throw new CustomError("Please enter a valid information! - backend", 400);
             }
 
-            const product = await products.findById(id);
+            const findClientDetails = await Otp.findOne({ phoneNo: clientDetails.phoneNo }); // fetch the OTP details from the database first by comparing the phone numbers
+            if (!findClientDetails) throw new CustomError("OTP not found! - backend", 404);
+
+            const confirmOTP = await bcrypt.compare(otpCode, findClientDetails.OTP); // OTP code confirmation
+            if (!confirmOTP) throw new CustomError("Wrong OTP", 401);
+
+            // Check if the OTP has expired
+            if (findClientDetails.expiresAt < Date.now()) {
+                throw new CustomError("OTP has expired", 401);
+            }
+
+            const product = await Products.findById(findClientDetails.productId); // fetch the product Id from the previous method's productId (clientVerification method)
             if (!product) throw new CustomError("Product not found! - backend", 404);
 
             // Removing the product quantity from the product database according to the request orderProduct's quantity
-            if (product.productQuantity >= orderDetails.orderQuantity) {
-                product.productQuantity -= orderDetails.orderQuantity;
+            if (product.productQuantity >= clientDetails.orderQuantity) {
+                product.productQuantity -= clientDetails.orderQuantity;
                 await product.save();
             } else throw new CustomError(`Not enough ${product.productName}.`, 400);
-
 
             // when the order is place, automatically track the order time
             const timestamp = new Date().toLocaleString();
 
             // This response will be first appear to the client after he placed an order
             const orderResponse = await OrderDetails.create({
-                ...orderDetails, orderProductName: product.productName, orderPrice: product.productPrice, orderTime: timestamp, status: 'pending' // set initial status to pending
+                ...clientDetails, orderProductName: product.productName, orderPrice: product.productPrice, orderTime: timestamp, status: 'pending' // set initial status to pending
             })
 
+            /**
+            * Once everything is done, remove the OPT collection from the database to save enough space(optimization) or to prevent any unwanted errors or conflicts in the future
+            */
+            await Otp.deleteOne({ phoneNo: clientDetails.phoneNo });
+
             return {
-                message: "Order succesfully!",
+                message: "Order placed succesfully!",
                 orderResponse
             }
         } catch (error) {
@@ -46,6 +86,7 @@ export class OrderService {
         }
     }
 
+    // needs code review ASAP
     async cancelOrder(id) {
         try {
             if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new CustomError("Invalid Id - backend", 400);
@@ -56,7 +97,7 @@ export class OrderService {
             if (order.status !== 'pending') throw new CustomError("Order cannot be canceled as it is already processed! - backend", 400);
 
             // Restoring the product quantity
-            const product = await products.findById(order.productId);
+            const product = await Products.findById(order.productId);
             product.productQuantity += order.orderQuantity;
             await product.save();
 
