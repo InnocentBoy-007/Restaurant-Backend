@@ -1,8 +1,9 @@
 import express from 'express'
 const route = express.Router();
 
-import { placeOrder } from './controlOrder/placeOrder.js';
+import { placeOrder,cancelOrder } from './controlOrder/placeRejectOrder.js';
 route.post("/placeOrder/:id", placeOrder);
+route.delete("/cancelOrder/:id", cancelOrder);
 
 //adminPanel - add or edit the product
 import { addProduct, updateProduct } from './adminPanel/adminHandleProducts.js';
@@ -13,7 +14,7 @@ route.patch("/updateProduct/:id", updateProduct);
 import { acceptOrder } from './adminPanel/adminAcceptOrder.js';
 import { rejectOrder } from './adminPanel/adminRejectOder.js';
 route.patch("/acceptOrder/:id", acceptOrder);
-route.patch("/rejectOrder/:id", rejectOrder);
+route.delete("/rejectOrder/:id", rejectOrder);
 
 //admin Signup-SignIn
 import { adminSignUp, adminSignIn } from './adminPanel/adminSignUpSignIn.js';
