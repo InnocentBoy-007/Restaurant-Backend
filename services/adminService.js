@@ -54,9 +54,8 @@ export class AdminService {
     // change the throw error later with custom error
     async adminSignIn(id, adminDetails) {
         try {
-            if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-                throw new CustomError("Invalid Id", 400);
-            }
+            if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new CustomError("Invalid Id", 400);
+
             if (!adminDetails || typeof adminDetails !== 'object') {
                 throw new CustomError("All fields required! - backend", 400);
             }
@@ -89,6 +88,8 @@ export class AdminService {
 
     async adminAcceptOrder(orderId) {
         try {
+            if(!orderId || !mongoose.Types.ObjectId.isValid(orderId)) throw new CustomError("Invalid Id - backend", 400);
+
             const order = await OrderDetails.findByIdAndUpdate(orderId,
                 { status: 'accepted' }, // Update the status
                 { new: true } // Return the updated document
@@ -105,6 +106,8 @@ export class AdminService {
     // method to reject order
     async adminRejectOrder(orderId) {
         try {
+            if(!orderId || !mongoose.Types.ObjectId.isValid(orderId)) throw new CustomError("Invalid Id", 400);
+
             const order = await OrderDetails.findByIdAndDelete(orderId);
             if (!order) throw new CustomError("Order not found!", 404);
 

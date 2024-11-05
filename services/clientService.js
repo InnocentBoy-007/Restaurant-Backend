@@ -8,11 +8,16 @@ export class OrderService {
      * Inside OrderService
      *
      * // placeOrder (place order features for clients)
+     * // cancelOrder (cancel the placed order)
      *
      */
     async placeOrder(id, orderDetails) {
         try {
-            if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new CustomError("Invalid Id", 409);
+            if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new CustomError("Invalid Id", 400);
+
+            if (!orderDetails || typeof orderDetails !== 'object') {
+                throw new CustomError("Please enter a valid information! - backend", 400);
+            }
 
             const product = await products.findById(id);
             if (!product) throw new CustomError("Product not found! - backend", 404);
@@ -36,6 +41,28 @@ export class OrderService {
                 message: "Order succesfully!",
                 orderResponse
             }
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    async cancelOrder(id) {
+        try {
+            if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new CustomError("Invalid Id - backend", 400);
+
+            const order = await OrderDetails.findById(id);
+            if (!order) throw new CustomError("Order not found! - backend", 404);
+
+            if (order.status !== 'pending') throw new CustomError("Order cannot be canceled as it is already processed! - backend", 400);
+
+            // Restoring the product quantity
+            const product = await products.findById(order.productId);
+            product.productQuantity += order.orderQuantity;
+            await product.save();
+
+            await OrderDetails.findByIdAndDelete(id);
+
+            return { message: "Order canceled successfully! - backend", order };
         } catch (error) {
             throw error;
         }
