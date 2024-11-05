@@ -1,13 +1,8 @@
 import mongoose from 'mongoose';
 import AdminModel from '../model/adminModel.js'
+import OrderDetails from '../model/orderDetailsModel.js'
 import bcryt from 'bcrypt'
-
-class CustomError extends Error {
-    constructor(message, errorCode) {
-        super(message);
-        this.errorCode = errorCode;
-    }
-}
+import { CustomError } from '../components/CustomError.js';
 
 /**
  * Inside AdminService
@@ -16,7 +11,7 @@ class CustomError extends Error {
  * // adminsignIn (sign in feature for admins)
  */
 
-class AdminService {
+export class AdminService {
     /**
     * 1. Checks for the adminDetails first (throws a custom error if the validation is not fullfilled!)
     * 2. Checks if the signup name is already inside the database or not (adminName compares adminDetails.adminName, adminName(database) - adminDetails.adminName(req body))
@@ -91,36 +86,31 @@ class AdminService {
             throw error;
         }
     }
-}
 
-// Controller functions (standalone functions)
-export const adminSignUp = async (req, res) => {
-    const { adminDetails } = req.body;
-    const adminService = new AdminService(); // Creating an instance of AdminService class
-    try {
-        const response = await adminService.adminSignUp(adminDetails); // Calling the instance method, adminSignUp
+    async adminAcceptOrder(orderId) {
+        try {
+            const order = await OrderDetails.findByIdAndUpdate(orderId,
+                { status: 'accepted' }, // Update the status
+                { new: true } // Return the updated document
+            );
 
-        return res.status(201).json({ message: "Signup successfully! - backend", response })
-    } catch (error) {
-        if (error instanceof CustomError) {
-            res.status(error.errorCode).json({ message: error.message })
+            if (!order) throw new CustomError("Order not found!", 404);
+
+            return order;
+        } catch (error) {
+            throw error;
         }
-        res.status(500).json({ message: "Internal server error! - backend" })
     }
-}
 
-export const adminSignIn = async (req, res) => {
-    const { id } = req.params;
-    const { adminDetails } = req.body;
-    const adminService = new AdminService();
-    try {
-        const response = await adminService.adminSignIn(id, adminDetails);
+    // method to reject order
+    async adminRejectOrder(orderId) {
+        try {
+            const order = await OrderDetails.findByIdAndDelete(orderId);
+            if (!order) throw new CustomError("Order not found!", 404);
 
-        return res.status(200).json({ message: "Sign in successfully! - backend", response })
-    } catch (error) {
-        if (error instanceof CustomError) {
-            res.status(error.errorCode).json({ message: error.message });
+            return { message: "Order rejected successfully." };
+        } catch (error) {
+            throw error;
         }
-        res.status(500).json({ message: "Internal server error! - backend" })
     }
 }

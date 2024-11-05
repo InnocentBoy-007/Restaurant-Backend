@@ -1,15 +1,9 @@
 import mongoose from "mongoose";
 import products from '../model/productModel.js'
 import OrderDetails from "../model/orderDetailsModel.js";
+import { CustomError } from "../components/CustomError.js";
 
-export class CustomError extends Error {
-    constructor(message, errorCode) {
-        super(message);
-        this.errorCode = errorCode
-    }
-}
-
-class OrderService {
+export class OrderService {
     /**
      * Inside OrderService
      *
@@ -27,7 +21,7 @@ class OrderService {
             if (product.productQuantity >= orderDetails.orderQuantity) {
                 product.productQuantity -= orderDetails.orderQuantity;
                 await product.save();
-            } else throw new CustomError(`Not enough ${product.productName}.`, 400)
+            } else throw new CustomError(`Not enough ${product.productName}.`, 400);
 
 
             // when the order is place, automatically track the order time
@@ -47,36 +41,4 @@ class OrderService {
         }
     }
 
-    // method to accept the placed order
-    async acceptOrder(orderId) {
-        try {
-            const order = await OrderDetails.findByIdAndUpdate(
-                orderId,
-                { status: 'accepted' }, // Update the status
-                { new: true } // Return the updated document
-            );
-
-            if (!order) throw new CustomError("Order not found!", 404);
-
-            return order;
-        } catch (error) {
-            throw error;
-        }
-
-    }
-
-    // method to reject order
-    async rejectOrder(orderId) {
-        try {
-            const order = await OrderDetails.findByIdAndDelete(orderId);
-            if (!order) throw new CustomError("Order not found!", 404);
-
-            return { message: "Order rejected successfully." };
-        } catch (error) {
-            throw error;
-        }
-
-    }
 }
-
-export default OrderService;

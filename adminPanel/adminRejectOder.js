@@ -1,10 +1,11 @@
-import OrderService from "./OrderServerice.js";
-import { CustomError } from "./OrderServerice.js";
+import { AdminService } from "../services/adminService.js";
+import { CustomError } from "../components/CustomError.js";
+
 export const rejectOrder = async(req, res) => {
     const {id} = req.params;
-    const orderService = new OrderService();
+    const adminService = new AdminService();
     try {
-        const response = await orderService.rejectOrder(id);
+        const response = await adminService.adminRejectOrder(id);
         return res.status(200).json({
             message:"Order rejected! - backend",
             response

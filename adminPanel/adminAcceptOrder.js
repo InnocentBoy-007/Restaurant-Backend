@@ -1,11 +1,11 @@
-import OrderService from "./OrderServerice.js";
-import { CustomError } from "./OrderServerice.js";
+import { AdminService } from "../services/adminService.js";
+import { CustomError } from "../components/CustomError.js";
 
 export const acceptOrder = async (req, res) => {
     const { id } = req.params;
-    const orderService = new OrderService();
+    const adminService = new AdminService();
     try {
-        const response = await orderService.acceptOrder(id);
+        const response = await adminService.adminAcceptOrder(id);
         // show the client about the dispatch time
         const timestamp = new Date().toLocaleString();
 

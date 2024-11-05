@@ -1,14 +1,8 @@
 import mongoose from 'mongoose';
 import Product from '../model/productModel.js'
+import { CustomError } from '../components/CustomError.js';
 
-export class CustomError extends Error {
-    constructor(message, errorCode) {
-        super(message);
-        this.errorCode = errorCode;
-    }
-}
-
-export class AdminControl {
+export class ProductControl {
     async addProduct(productDetails) {
         try {
             if (!productDetails || typeof productDetails !== 'object') {
@@ -65,6 +59,21 @@ export class AdminControl {
                 message: "Product updated successfully! - backend",
                 product
             }
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    async deleteProduct(id) {
+        try {
+            if(!id || !mongoose.Types.ObjectId.isValid(id)) {
+                throw new CustomError("Invalid Id - backend!", 409);
+            }
+
+            const product = await Product.findByIdAndDelete(id); // find the product by using req params product id and delete if it exist
+            if(!product) throw new CustomError("Product cannot be deleted! - backend", 500);
+
+            return {message:"Product deleted successfully! - backend", product};
         } catch (error) {
             throw error;
         }

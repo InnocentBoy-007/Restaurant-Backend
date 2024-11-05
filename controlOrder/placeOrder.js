@@ -1,5 +1,5 @@
-import OrderService from "./OrderServerice.js";
-import { CustomError } from "./OrderServerice.js";
+import { OrderService } from "../services/clientService.js";
+import { CustomError } from "../components/CustomError.js";
 
 // Controller function of OrderService class (standalone functions)
 export const placeOrder = async (req, res) => {
