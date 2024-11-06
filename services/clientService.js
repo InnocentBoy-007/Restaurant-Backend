@@ -33,7 +33,7 @@ export class OrderService {
             })
             console.log(`Your OTP: ${generateOTP}`); // the OPT should be 'generateOTP' since it hasn't been hashed yet
 
-            return { message: "Your OTP expires in 60 seconds..."}; // it has to return the generateOTP since it hasn't been hashed yet
+            return { message: "Your OTP expires in 60 seconds..." }; // it has to return the generateOTP since it hasn't been hashed yet
 
         } catch (error) {
             throw error;
@@ -83,7 +83,7 @@ export class OrderService {
 
             // This response will be first appear to the client after he placed an order
             const orderResponse = await OrderDetails.create({
-                ...clientDetails, orderProductName: product.productName, orderPrice: product.productPrice, orderTime: timestamp, status: 'pending' // set initial status to pending
+                ...clientDetails, orderProductName: product.productName, orderPrice: product.productPrice, orderTime: timestamp, status: 'pending', receivedByClient: 'pending'
             })
 
             /**
@@ -101,12 +101,11 @@ export class OrderService {
         }
     }
 
-    // needs code review ASAP
-    async cancelOrder(orderId, orderProductDetails) {
+    async cancelOrder(orderProductDetails) { // send 'orderProductDetails' as req body
         try {
-            if (!id || !mongoose.Types.ObjectId.isValid(orderId)) throw new CustomError("Invalid Id - backend", 400);
+            if (!id || !mongoose.Types.ObjectId.isValid(orderProductDetails.orderId)) throw new CustomError("Invalid Id - backend", 400);
 
-            const order = await OrderDetails.findById(orderId);
+            const order = await OrderDetails.findById(orderProductDetails.orderId); // checks if the order is already accepted or not
             if (!order) throw new CustomError("Order not found! - backend", 404);
 
             if (order.status !== 'pending') throw new CustomError("Order cannot be canceled as it is already processed! - backend", 400);
@@ -116,7 +115,7 @@ export class OrderService {
             product.productQuantity += orderProductDetails.orderQuantity;
             await product.save();
 
-            await OrderDetails.findByIdAndDelete(orderId);
+            await OrderDetails.findByIdAndDelete(orderProductDetails.orderId);
 
             return { message: "Order canceled successfully! - backend", order };
         } catch (error) {
@@ -124,4 +123,19 @@ export class OrderService {
         }
     }
 
+    // method for client ordered product received confirmation
+    async orderConfirmation(orderId) {
+        if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) throw new CustomError("Invalid orderId - backend", 400);
+        try {
+            await OrderDetails.findByIdAndUpdate(orderId,
+                { receivedByClient: 'received' },
+                { new: true }
+            );
+
+            return {message:"Product received by client! - backend"};
+
+        } catch (error) {
+            throw error;
+        }
+    }
 }

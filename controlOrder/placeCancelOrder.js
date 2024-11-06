@@ -36,13 +36,26 @@ export const placeOrder = async (req, res) => {
 }
 
 export const cancelOrder = async(req, res) => {
-    const {id} = req.params;
+    const {orderProductDetails} = req.body;
     try {
-        const response = await orderService.cancelOrder(id);
+        const response = await orderService.cancelOrder(orderProductDetails.orderId);
         return res.status(204).json(response);
     } catch (error) {
         if(error instanceof CustomError) {
             return res.status(error.errorCode).json({message: error.message});
+        }
+        return res.status(500).json({message:"Internal server error! - backend"});
+    }
+}
+
+export const orderConfirmation = async(req, res)=> {
+    const {orderId} = req.params;
+    try {
+        const response = await orderService.orderConfirmation(orderId);
+        return res.status(200).json(response);
+    } catch (error) {
+        if(error instanceof CustomError) {
+            return res.status(error.errorCode).json({message:error.message});
         }
         return res.status(500).json({message:"Internal server error! - backend"});
     }

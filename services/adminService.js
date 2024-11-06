@@ -90,9 +90,15 @@ export class AdminService {
         try {
             if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) throw new CustomError("Invalid Id - backend", 400);
 
+            // track the time of the order acception
+            const timestamp = new Date().toLocaleString();
+
             // It is more conveniet to use {new:true} instead of await order.save() when using .findbyIdAndUpdate
             const order = await OrderDetails.findByIdAndUpdate(orderId,
-                { status: 'accepted' }, // Update the status
+                {
+                    status: 'accepted',
+                    orderDispatchedTime: timestamp
+                },
                 { new: true } // Return the updated document
             );
             if (!order) throw new CustomError("Order not found!", 404);

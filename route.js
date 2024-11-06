@@ -1,5 +1,5 @@
 import express from 'express'
-import { placeOrder,cancelOrder, OTPverification } from './controlOrder/placeRejectOrder.js';
+import { placeOrder,cancelOrder, OTPverification, orderConfirmation } from './controlOrder/placeCancelOrder.js';
 import { addProduct, updateProduct, deleteProduct } from './adminPanel/adminHandleProducts.js';
 import { acceptOrder, rejectOrder } from './adminPanel/adminAcceptRejectOrder.js';
 import { adminSignUp, adminSignIn } from './adminPanel/adminSignUpSignIn.js';
@@ -9,6 +9,7 @@ const route = express.Router();
 route.post("/otpverify", OTPverification);
 route.post("/placeOrder/:otpCode", placeOrder);
 route.delete("/cancelOrder/:id", cancelOrder);
+route.post("/orderConfirmation/:id", orderConfirmation);
 
 
 route.post("/addProduct", addProduct);
