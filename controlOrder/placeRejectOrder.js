@@ -3,13 +3,26 @@ import { CustomError } from "../components/CustomError.js";
 
 const orderService = new OrderService();
 
+export const OTPverification = async(req, res) => {
+    const {productId, phoneNo} = req.body;
+    try {
+        const response = await orderService.clientVerification(productId, phoneNo);
+        return res.status(200).json(response);
+    } catch (error) {
+        if(error instanceof CustomError) {
+            return res.status(error.errorCode).json({message:error.message});
+        }
+        res.status(500).json({message:"Internal server error! - backend"});
+    }
+}
+
 // Controller functions of OrderService class (standalone functions)
 export const placeOrder = async (req, res) => {
-    const { id } = req.params;
+    const { otpCode } = req.params;
     const { orderDetails } = req.body;
 
     try {
-        const response = await orderService.placeOrder(id, orderDetails);
+        const response = await orderService.placeOrder(otpCode, orderDetails);
         return res.status(200).json(response)
 
     } catch (error) {

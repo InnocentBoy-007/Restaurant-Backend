@@ -8,6 +8,7 @@ const orderDetailsModel = new mongoose.Schema({
     orderAddress:{ type:String, required:true },
     orderPhoneNo:{ type:Number, required:true },
     orderTime:{ type:String, required:true },
+    // add dispatched time
     status: {
         type: String,
         enum: ['pending', 'accepted', 'rejected'],

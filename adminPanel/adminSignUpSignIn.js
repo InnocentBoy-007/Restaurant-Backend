@@ -19,10 +19,9 @@ export const adminSignUp = async (req, res) => {
 }
 
 export const adminSignIn = async (req, res) => {
-    const { id } = req.params;
     const { adminDetails } = req.body;
     try {
-        const response = await adminService.adminSignIn(id, adminDetails);
+        const response = await adminService.adminSignIn(adminDetails);
 
         return res.status(200).json({ message: "Sign in successfully! - backend", response })
     } catch (error) {
