@@ -29,19 +29,14 @@ export class AdminService {
 
         const isDuplicate = await AdminModel.findOne({ adminName: adminDetails.adminName }); //check if there's any duplicate account in the database
         if (isDuplicate) {
-            throw new CustomError("Account already exist!(conflict error) - backend0", 409);
+            throw new CustomError("Account already exist!(conflict error) - backend", 409);
         }
 
         const hashPassword = await bcryt.hash(adminDetails.password, 10); // encrypt the password using bcryt
 
-        const account = await AdminModel.create({ // create an admin account with adminDetails(using admin model)
-            ...adminDetails,
-            password: hashPassword
-        })
+        const account = await AdminModel.create({ ...adminDetails, password: hashPassword }) // create an admin account with adminDetails(using admin model)
 
-        if (!account) { // if the account cannot be created, throw an error
-            throw new CustomError("Account cannot be created! - backend", 500);
-        }
+        if (!account) throw new CustomError("Account cannot be created! - backend", 500); // if the account cannot be created, throw an error
 
         // track the time of an account creation
         const timestamp = new Date().toLocaleString();
@@ -68,7 +63,7 @@ export class AdminService {
             }
 
             // have to use .select("+password") since, 'select:false' in database
-            const account = await AdminModel.findOne({adminName:adminDetails.adminName}).select("+password");
+            const account = await AdminModel.findOne({ adminName: adminDetails.adminName }).select("+password");
             if (!account) {
                 throw new CustomError("Account does not exist! - backend", 404);
             }
@@ -101,7 +96,7 @@ export class AdminService {
      */
     async adminAcceptOrder(orderId) {
         try {
-            if(!orderId || !mongoose.Types.ObjectId.isValid(orderId)) throw new CustomError("Invalid Id - backend", 400);
+            if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) throw new CustomError("Invalid Id - backend", 400);
 
             // It is more conveniet to use {new:true} instead of await order.save() when using .findbyIdAndUpdate
             const order = await OrderDetails.findByIdAndUpdate(orderId,
@@ -125,7 +120,7 @@ export class AdminService {
      */
     async adminRejectOrder(orderId) {
         try {
-            if(!orderId || !mongoose.Types.ObjectId.isValid(orderId)) throw new CustomError("Invalid Id", 400);
+            if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) throw new CustomError("Invalid Id", 400);
 
             const order = await OrderDetails.findByIdAndDelete(orderId); // Directly deletes the orderDetails from the database using orderId
             if (!order) throw new CustomError("Order not found!", 404);
