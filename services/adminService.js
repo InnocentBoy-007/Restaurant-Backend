@@ -86,7 +86,7 @@ export class AdminService {
      * 3. If the orderDetails is not found, throw a custom error
      * 4. Return the updated orderDetails
      */
-    async adminAcceptOrder(orderId, admin) {
+    async adminAcceptOrder(orderId, admin) { // (test succesfull)
         try {
             if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) throw new CustomError("Invalid Id - backend", 400);
 
@@ -96,7 +96,7 @@ export class AdminService {
             // It is more conveniet to use {new:true} instead of await order.save() when using .findbyIdAndUpdate
             const order = await OrderDetails.findByIdAndUpdate(orderId,
                 {
-                    status: 'accepted',
+                    acceptedByAdmin: 'accepted',
                     orderDispatchedTime: timestamp,
                     orderDispatchedBy: admin
                 },

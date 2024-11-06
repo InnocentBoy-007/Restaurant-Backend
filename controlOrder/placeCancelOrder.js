@@ -3,7 +3,8 @@ import { CustomError } from "../components/CustomError.js";
 
 const orderService = new OrderService();
 
-export const OTPverification = async(req, res) => {
+// (test successfull)
+export const clientVerification = async(req, res) => {
     const {productId, phoneNo} = req.body;
     try {
         const response = await orderService.clientVerification(productId, phoneNo);
@@ -17,12 +18,13 @@ export const OTPverification = async(req, res) => {
 }
 
 // Controller functions of OrderService class (standalone functions)
+// (test successfull)
 export const placeOrder = async (req, res) => {
     const { otpCode } = req.params;
-    const { orderDetails } = req.body;
+    const { clientDetails } = req.body;
 
     try {
-        const response = await orderService.placeOrder(otpCode, orderDetails);
+        const response = await orderService.placeOrder(otpCode, clientDetails);
         return res.status(200).json(response)
 
     } catch (error) {
@@ -35,7 +37,7 @@ export const placeOrder = async (req, res) => {
     }
 }
 
-// not tested
+// (not tested)
 export const cancelOrder = async(req, res) => {
     const {orderProductDetails} = req.body;
     try {
@@ -49,10 +51,9 @@ export const cancelOrder = async(req, res) => {
     }
 }
 
-// not tested
+// (test successfull)
 export const orderConfirmation = async(req, res)=> {
-    const {orderId} = req.params;
-    const {clientConfirmation} = req.body;
+    const {orderId, clientConfirmation} = req.body;
     try {
         const response = await orderService.orderConfirmation(orderId, clientConfirmation);
         return res.status(200).json(response);

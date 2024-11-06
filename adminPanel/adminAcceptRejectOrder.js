@@ -1,21 +1,19 @@
 import { AdminService } from "../services/adminService.js";
 import { CustomError } from "../components/CustomError.js";
 
+// acceptOrder(test successfull)
 export const acceptOrder = async (req, res) => {
-    const { id } = req.params;
-    const {admin} = req.body;
+    const {orderId, admin} = req.body;
     const adminService = new AdminService();
     try {
-        const response = await adminService.adminAcceptOrder(id, admin);
+        const response = await adminService.adminAcceptOrder(orderId, admin);
         // show the client about the dispatch time
         const timestamp = new Date().toLocaleString();
 
         // return the response along with the order time and the dispatched time
         return res.status(200).json({
             message: "Order has been dispatched! - backend",
-            dispatchedBy: admin,
             response,
-            dispatchTime: timestamp
         })
     } catch (error) {
         if (error instanceof CustomError) {

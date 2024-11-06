@@ -12,9 +12,10 @@ export class OrderService {
          * e.g. ----> this.OTP_EXPIRATION_TIME = 2(first number) * 60 * 1000; // 2mins
          * Change the first number according to the min you desire
          */
-        this.OTP_EXPIRATION_TIME = 60 * 1000; // 1min
+        this.OTP_EXPIRATION_TIME = 3 * 60 * 1000; // 3min
     }
 
+    // (test successfull)
     async clientVerification(productId, phoneNo) {
         try {
             if (!productId || !mongoose.Types.ObjectId.isValid(productId)) throw new CustomError("Invalid product Id", 400);
@@ -40,6 +41,7 @@ export class OrderService {
         }
     }
 
+    // (test successfull)
     async placeOrder(otpCode, clientDetails) { // send the request body along with the same phone number
         /**
          * Properties needed in clientDetails
@@ -50,7 +52,7 @@ export class OrderService {
          * 5. clientDetails.productId
          */
         try {
-            if (!otpCode || typeof otpCode !== 'string') throw new CustomError("Invalid OTP", 400);
+            if (!otpCode) throw new CustomError("Invalid OTP", 400);
 
             if (!clientDetails || typeof clientDetails !== 'object') {
                 console.log(clientDetails);
@@ -69,6 +71,8 @@ export class OrderService {
                 throw new CustomError("OTP has expired", 401);
             }
 
+            await Otp.deleteOne({ phoneNo: clientDetails.phoneNo }); // delete the otp collection once the confirmation is done
+
             const product = await Products.findById(clientDetails.productId); // fetch the product Id from req body
             if (!product) throw new CustomError("Product not found! - backend", 404);
 
@@ -81,26 +85,24 @@ export class OrderService {
             // when the order is placed, automatically track the order time
             const timestamp = new Date().toLocaleString();
 
+            const totalPrice = product.productPrice * clientDetails.orderQuantity;
+
             // This response will be first appear to the client after he placed an order
             const orderResponse = await OrderDetails.create({
-                ...clientDetails, orderProductName: product.productName, orderPrice: product.productPrice, orderTime: timestamp, status: 'pending', receivedByClient: 'pending'
+                ...clientDetails, orderProductName: product.productName, productPrice: product.productPrice, totalPrice: totalPrice, orderTime: timestamp, status: 'pending', receivedByClient: false
             })
-
-            /**
-            * Once everything is done or if the OTP is not provided within the specific time-limit, remove the OTP collection from the database to save enough space(optimization) or to prevent any unwanted errors or conflicts in the future
-            * Reference from 'otp' collection
-            */
-            await Otp.deleteOne({ phoneNo: clientDetails.phoneNo });
 
             return {
                 message: "Order placed succesfully!",
                 orderResponse
             }
         } catch (error) {
+            console.log(error); // debugging
             throw error;
         }
     }
 
+    // (not tested)
     async cancelOrder(orderProductDetails) { // send 'orderProductDetails' as req body
         try {
             if (!id || !mongoose.Types.ObjectId.isValid(orderProductDetails.orderId)) throw new CustomError("Invalid Id - backend", 400);
@@ -123,13 +125,12 @@ export class OrderService {
         }
     }
 
-    // method for client ordered product received confirmation (not tested)
-    async orderConfirmation(orderId, clientConfirmation) { // clientConfirmation has to be either 'true' or 'false'
+    // method for client ordered product received confirmation (test successfull)
+    async orderConfirmation(orderId) { // clientConfirmation has to be either 'true' or 'false'
         if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) throw new CustomError("Invalid orderId - backend", 400);
-        if(!clientConfirmation || typeof clientConfirmation !== 'boolean') throw new CustomError("Invalid confirmation: true/false - backend", 400);
         try {
             const confirmation = await OrderDetails.findByIdAndUpdate(orderId,
-                { receivedByClient: clientConfirmation}, // boolean value
+                { receivedByClient: true}, // boolean value
                 { new: true }
             );
             if(!confirmation) throw new Error("Order not found! - backend", 404);
