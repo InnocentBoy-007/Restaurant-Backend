@@ -9,7 +9,7 @@ const route = express.Router();
 route.post("/otpverify", OTPverification);
 route.post("/placeOrder/:otpCode", placeOrder);
 route.delete("/cancelOrder/:id", cancelOrder);
-route.post("/orderConfirmation/:id", orderConfirmation);
+route.patch("/orderConfirmation/:id", orderConfirmation);
 
 
 route.post("/addProduct", addProduct);

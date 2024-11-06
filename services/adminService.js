@@ -86,7 +86,7 @@ export class AdminService {
      * 3. If the orderDetails is not found, throw a custom error
      * 4. Return the updated orderDetails
      */
-    async adminAcceptOrder(orderId) {
+    async adminAcceptOrder(orderId, admin) {
         try {
             if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) throw new CustomError("Invalid Id - backend", 400);
 
@@ -97,7 +97,8 @@ export class AdminService {
             const order = await OrderDetails.findByIdAndUpdate(orderId,
                 {
                     status: 'accepted',
-                    orderDispatchedTime: timestamp
+                    orderDispatchedTime: timestamp,
+                    orderDispatchedBy: admin
                 },
                 { new: true } // Return the updated document
             );

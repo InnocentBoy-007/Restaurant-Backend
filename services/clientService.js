@@ -123,14 +123,16 @@ export class OrderService {
         }
     }
 
-    // method for client ordered product received confirmation
-    async orderConfirmation(orderId) {
+    // method for client ordered product received confirmation (not tested)
+    async orderConfirmation(orderId, clientConfirmation) { // clientConfirmation has to be either 'true' or 'false'
         if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) throw new CustomError("Invalid orderId - backend", 400);
+        if(!clientConfirmation || typeof clientConfirmation !== 'boolean') throw new CustomError("Invalid confirmation: true/false - backend", 400);
         try {
-            await OrderDetails.findByIdAndUpdate(orderId,
-                { receivedByClient: 'received' },
+            const confirmation = await OrderDetails.findByIdAndUpdate(orderId,
+                { receivedByClient: clientConfirmation}, // boolean value
                 { new: true }
             );
+            if(!confirmation) throw new Error("Order not found! - backend", 404);
 
             return {message:"Product received by client! - backend"};
 

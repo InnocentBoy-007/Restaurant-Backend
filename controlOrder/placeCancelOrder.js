@@ -35,6 +35,7 @@ export const placeOrder = async (req, res) => {
     }
 }
 
+// not tested
 export const cancelOrder = async(req, res) => {
     const {orderProductDetails} = req.body;
     try {
@@ -48,10 +49,12 @@ export const cancelOrder = async(req, res) => {
     }
 }
 
+// not tested
 export const orderConfirmation = async(req, res)=> {
     const {orderId} = req.params;
+    const {clientConfirmation} = req.body;
     try {
-        const response = await orderService.orderConfirmation(orderId);
+        const response = await orderService.orderConfirmation(orderId, clientConfirmation);
         return res.status(200).json(response);
     } catch (error) {
         if(error instanceof CustomError) {
