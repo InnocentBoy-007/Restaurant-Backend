@@ -16,7 +16,6 @@ export const addProduct = async (req, res) => {
     }
 }
 
-
 export const updateProduct = async (req, res) => {
     const { id } = req.params;
     const { productDetails } = req.body;
@@ -28,5 +27,18 @@ export const updateProduct = async (req, res) => {
             res.status(error.errorCode).json({ message: error.message })
         }
         res.status(500).json({ message: "Internal server error! - backend" })
+    }
+}
+
+export const deleteProduct = async(req, res) => {
+    const {id} = req.params;
+    try {
+        await productControl.deleteProduct(id);
+        res.status(204).json({message:"Product deleted successfully! - backend"});
+    } catch (error) {
+        if(error instanceof CustomError) {
+            res.status(error.errorCode).json({message:error.message})
+        }
+        res.status(500).json({message:"Internal server error! - backend"});
     }
 }

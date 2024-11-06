@@ -64,24 +64,16 @@ export class AdminService {
 
             // have to use .select("+password") since, 'select:false' in database
             const account = await AdminModel.findOne({ adminName: adminDetails.adminName }).select("+password");
-            if (!account) {
-                throw new CustomError("Account does not exist! - backend", 404);
-            }
+            if (!account) throw new CustomError("Account does not exist! - backend", 404);
 
             // compare passwords(enterPassword, storedPassword)
             const comparePassword = await bcryt.compare(adminDetails.password, account.password);
-
-            if (!comparePassword) {
-                throw new CustomError("IncorrectPassword! - backend", 409);
-            }
+            if (!comparePassword) throw new CustomError("IncorrectPassword! - backend", 409);
 
             // track the time of an account signIn
             const timestamp = new Date().toLocaleString();
 
-            return {
-                ...adminDetails,
-                signInAt: timestamp
-            }
+            return { ...adminDetails, signInAt: timestamp }
         } catch (error) {
             console.log(error);
             throw error;
@@ -103,7 +95,6 @@ export class AdminService {
                 { status: 'accepted' }, // Update the status
                 { new: true } // Return the updated document
             );
-
             if (!order) throw new CustomError("Order not found!", 404);
 
             return order;

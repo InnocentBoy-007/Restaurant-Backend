@@ -7,7 +7,12 @@ import bcrypt from 'bcrypt'
 
 export class OrderService {
     constructor() {
-        this.OTP_EXPIRATION_TIME = 60 * 1000; // 2mins
+        /**
+         * If you want to change the duration
+         * e.g. ----> this.OTP_EXPIRATION_TIME = 2(first number) * 60 * 1000; // 2mins
+         * Change the first number according to the min you desire
+         */
+        this.OTP_EXPIRATION_TIME = 60 * 1000; // 1min
     }
 
     async clientVerification(productId, phoneNo) {
@@ -17,8 +22,8 @@ export class OrderService {
             if (!phoneNo || typeof phoneNo !== 'number') throw new CustomError("Please enter a valid phone number! - backend", 400);
 
             const generateOTP = Math.floor(100000 + Math.random() * 900000).toString(); // generate a random 6 digit number
-            const hashOTP = await bcrypt.hash(generateOTP, 10); // hash the password for more security
-            const expirationCountDown = new Date(Date.now() + this.OTP_EXPIRATION_TIME);
+            const hashOTP = await bcrypt.hash(generateOTP, 10); // hash the generated OTP for more security
+            const expirationCountDown = new Date(Date.now() + this.OTP_EXPIRATION_TIME); // creating a countdown which starts from the OTP creation time untill 1 min.
 
             await Otp.create({
                 OTP: hashOTP,
@@ -82,7 +87,8 @@ export class OrderService {
             })
 
             /**
-            * Once everything is done, remove the OPT collection from the database to save enough space(optimization) or to prevent any unwanted errors or conflicts in the future
+            * Once everything is done or if the OTP is not provided within the specific time-limit, remove the OTP collection from the database to save enough space(optimization) or to prevent any unwanted errors or conflicts in the future
+            * Reference from 'otp' collection
             */
             await Otp.deleteOne({ phoneNo: clientDetails.phoneNo });
 
