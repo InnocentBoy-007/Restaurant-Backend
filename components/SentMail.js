@@ -14,11 +14,9 @@ export class SentMail {
     async setUp() {
         try {
             const transporter = nodemailer.createTransport({
-                host: this.host,
-                port: 587,
-                secure: false,
+                service: 'gmail',
                 auth: {
-                    user: this.user,
+                    user:this.user,
                     pass: this.pass
                 }
             })

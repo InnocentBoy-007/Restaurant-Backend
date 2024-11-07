@@ -3,7 +3,7 @@ import AdminModel from '../model/adminModel.js'
 import OrderDetails from '../model/orderDetailsModel.js'
 import bcryt from 'bcrypt'
 import { CustomError } from '../components/CustomError.js';
-// import { SentMail } from '../components/SentMail.js'; (bug)
+import { SentMail } from '../components/SentMail.js';
 
 /**
  * Inside AdminService
@@ -19,6 +19,7 @@ export class AdminService {
         this.otp = null;
     }
 
+    // (test passed)
     async adminSignUp(adminDetails) { // adminDetails is a req body
         if (!adminDetails || typeof adminDetails !== 'object') {
             throw new CustomError("All fields required!(Bad Request) - backend", 400); // throws a custom error in case the req body is not provided fully or the provided req body is not an object
@@ -34,26 +35,25 @@ export class AdminService {
             const generateOTP = Math.floor(100000 + Math.random() * 900000).toString(); // generate otp
             this.otp = generateOTP;
 
-
-            /** (major bug)
-             *  nodemail configuration
-             *  const mailer = new SentMail();
-             *  const receiverInfo = { // (object)
-                to:adminDetails.adminEmail,
-                subject:"OTP confirmation",
-                text:this.otp
+            const mailer = new SentMail();
+            const receiverInfo = { // (object)
+                to: adminDetails.adminEmail,
+                subject: "OTP confirmation",
+                text: `Use this OTP for the signup process ${this.otp}. Thanks from Innocent Team.`
             }
             await mailer.setUp();
-            const info = await mailer.sentMail(receiverInfo.to,receiverInfo.subject,receiverInfo.text);
-            console.log("OTP is sent to ---> ", info.to);
-             */
+            await mailer.sentMail(receiverInfo.to, receiverInfo.subject, receiverInfo.text); // otp will be sent to the registered email address
+            console.log("OTP is sent to ---> ", adminDetails.adminEmail);
 
-            return { message: "Please enter the OTP....", otp: this.otp }; // for testing
+            return { message: `OTP is sent to ${adminDetails.adminEmail}` }; // for testing
         } catch (error) {
+            console.log(error);
+
             throw error;
         }
     }
 
+    // (test passed)
     async adminVerification(otp) {
         if (!otp) throw new CustomError("Invalid otp - backend", 400);
 
@@ -61,7 +61,7 @@ export class AdminService {
 
         try {
             if (otp !== this.otp) throw new CustomError("Wrong otp", 409);
-            const hashPassword = await bcryt.hash(this.adminDetails.password, 10); // encrypt the password using bcryt
+            const hashPassword = await bcryt.hash(this.adminDetails.adminPassword, 10); // encrypt the password using bcryt
 
             const account = await AdminModel.create({ ...this.adminDetails, password: hashPassword }) // create an admin account with adminDetails(using admin model)
 
