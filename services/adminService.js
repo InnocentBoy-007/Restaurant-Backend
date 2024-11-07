@@ -17,6 +17,7 @@ export class AdminService {
     constructor() {
         this.adminDetails = null; // creating an instance variable so that it is avaible to all the methods
         this.otp = null;
+        this.mailer = new SentMail();
     }
 
     // (test passed)
@@ -35,14 +36,13 @@ export class AdminService {
             const generateOTP = Math.floor(100000 + Math.random() * 900000).toString(); // generate otp
             this.otp = generateOTP;
 
-            const mailer = new SentMail();
             const receiverInfo = { // (object)
                 to: adminDetails.adminEmail,
                 subject: "OTP confirmation",
                 text: `Use this OTP for the signup process ${this.otp}. Thanks from Innocent Team.`
             }
-            await mailer.setUp();
-            await mailer.sentMail(receiverInfo.to, receiverInfo.subject, receiverInfo.text); // otp will be sent to the registered email address
+            await this.mailer.setUp();
+            await this.mailer.sentMail(receiverInfo.to, receiverInfo.subject, receiverInfo.text); // otp will be sent to the registered email address
             console.log("OTP is sent to ---> ", adminDetails.adminEmail);
 
             return { message: `OTP is sent to ${adminDetails.adminEmail}` }; // for testing
@@ -70,7 +70,16 @@ export class AdminService {
             // track the time of an account creation
             const timestamp = new Date().toLocaleString();
 
-            return { message: "Account sign up successfull! - backend", timestamp }
+            const receiverInfo = {
+                to: this.adminDetails.adminEmail,
+                subject: "Successfull sign up!",
+                text: `Thanks ${this.adminDetails.adminName} for choosing Innocent Restaurant. From Innocent Team.`
+            }
+
+            await this.mailer.setUp();
+            await this.mailer.sentMail(receiverInfo.to, receiverInfo.subject, receiverInfo.text);
+
+            return { message: "Account sign up successfull! - backend" };
         } catch (error) {
             console.log(error);
             throw error;
