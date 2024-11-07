@@ -15,7 +15,7 @@ export class OrderService {
         this.OTP_EXPIRATION_TIME = 3 * 60 * 1000; // 3min
     }
 
-    // (test successfull)
+    // (test passed)
     async clientVerification(productId, phoneNo) {
         try {
             if (!productId || !mongoose.Types.ObjectId.isValid(productId)) throw new CustomError("Invalid product Id", 400);
@@ -41,7 +41,7 @@ export class OrderService {
         }
     }
 
-    // (test successfull)
+    // (test passed)
     async placeOrder(otpCode, clientDetails) { // send the request body along with the same phone number
         /**
          * Properties needed in clientDetails
@@ -55,15 +55,15 @@ export class OrderService {
             if (!otpCode) throw new CustomError("Invalid OTP", 400);
 
             if (!clientDetails || typeof clientDetails !== 'object') {
-                console.log(clientDetails);
-
                 throw new CustomError("Please enter a valid information! - backend", 400);
             }
 
             const findClientDetails = await Otp.findOne({ phoneNo: clientDetails.orderPhoneNo }); // fetch the OTP details from the database first by comparing the phone numbers
             if (!findClientDetails) throw new CustomError("OTP not found! - backend", 404);
 
-            const confirmOTP = await bcrypt.compare(otpCode, findClientDetails.OTP); // OTP code confirmation
+            const confirmOTP = await bcrypt.compare(otpCode, findClientDetails.OTP); // OTP code confirmation (bug fixed)
+            console.log("confirm OTP--->", confirmOTP);
+
             if (!confirmOTP) throw new CustomError("Wrong OTP", 401);
 
             // Check if the OTP has expired
@@ -102,30 +102,33 @@ export class OrderService {
         }
     }
 
-    // (not tested)
-    async cancelOrder(orderProductDetails) { // send 'orderProductDetails' as req body
+    // (test passed)
+    async cancelOrder(orderId) { // send 'orderProductDetails' as req body
         try {
-            if (!id || !mongoose.Types.ObjectId.isValid(orderProductDetails.orderId)) throw new CustomError("Invalid Id - backend", 400);
+            if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) throw new CustomError("Invalid Id - backend", 400);
 
-            const order = await OrderDetails.findById(orderProductDetails.orderId); // checks if the order is already accepted or not
+            const order = await OrderDetails.findById(orderId); // checks if the order is already accepted or not
             if (!order) throw new CustomError("Order not found! - backend", 404);
 
-            if (order.status !== 'pending') throw new CustomError("Order cannot be canceled as it is already processed! - backend", 400);
+            if (order.acceptedByAdmin !== 'pending') throw new CustomError("Order cannot be canceled as it is already processed! - backend", 400);
 
             // Restoring the product quantity
-            const product = await Products.findById(orderProductDetails.productId);
-            product.productQuantity += orderProductDetails.orderQuantity;
+            const product = await Products.findOne({productName:order.orderProductName}); // fixed minor bug(changed findById to findOne)
+
+            product.productQuantity += order.orderQuantity; // (bug fixed)
             await product.save();
 
-            await OrderDetails.findByIdAndDelete(orderProductDetails.orderId);
+            await OrderDetails.findByIdAndDelete(orderId);
 
-            return { message: "Order canceled successfully! - backend", order };
+            return { message: "Order canceled successfully! - backend"};
         } catch (error) {
+            console.log(error);
+
             throw error;
         }
     }
 
-    // method for client ordered product received confirmation (test successfull)
+    // method for client ordered product received confirmation (test passed)
     async orderConfirmation(orderId) { // clientConfirmation has to be either 'true' or 'false'
         if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) throw new CustomError("Invalid orderId - backend", 400);
         try {

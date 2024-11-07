@@ -8,7 +8,7 @@ const route = express.Router();
 
 route.post("/otpverify", clientVerification);
 route.post("/placeOrder/:otpCode", placeOrder);
-route.delete("/cancelOrder/:id", cancelOrder);
+route.delete("/cancelOrder/:orderId", cancelOrder);
 route.patch("/orderConfirmation", orderConfirmation);
 
 
