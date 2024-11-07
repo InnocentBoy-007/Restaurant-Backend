@@ -3,6 +3,7 @@ import AdminModel from '../model/adminModel.js'
 import OrderDetails from '../model/orderDetailsModel.js'
 import bcryt from 'bcrypt'
 import { CustomError } from '../components/CustomError.js';
+// import { SentMail } from '../components/SentMail.js'; (bug)
 
 /**
  * Inside AdminService
@@ -13,38 +14,67 @@ import { CustomError } from '../components/CustomError.js';
  */
 
 export class AdminService {
-    /**
-    * 1. Checks for the adminDetails first (throws a custom error if the validation is not fullfilled!)
-    * 2. Checks if the signup name is already inside the database or not (adminName compares adminDetails.adminName(req body), adminName(database))
-    * 3. If there isn't any duplicate account, hash the password provided from the req body using bcryt
-    * 4. Create an account using the provided req body and the hashed password
-    * 5. Throw a custom error if an account cannot be created (throw custom error if cannot signup)
-    * 6. Create a new timestamp (tracking the date & time of account creation (signup date & time))
-    * 7. return the details of the created account
-    */
+    constructor() {
+        this.adminDetails = null; // creating an instance variable so that it is avaible to all the methods
+        this.otp = null;
+    }
+
     async adminSignUp(adminDetails) { // adminDetails is a req body
         if (!adminDetails || typeof adminDetails !== 'object') {
             throw new CustomError("All fields required!(Bad Request) - backend", 400); // throws a custom error in case the req body is not provided fully or the provided req body is not an object
         }
+        try {
+            const isDuplicate = await AdminModel.findOne({ adminName: adminDetails.adminName }); //check if there's any duplicate account in the database
+            if (isDuplicate) {
+                throw new CustomError("Account already exist!(conflict error) - backend", 409);
+            }
 
-        const isDuplicate = await AdminModel.findOne({ adminName: adminDetails.adminName }); //check if there's any duplicate account in the database
-        if (isDuplicate) {
-            throw new CustomError("Account already exist!(conflict error) - backend", 409);
+            this.adminDetails = adminDetails; // assigning all the req bodies to the instance variable
+
+            const generateOTP = Math.floor(100000 + Math.random() * 900000).toString(); // generate otp
+            this.otp = generateOTP;
+
+
+            /** (major bug)
+             *  nodemail configuration
+             *  const mailer = new SentMail();
+             *  const receiverInfo = { // (object)
+                to:adminDetails.adminEmail,
+                subject:"OTP confirmation",
+                text:this.otp
+            }
+            await mailer.setUp();
+            const info = await mailer.sentMail(receiverInfo.to,receiverInfo.subject,receiverInfo.text);
+            console.log("OTP is sent to ---> ", info.to);
+             */
+
+            return { message: "Please enter the OTP....", otp: this.otp }; // for testing
+        } catch (error) {
+            throw error;
         }
+    }
 
-        const hashPassword = await bcryt.hash(adminDetails.password, 10); // encrypt the password using bcryt
+    async adminVerification(otp) {
+        if (!otp) throw new CustomError("Invalid otp - backend", 400);
 
-        const account = await AdminModel.create({ ...adminDetails, password: hashPassword }) // create an admin account with adminDetails(using admin model)
+        if (!this.adminDetails || typeof this.adminDetails !== 'object') throw new CustomError("All fields required! - backend", 400); // I don't think this is necessary since the validation is already done in the previous method
 
-        if (!account) throw new CustomError("Account cannot be created! - backend", 500); // if the account cannot be created, throw an error
+        try {
+            if (otp !== this.otp) throw new CustomError("Wrong otp", 409);
+            const hashPassword = await bcryt.hash(this.adminDetails.password, 10); // encrypt the password using bcryt
 
-        // track the time of an account creation
-        const timestamp = new Date().toLocaleString();
+            const account = await AdminModel.create({ ...this.adminDetails, password: hashPassword }) // create an admin account with adminDetails(using admin model)
 
-        return {
-            account,
-            signUpAt: timestamp
-        };
+            if (!account) throw new CustomError("Account cannot be created! - backend", 500); // if the account cannot be created, throw an error
+
+            // track the time of an account creation
+            const timestamp = new Date().toLocaleString();
+
+            return { message: "Account sign up successfull! - backend", timestamp }
+        } catch (error) {
+            console.log(error);
+            throw error;
+        }
     }
 
     /**

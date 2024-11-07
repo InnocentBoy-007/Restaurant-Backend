@@ -2,7 +2,7 @@ import express from 'express'
 import { placeOrder,cancelOrder, clientVerification, orderConfirmation } from './controlOrder/placeCancelOrder.js';
 import { addProduct, updateProduct, deleteProduct } from './adminPanel/adminHandleProducts.js';
 import { acceptOrder, rejectOrder } from './adminPanel/adminAcceptRejectOrder.js';
-import { adminSignUp, adminSignIn } from './adminPanel/adminSignUpSignIn.js';
+import { adminSignUp, adminSignIn, adminVerification } from './adminPanel/adminSignUpSignIn.js';
 
 const route = express.Router();
 
@@ -22,6 +22,7 @@ route.delete("/rejectOrder/:id", rejectOrder);
 
 
 route.post("/adminSignUp", adminSignUp);
+route.post("/adminVerification", adminVerification);
 route.post("/adminSignIn", adminSignIn);
 
 export default route;

@@ -52,7 +52,7 @@ export class OrderService {
          * 5. clientDetails.productId
          */
         try {
-            if (!otpCode) throw new CustomError("Invalid OTP", 400);
+            if (!otpCode) throw new CustomError("Invalid OTP", 400); // the otp is in the form of string
 
             if (!clientDetails || typeof clientDetails !== 'object') {
                 throw new CustomError("Please enter a valid information! - backend", 400);
