@@ -12,25 +12,19 @@ export const adminSignUp = async (req, res) => {
 
         return res.status(201).json({ message: "Please enter the OTP to complete the signup process - backend", response })
     } catch (error) {
-        if (error instanceof CustomError) {
-            res.status(error.errorCode).json({ message: error.message })
-        }
-        res.status(500).json({ message: "Internal server error! - backend" })
+        if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
     }
 }
 
 // (test passed)
-export const adminVerification = async(req, res) => {
-    const {otp} = req.body;
+export const adminVerification = async (req, res) => {
+    const { otp } = req.body;
     try {
         const response = await adminService.adminVerification(otp);
 
-        return res.status(200).json({response});
+        return res.status(200).json({ response });
     } catch (error) {
-        if(error instanceof CustomError) {
-            res.status(error.errorCode).json({message:error.message});
-        }
-        res.status(500).json({message:"Internal server error! - backend"});
+        if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
     }
 }
 
@@ -41,9 +35,6 @@ export const adminSignIn = async (req, res) => {
 
         return res.status(200).json({ message: "Sign in successfully! - backend", response })
     } catch (error) {
-        if (error instanceof CustomError) {
-            res.status(error.errorCode).json({ message: error.message });
-        }
-        res.status(500).json({ message: "Internal server error! - backend" })
+        if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
     }
 }

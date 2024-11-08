@@ -10,10 +10,7 @@ export const clientVerification = async (req, res) => {
         const response = await orderService.clientVerification(productId, orderEmail);
         return res.status(200).json(response);
     } catch (error) {
-        if (error instanceof CustomError) {
-            return res.status(error.errorCode).json({ message: error.message });
-        }
-        res.status(500).json({ message: "Internal server error! - backend" });
+        if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
     }
 }
 
@@ -29,11 +26,7 @@ export const placeOrder = async (req, res) => {
 
     } catch (error) {
         // Handle the error based on its type or properties
-        if (error instanceof CustomError) {
-            return res.status(error.errorCode).json({ message: error.message });
-        }
-        // For unexpected errors, return a generic message
-        return res.status(500).json({ message: "Internal server error! - backend" });
+        if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
     }
 }
 
@@ -44,10 +37,7 @@ export const cancelOrder = async (req, res) => {
         const response = await orderService.cancelOrder(orderId);
         return res.status(200).json(response);
     } catch (error) {
-        if (error instanceof CustomError) {
-            return res.status(error.errorCode).json({ message: error.message });
-        }
-        return res.status(500).json({ message: "Internal server error! - backend" });
+        if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
     }
 }
 
@@ -58,9 +48,6 @@ export const orderConfirmation = async (req, res) => {
         const response = await orderService.orderConfirmation(orderId, clientConfirmation);
         return res.status(200).json(response);
     } catch (error) {
-        if (error instanceof CustomError) {
-            return res.status(error.errorCode).json({ message: error.message });
-        }
-        return res.status(500).json({ message: "Internal server error! - backend" });
+        if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
     }
 }

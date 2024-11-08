@@ -48,7 +48,8 @@ export class OrderService {
             return { message: "Your OTP expires in 60 seconds..." }; // it has to return the generateOTP since it hasn't been hashed yet
 
         } catch (error) {
-            throw error;
+            if (error instanceof CustomError) throw error;
+            throw new CustomError("An unexpected error occured while verifying an OTP - backend", 500);
         }
     }
 
@@ -105,7 +106,8 @@ export class OrderService {
             }
         } catch (error) {
             console.log(error); // debugging
-            throw error;
+            if (error instanceof CustomError) throw error;
+            throw new CustomError("An unexpected error occured while placing an order - backend", 500);
         }
     }
 
@@ -129,8 +131,8 @@ export class OrderService {
             return { message: "Order canceled successfully! - backend" };
         } catch (error) {
             console.log(error);
-
-            throw error;
+            if (error instanceof CustomError) throw error;
+            throw new CustomError("An unexpected error occured while canceling an order! - backend", 500);
         }
     }
 
@@ -147,7 +149,8 @@ export class OrderService {
             return { message: "Product received by client! - backend" };
 
         } catch (error) {
-            throw error;
+            if (error instanceof CustomError) throw error;
+            throw new CustomError("An unexpected error occured while confirming an order - backend", 500);
         }
     }
 }

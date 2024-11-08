@@ -27,9 +27,7 @@ export class AdminService {
         }
         try {
             const isDuplicate = await AdminModel.findOne({ adminName: adminDetails.adminName }); //check if there's any duplicate account in the database
-            if (isDuplicate) {
-                throw new CustomError("Account already exist!(conflict error) - backend", 409);
-            }
+            if (isDuplicate) throw new CustomError("Account already exist!(conflict error) - backend", 409);
 
             this.adminDetails = adminDetails; // assigning all the req bodies to the instance variable
 
@@ -47,9 +45,8 @@ export class AdminService {
 
             return { message: `OTP is sent to ${adminDetails.adminEmail}` }; // for testing
         } catch (error) {
-            console.log(error);
-
-            throw error;
+            if (error instanceof CustomError) throw error;
+            throw new CustomError("An unexpected error occured while signing in!", 500);
         }
     }
 
@@ -77,10 +74,10 @@ export class AdminService {
             await this.mailer.setUp();
             await this.mailer.sentMail(receiverInfo.to, receiverInfo.subject, receiverInfo.text);
 
-            return { message: "Account sign up successfull! - backend" };
+            return { message: "Account sign up successfull! - backend", verification: `Verified on ${timestamp}` };
         } catch (error) {
-            console.log(error);
-            throw error;
+            if (error instanceof CustomError) throw error;
+            throw new CustomError("An unexpected error occured while verifying an OTP - backend", 500);
         }
     }
 
@@ -109,14 +106,12 @@ export class AdminService {
             // track the time of an account signIn
             const timestamp = new Date().toLocaleString();
 
-
             const message = `Signed in successfull, ${account.adminName}.`
-
 
             return { message, signInAt: timestamp }
         } catch (error) {
-            console.log(error);
-            throw error;
+            if (error instanceof CustomError) throw error;
+            throw new CustomError("An unexpected error occured while signing in - backend", 500);
         }
     }
 
@@ -146,7 +141,8 @@ export class AdminService {
 
             return order;
         } catch (error) {
-            throw error;
+            if (error instanceof CustomError) throw error;
+            throw new CustomError("An unexpected error occured while accepting an order - backend", 500);
         }
     }
 
@@ -165,7 +161,8 @@ export class AdminService {
 
             return { message: "Order rejected successfully." }; // Returns only the deletion message without the deleted orderDetails
         } catch (error) {
-            throw error;
+            if (error instanceof CustomError) throw error;
+            throw new CustomError("An unexpected error occured while rejecting an order! - backend", 500);
         }
     }
 }

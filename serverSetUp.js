@@ -3,17 +3,11 @@ import mongoose from "mongoose"; //ODM (Object Data Modeling) library for MongoD
 import cors from 'cors'
 import dotenv from 'dotenv'
 import route from './route.js';
-
+import { CustomError } from './components/CustomError.js';
 /**
  * The CustomError class extends the built-in Error class.
     It adds an additional property errorCode to provide more context about the error.
  */
-class CustomError extends Error {
-    constructor(message, errorCode) {
-        super(message); // message is already a property of built-in 'Error'
-        this.errorCode = errorCode;
-    }
-}
 
 class ServerSetUp { // This class encapsulates all the logic related to setting up the server and connecting to the database (encapsulates the main methods)
     /**
@@ -59,9 +53,10 @@ class ServerSetUp { // This class encapsulates all the logic related to setting 
             // Global error handler
             app.use((err, req, res, next) => {
                 if (err instanceof CustomError) {
-                    res.status(err.errorCode).json({ message: err.message });
+                    return res.status(err.errorCode).json({ message: err.message });
                 } else {
-                    res.status(500).json({ message: "Internal Server Error" });
+                    console.log("Global error ----> ", err);
+                    return res.status(500).json({ message: "Internal Server Error" });
                 }
             });
 
