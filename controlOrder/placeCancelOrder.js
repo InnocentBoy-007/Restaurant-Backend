@@ -3,25 +3,15 @@ import { CustomError } from "../components/CustomError.js";
 
 const orderService = new OrderService();
 
-// (test successfull)
-export const clientVerification = async (req, res) => {
-    const { productId, orderEmail } = req.body;
-    try {
-        const response = await orderService.clientVerification(productId, orderEmail);
-        return res.status(200).json(response);
-    } catch (error) {
-        if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
-    }
-}
-
 // Controller functions of OrderService class (standalone functions)
-// (test successfull)
+
+// (test passed)
 export const placeOrder = async (req, res) => {
-    const { otpCode } = req.params;
+    const { productId } = req.params;
     const { clientDetails } = req.body;
 
     try {
-        const response = await orderService.placeOrder(otpCode, clientDetails);
+        const response = await orderService.placeOrder(productId, clientDetails);
         return res.status(200).json(response)
 
     } catch (error) {
@@ -29,6 +19,19 @@ export const placeOrder = async (req, res) => {
         if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
     }
 }
+
+// (test passed)
+export const clientVerification = async (req, res) => {
+    const { otp } = req.body;
+    try {
+        const response = await orderService.clientVerification(otp);
+        return res.status(200).json(response);
+    } catch (error) {
+        if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
+    }
+}
+
+
 
 // (not tested)
 export const cancelOrder = async (req, res) => {
@@ -41,11 +44,11 @@ export const cancelOrder = async (req, res) => {
     }
 }
 
-// (test successfull)
+// (test passed)
 export const orderConfirmation = async (req, res) => {
-    const { orderId, clientConfirmation } = req.body;
+    const { orderId } = req.params;
     try {
-        const response = await orderService.orderConfirmation(orderId, clientConfirmation);
+        const response = await orderService.orderConfirmation(orderId);
         return res.status(200).json(response);
     } catch (error) {
         if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });

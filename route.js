@@ -1,15 +1,15 @@
 import express from 'express'
-import { placeOrder,cancelOrder, clientVerification, orderConfirmation } from './controlOrder/placeCancelOrder.js';
+import { placeOrder, cancelOrder, clientVerification, orderConfirmation } from './controlOrder/placeCancelOrder.js';
 import { addProduct, updateProduct, deleteProduct } from './adminPanel/adminHandleProducts.js';
 import { acceptOrder, rejectOrder } from './adminPanel/adminAcceptRejectOrder.js';
 import { adminSignUp, adminSignIn, adminVerification } from './adminPanel/adminSignUpSignIn.js';
 
 const route = express.Router();
 
+route.post("/placeOrder/:productId", placeOrder);
 route.post("/otpverify", clientVerification);
-route.post("/placeOrder/:otpCode", placeOrder);
 route.delete("/cancelOrder/:orderId", cancelOrder);
-route.patch("/orderConfirmation", orderConfirmation);
+route.patch("/orderConfirmation/:orderId", orderConfirmation);
 
 
 route.post("/addProduct", addProduct);

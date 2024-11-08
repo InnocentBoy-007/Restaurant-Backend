@@ -121,7 +121,7 @@ export class AdminService {
      * 3. If the orderDetails is not found, throw a custom error
      * 4. Return the updated orderDetails
      */
-    async adminAcceptOrder(orderId, admin) { // (test succesfull)
+    async adminAcceptOrder(orderId, admin) { // (test passed)
         try {
             if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) throw new CustomError("Invalid Id - backend", 400);
 
@@ -137,7 +137,15 @@ export class AdminService {
                 },
                 { new: true } // Return the updated document
             );
-            if (!order) throw new CustomError("Order not found!", 404);
+
+            const mailInfo = {
+                to: order.orderEmail,
+                subject: 'Order Accepted',
+                text: `Thanks, ${order.orderName} for choosing us and ordering ${order.orderQuantity} ${order.orderProductName}. Please order again. From Innocent Team.`
+            }
+
+            await this.mailer.setUp();
+            await this.mailer.sentMail(mailInfo.to, mailInfo.subject, mailInfo.text);
 
             return order;
         } catch (error) {

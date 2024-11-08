@@ -7,107 +7,113 @@ import bcrypt from 'bcrypt'
 import { SentMail } from "../components/SentMail.js";
 
 export class OrderService {
+    /**
+     * 1. Place order first
+     * 2. Send OTP to the registered phone no
+     * 3. Verify phone no
+     * 4. If the phone no is verified, processed the order
+     * 5. If not throw a custom error
+     */
     constructor() {
         /**
          * If you want to change the duration
          * e.g. ----> this.OTP_EXPIRATION_TIME = 2(first number) * 60 * 1000; // 2mins
          * Change the first number according to the min you desire
          */
-        this.OTP_EXPIRATION_TIME = 3 * 60 * 1000; // 3min
+        this.OTP_EXPIRATION_TIME = 3 * 60 * 1000; // 3mins
         this.mailer = new SentMail();
-        this.orderEmail = null;
+        this.clientDetails = null;
+        this.product = null;
     }
 
     // (test passed)
-    async clientVerification(productId, orderEmail) {
-        this.orderEmail = orderEmail;
-        if (!productId || !mongoose.Types.ObjectId.isValid(productId)) throw new CustomError("Invalid product Id", 400);
-        if (!phoneNo || typeof phoneNo !== 'number') throw new CustomError("Please enter a valid phone number! - backend", 400);
-        try {
-            const generateOTP = Math.floor(100000 + Math.random() * 900000).toString(); // generate a random 6 digit number
-            const hashOTP = await bcrypt.hash(generateOTP, 10); // hash the generated OTP for more security
-            const expirationCountDown = new Date(Date.now() + this.OTP_EXPIRATION_TIME); // creating a countdown which starts from the OTP creation time untill 1 min.
-
-            const mailInfo = {
-                to: orderEmail,
-                subject: "OTP for Order Verification",
-                text: `Your OTP for order verification is ${hashOTP}. Please enter this OTP to complete the order process.`
-            }
-
-            await this.mailer.setUp();
-            await this.mailer.sentMail(mailInfo.to, mailInfo.subject, mailInfo.body);
-
-            await Otp.create({
-                OTP: hashOTP,
-                phoneNo: phoneNo,
-                productId: productId,
-                expiresAt: expirationCountDown
-            })
-            console.log(`Your OTP: ${generateOTP}`); // the OPT should be 'generateOTP' since it hasn't been hashed yet
-
-            return { message: "Your OTP expires in 60 seconds..." }; // it has to return the generateOTP since it hasn't been hashed yet
-
-        } catch (error) {
-            if (error instanceof CustomError) throw error;
-            throw new CustomError("An unexpected error occured while verifying an OTP - backend", 500);
-        }
-    }
-
-    // (test passed)
-    async placeOrder(otpCode, clientDetails) { // send the request body along with the same phone number
+    async placeOrder(productId, clientDetails) { // send the request body along with the same phone number
         /**
          * Properties needed in clientDetails
-         * 1. clientDetails.orderPhoneNo
+         * 1. clientDetails.PhoneNo
          * 2. clientDetails.orderName
          * 3. clientDetails.orderQuantity
          * 4. clientDetails.orderAddress
          * 5. clientDetails.productId
+         * 6. clientDetails.orderEmail
          */
-        if (!otpCode) throw new CustomError("Invalid OTP", 400); // the otp is in the form of string
+        if (!productId || !mongoose.Types.ObjectId.isValid(productId)) throw new CustomError("Please enter a valid productId! - backend", 400);
         if (!clientDetails || typeof clientDetails !== 'object') throw new CustomError("Please enter a valid information! - backend", 400);
         try {
-            const findClientDetails = await Otp.findOne({ orderEmail: this.orderEmail }); // fetch the OTP details from the database first by comparing the phone numbers
-            if (!findClientDetails) throw new CustomError("OTP not found! - backend", 404);
+            const product = await Products.findById(productId);
+            if (!product) throw new CustomError("Cannot find the product! - backend", 404);
+            this.product = product;
 
-            const confirmOTP = await bcrypt.compare(otpCode, findClientDetails.OTP); // OTP code confirmation (bug fixed)
-            console.log("confirm OTP--->", confirmOTP); // testing (delete later)
+            if (clientDetails.orderQuantity > product.productQuantity) throw new CustomError(`Not enough ${product.productName}`, 409); // check the order quantity before the client verification (user experience)
 
-            if (!confirmOTP) throw new CustomError("Wrong OTP", 401);
+            this.clientDetails = clientDetails;
 
-            // Check if the OTP has expired
-            if (findClientDetails.expiresAt < Date.now()) {
-                throw new CustomError("OTP has expired", 401);
+            const generateOTP = Math.floor(100000 + Math.random() * 900000); // generate a random 6 digit number
+            const expirationCountDown = new Date(Date.now() + this.OTP_EXPIRATION_TIME); // creating a countdown which starts from the OTP creation time untill 1 min.
+
+            const mailInfo = {
+                to: clientDetails.orderEmail,
+                subject: "OTP for Order Verification",
+                text: `Your OTP for order verification is ${generateOTP}. Please enter this OTP to complete the order process.`
             }
 
-            await Otp.deleteOne({ orderEmail: this.orderEmail }); // delete the otp collection once the confirmation is done
+            await this.mailer.setUp();
+            await this.mailer.sentMail(mailInfo.to, mailInfo.subject, mailInfo.text);
 
-            const product = await Products.findById(clientDetails.productId); // fetch the product Id from req body
-            if (!product) throw new CustomError("Product not found! - backend", 404);
-
-            // Removing the product quantity from the product database according to the request orderProduct's quantity
-            if (product.productQuantity >= clientDetails.orderQuantity) {
-                product.productQuantity -= clientDetails.orderQuantity;
-                await product.save();
-            } else throw new CustomError(`Not enough ${product.productName}.`, 400);
-
-            // when the order is placed, automatically track the order time
             const timestamp = new Date().toLocaleString();
 
-            const totalPrice = product.productPrice * clientDetails.orderQuantity;
-
-            // This response will be first appear to the client after he placed an order
-            const orderResponse = await OrderDetails.create({
-                ...clientDetails, orderProductName: product.productName, productPrice: product.productPrice, totalPrice: totalPrice, orderTime: timestamp, status: 'pending', receivedByClient: false
+            await Otp.create({
+                OTP: generateOTP,
+                expiresAt: expirationCountDown
             })
 
             return {
-                message: "Order placed succesfully!",
-                orderResponse
+                message: `Please verify your phone number first before placing the order. Please verify your OTP sent to '${clientDetails.orderEmail}'. Order placed at ${timestamp}`,
             }
         } catch (error) {
             console.log(error); // debugging
             if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while placing an order - backend", 500);
+        }
+    }
+
+    // (test passed)
+    async clientVerification(otp) {
+        if (!otp) throw new CustomError("OTP is required!", 400);
+        if (typeof otp !== 'number') throw new CustomError("OTP should be a number! - backend", 400);
+
+        try {
+            const confirmOTP = await Otp.findOne({ OTP: otp });
+            if (!confirmOTP) throw new CustomError("Wrong OTP", 409);
+
+            // Check if the OTP has expired
+            if (confirmOTP.expiresAt < Date.now()) throw new CustomError("OTP has expired", 401);
+
+            await Otp.deleteOne({ OTP: otp }); // delete the otp collection once the confirmation is done
+
+            /**
+             * Removing the product quantity from the product database according to the request orderProduct's quantity
+             * Doesn't need to check the order quantity again, since it has already been checked
+             */
+            this.product.productQuantity -= this.clientDetails.orderQuantity;
+            await this.product.save();
+
+            // when the order is placed, automatically track the order time
+            const timestamp = new Date().toLocaleString();
+
+            const totalPrice = this.product.productPrice * this.clientDetails.orderQuantity;
+
+            const orderDetails = await OrderDetails.create({
+                ...this.clientDetails, orderProductName: this.product.productName, productPrice: this.product.productPrice, totalPrice: totalPrice, orderTime: timestamp, status: 'pending', receivedByClient: false
+            })
+
+            return { message: `${this.clientDetails.orderName}, your order is placed succsesfully! Please wait for the order to be dispatched! And please don't forget to send the order reception verification - backend`, orderDetails };
+
+        } catch (error) {
+            console.log(error);
+
+            if (error instanceof CustomError) throw error;
+            throw new CustomError("An unexpected error occured while verifying an OTP - backend", 500);
         }
     }
 
