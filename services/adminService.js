@@ -56,10 +56,8 @@ export class AdminService {
     // (test passed)
     async adminVerification(otp) {
         if (!otp) throw new CustomError("Invalid otp - backend", 400);
-
-        if (!this.adminDetails || typeof this.adminDetails !== 'object') throw new CustomError("All fields required! - backend", 400); // I don't think this is necessary since the validation is already done in the previous method
-
         try {
+            if (!this.adminDetails || typeof this.adminDetails !== 'object') throw new CustomError("All fields required! - backend", 400); // I don't think this is necessary since the validation is already done in the previous method
             if (otp !== this.otp) throw new CustomError("Wrong otp", 409);
             const hashPassword = await bcryt.hash(this.adminDetails.adminPassword, 10); // encrypt the password using bcryt
 
@@ -96,11 +94,10 @@ export class AdminService {
      * 7. Finally, return the signedIn account's details along with the timstamp
      */
     async adminSignIn(adminDetails) {//{adminDetails} as req.body
+        if (!adminDetails || typeof adminDetails !== 'object') {
+            throw new CustomError("All fields required! - backend", 400);
+        }
         try {
-            if (!adminDetails || typeof adminDetails !== 'object') {
-                throw new CustomError("All fields required! - backend", 400);
-            }
-
             // have to use .select("+password") since, 'select:false' in database
             const account = await AdminModel.findOne({ adminName: adminDetails.adminName }).select("+password");
             if (!account) throw new CustomError("Account does not exist! - backend", 404);
@@ -112,7 +109,11 @@ export class AdminService {
             // track the time of an account signIn
             const timestamp = new Date().toLocaleString();
 
-            return { ...adminDetails, signInAt: timestamp }
+
+            const message = `Signed in successfull, ${account.adminName}.`
+
+
+            return { message, signInAt: timestamp }
         } catch (error) {
             console.log(error);
             throw error;

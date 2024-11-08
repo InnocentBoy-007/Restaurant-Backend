@@ -4,16 +4,16 @@ import { CustomError } from "../components/CustomError.js";
 const orderService = new OrderService();
 
 // (test successfull)
-export const clientVerification = async(req, res) => {
-    const {productId, phoneNo} = req.body;
+export const clientVerification = async (req, res) => {
+    const { productId, orderEmail } = req.body;
     try {
-        const response = await orderService.clientVerification(productId, phoneNo);
+        const response = await orderService.clientVerification(productId, orderEmail);
         return res.status(200).json(response);
     } catch (error) {
-        if(error instanceof CustomError) {
-            return res.status(error.errorCode).json({message:error.message});
+        if (error instanceof CustomError) {
+            return res.status(error.errorCode).json({ message: error.message });
         }
-        res.status(500).json({message:"Internal server error! - backend"});
+        res.status(500).json({ message: "Internal server error! - backend" });
     }
 }
 
@@ -38,29 +38,29 @@ export const placeOrder = async (req, res) => {
 }
 
 // (not tested)
-export const cancelOrder = async(req, res) => {
-    const {orderId} = req.params;
+export const cancelOrder = async (req, res) => {
+    const { orderId } = req.params;
     try {
         const response = await orderService.cancelOrder(orderId);
         return res.status(200).json(response);
     } catch (error) {
-        if(error instanceof CustomError) {
-            return res.status(error.errorCode).json({message: error.message});
+        if (error instanceof CustomError) {
+            return res.status(error.errorCode).json({ message: error.message });
         }
-        return res.status(500).json({message:"Internal server error! - backend"});
+        return res.status(500).json({ message: "Internal server error! - backend" });
     }
 }
 
 // (test successfull)
-export const orderConfirmation = async(req, res)=> {
-    const {orderId, clientConfirmation} = req.body;
+export const orderConfirmation = async (req, res) => {
+    const { orderId, clientConfirmation } = req.body;
     try {
         const response = await orderService.orderConfirmation(orderId, clientConfirmation);
         return res.status(200).json(response);
     } catch (error) {
-        if(error instanceof CustomError) {
-            return res.status(error.errorCode).json({message:error.message});
+        if (error instanceof CustomError) {
+            return res.status(error.errorCode).json({ message: error.message });
         }
-        return res.status(500).json({message:"Internal server error! - backend"});
+        return res.status(500).json({ message: "Internal server error! - backend" });
     }
 }
