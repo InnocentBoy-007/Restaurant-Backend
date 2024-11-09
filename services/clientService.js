@@ -3,7 +3,6 @@ import Products from '../model/productModel.js'
 import OrderDetails from "../model/orderDetailsModel.js";
 import { CustomError } from "../components/CustomError.js";
 import Otp from "../model/otp.js";
-import bcrypt from 'bcrypt'
 import { SentMail } from "../components/SentMail.js";
 
 export class OrderService {

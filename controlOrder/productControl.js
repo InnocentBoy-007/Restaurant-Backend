@@ -4,6 +4,17 @@ import { CustomError } from '../components/CustomError.js';
 import AdminModel from '../model/adminModel.js'
 
 export class ProductControl {
+    async fetchProduct() {
+        try {
+            const product = await Product.find();
+            if(product.length === 0) throw new CustomError("There are no products in the database! - backend", 404);
+            return product;
+        } catch (error) {
+            if(error instanceof CustomError) throw error;
+            throw new CustomError("An unexpected error occured while fetching products details from the database - backend", 500);
+        }
+    }
+
     async addProduct(productDetails) {
         if (!productDetails || typeof productDetails !== 'object') throw new CustomError("Product details are necessary!", 400);
         try {

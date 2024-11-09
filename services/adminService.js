@@ -115,6 +115,17 @@ export class AdminService {
         }
     }
 
+    async fetchAdmins() {
+        try {
+            const admins = await AdminModel.find();
+            if(admins.length === 0) throw new CustomError("No admins found! - backend", 404);
+            return admins;
+        } catch (error) {
+            if(error instanceof CustomError) throw error;
+            throw new CustomError("An unexpected error occured while trying to fetch admin details! - backend", 500);
+        }
+    }
+
     /**
      * 1. Validate the orderId first (throws a custom error if it goes wrong)
      * 2. Find and update the orderDetails using orderId, updates the default status with 'accepted'
