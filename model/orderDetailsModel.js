@@ -8,7 +8,7 @@ const orderDetailsModel = new mongoose.Schema({
     totalPrice: { type: Number, required: true },
     orderQuantity: { type: Number, required: true },
     orderAddress: { type: String, required: true },
-    orderPhoneNo: { type: Number, required: true },
+    orderPhoneNo: { type: String, required: true },
     orderTime: { type: String, required: true },
     orderDispatchedTime: { type: String, default: null },
     acceptedByAdmin: {

@@ -47,3 +47,24 @@ export const fetchAdmins = async(req, res) => {
         if(error instanceof CustomError) return res.status(error.errorCode).json({message:error.message});
     }
 }
+
+export const deleteAdmin = async(req, res) => {
+    const {adminId} = req.param
+    try {
+        await adminService.deleteAdmin(adminId);
+        return res.status(200).json({messag:"Admin deleted successfully! - backend"});
+    } catch (error) {
+        if(error instanceof CustomError) return res.status(error.errorCode).json({message:error.message});
+    }
+}
+
+export const updateAdmin = async(req, res) => {
+    const {adminId} = req.params;
+    const {adminDetails} = req.body;
+    try {
+        const response = await adminService.updateAdmin(adminId, adminDetails);
+        return res.status(201).json({message:"Admin profile updated successfully! - backend", response});
+    } catch (error) {
+        if(error instanceof CustomError) return res.status(error.errorCode).json({message:error.message});
+    }
+}

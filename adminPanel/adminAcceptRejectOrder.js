@@ -1,10 +1,11 @@
 import { AdminService } from "../services/adminService.js";
 import { CustomError } from "../components/CustomError.js";
 
+const adminService = new AdminService();
+
 // acceptOrder(test successfull)
 export const acceptOrder = async (req, res) => {
     const { orderId, admin } = req.body;
-    const adminService = new AdminService();
     try {
         const response = await adminService.adminAcceptOrder(orderId, admin);
         // show the client about the dispatch time
@@ -22,7 +23,6 @@ export const acceptOrder = async (req, res) => {
 
 export const rejectOrder = async (req, res) => {
     const { id } = req.params;
-    const adminService = new AdminService();
     try {
         const response = await adminService.adminRejectOrder(id);
         return res.status(200).json({

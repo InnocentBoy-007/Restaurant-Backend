@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import bcrypt from 'bcrypt'
 import Products from '../model/productModel.js'
 import OrderDetails from "../model/orderDetailsModel.js";
 import { CustomError } from "../components/CustomError.js";
@@ -38,6 +39,20 @@ export class OrderService {
          */
         if (!productId || !mongoose.Types.ObjectId.isValid(productId)) throw new CustomError("Please enter a valid productId! - backend", 400);
         if (!clientDetails || typeof clientDetails !== 'object') throw new CustomError("Please enter a valid information! - backend", 400);
+        // Check for specific fields in clientDetails
+        const requiredFields = [
+            { key: 'orderName', message: 'Wrong name' },
+            { key: 'orderPhoneNo', message: 'Wrong phoneNo' },
+            { key: 'orderEmail', message: 'Wrong email' },
+            { key: 'orderAddress', message: 'Wrong address' },
+            { key: 'orderQuantity', message: 'Wrong quantity' }
+        ];
+
+        for (const field of requiredFields) {
+            if (!clientDetails[field.key]) {
+                throw new CustomError(field.message, 400);
+            }
+        }
         try {
             const product = await Products.findById(productId);
             if (!product) throw new CustomError("Cannot find the product! - backend", 404);
@@ -47,7 +62,8 @@ export class OrderService {
 
             this.clientDetails = clientDetails;
 
-            const generateOTP = Math.floor(100000 + Math.random() * 900000); // generate a random 6 digit number
+            const generateOTP = Math.floor(100000 + Math.random() * 900000).toString(); // generate a random 6 digit number
+            const hashOTP = await bcrypt.hash(generateOTP, 10);
             const expirationCountDown = new Date(Date.now() + this.OTP_EXPIRATION_TIME); // creating a countdown which starts from the OTP creation time untill 1 min.
 
             const mailInfo = {
@@ -62,7 +78,7 @@ export class OrderService {
             const timestamp = new Date().toLocaleString();
 
             await Otp.create({
-                OTP: generateOTP,
+                OTP: hashOTP,
                 expiresAt: expirationCountDown
             })
 
@@ -79,21 +95,23 @@ export class OrderService {
     // (test passed)
     async clientVerification(otp) {
         if (!otp) throw new CustomError("OTP is required!", 400);
-        if (typeof otp !== 'number') throw new CustomError("OTP should be a number! - backend", 400);
+        if (typeof otp !== 'string') throw new CustomError("OTP should be a string! - backend", 400);
 
         try {
-            const confirmOTP = await Otp.findOne({ OTP: otp });
+            const findOTP = await Otp.findOne({OTP:otp});
+            if(!findOTP) throw new CustomError("OTP not found! - backend", 404);
+
+            if (findOTP.expiresAt < Date.now()) throw new CustomError("OTP has expired", 401); // Check if the OTP has expired
+
+            const confirmOTP = await bcrypt.compare(otp,findOTP.OTP); // comparing the hashed password
             if (!confirmOTP) throw new CustomError("Wrong OTP", 409);
-
-            // Check if the OTP has expired
-            if (confirmOTP.expiresAt < Date.now()) throw new CustomError("OTP has expired", 401);
-
-            await Otp.deleteOne({ OTP: otp }); // delete the otp collection once the confirmation is done
 
             /**
              * Removing the product quantity from the product database according to the request orderProduct's quantity
              * Doesn't need to check the order quantity again, since it has already been checked
              */
+            await Otp.deleteOne({ OTP: otp }); // delete the otp collection once the confirmation is done
+
             this.product.productQuantity -= this.clientDetails.orderQuantity;
             await this.product.save();
 

@@ -2,7 +2,7 @@ import express from 'express'
 import { placeOrder, cancelOrder, clientVerification, orderConfirmation } from './controlOrder/placeCancelOrder.js';
 import { fetchProduct, addProduct, updateProduct, deleteProduct } from './adminPanel/adminHandleProducts.js';
 import { acceptOrder, rejectOrder } from './adminPanel/adminAcceptRejectOrder.js';
-import { adminSignUp, adminSignIn, adminVerification, fetchAdmins } from './adminPanel/adminSignUpSignIn.js';
+import { adminSignUp, adminSignIn, adminVerification, fetchAdmins, deleteAdmin, updateAdmin } from './adminPanel/adminSignUpSignIn.js';
 
 const route = express.Router();
 
@@ -26,5 +26,7 @@ route.post("/adminSignUp", adminSignUp);
 route.post("/adminVerification", adminVerification);
 route.get("/fetchAdmins", fetchAdmins);
 route.post("/adminSignIn", adminSignIn);
+route.delete("/deleteAdmin/:adminId", deleteAdmin);
+route.patch("/updateAdmin/:adminId", updateAdmin);
 
 export default route;

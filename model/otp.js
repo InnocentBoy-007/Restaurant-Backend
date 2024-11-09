@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 const OTPschema = new mongoose.Schema({
-    OTP: { type: Number, required: true },
+    OTP: { type: String, required: true },
     expiresAt: { type: Date, required: true }
 })
 
