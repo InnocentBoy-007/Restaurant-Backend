@@ -3,6 +3,7 @@ import mongoose from "mongoose"; //ODM (Object Data Modeling) library for MongoD
 import cors from 'cors'
 import dotenv from 'dotenv'
 import route from './route.js';
+import cookieParser from 'cookie-parser';
 import { CustomError } from './components/CustomError.js';
 /**
  * The CustomError class extends the built-in Error class.
@@ -29,6 +30,7 @@ class ServerSetUp { // This class encapsulates all the logic related to setting 
          * The instance method 'this.connectServer()' will be automatically called when the instance of the dependant class is created
          */
         this.connectServer(); // instance method
+        this.allowedOrigins = [`${process.env.ORIGIN}`];
     }
 
     async connectDatabase() {
@@ -47,7 +49,21 @@ class ServerSetUp { // This class encapsulates all the logic related to setting 
 
             // middlewares
             app.use(express.json()); // parses incoming JSON requests
-            app.use(cors()); // enables CORS for the application
+
+            app.use(cookieParser());
+
+            app.use(cors({
+                origin: (origin, callback) => {
+                    if (this.allowedOrigins.indexOf(origin) !== -1 || !origin) {
+                        // Allow requests with no origin (like mobile apps or curl requests)
+                        callback(null, true);
+                    } else {
+                        callback(new Error('Not allowed by CORS'));
+                    }
+                },
+                credentials: true,
+            })); // enables CORS for the application
+
             app.use("/api", route); // Sets up routing for the API
 
             // Global error handler
@@ -56,7 +72,7 @@ class ServerSetUp { // This class encapsulates all the logic related to setting 
                     return res.status(err.errorCode).json({ message: err.message });
                 } else {
                     console.log("Global error ----> ", err);
-                    return res.status(500).json({ message: "Internal Server Error" });
+                    return res.status(500).json({ message: "Internal Server Error - global error" });
                 }
             });
 

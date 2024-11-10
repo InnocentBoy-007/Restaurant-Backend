@@ -1,9 +1,10 @@
 import mongoose from 'mongoose';
 import AdminModel from '../model/adminModel.js'
 import OrderDetails from '../model/orderDetailsModel.js'
-import bcryt from 'bcrypt'
+import bcrypt from 'bcrypt'
 import { CustomError } from '../components/CustomError.js';
 import { SentMail } from '../components/SentMail.js';
+import jwt from 'jsonwebtoken'
 
 /**
  * Inside AdminService
@@ -70,7 +71,7 @@ export class AdminService {
         if (!otp) throw new CustomError("Invalid otp - backend", 400);
         try {
             if (otp !== this.otp) throw new CustomError("Wrong otp", 409);
-            const hashPassword = await bcryt.hash(this.adminDetails.password, 10); // encrypt the password using bcryt
+            const hashPassword = await bcrypt.hash(this.adminDetails.password, 10); // encrypt the password using bcryt
 
             const account = await AdminModel.create({ ...this.adminDetails, password: hashPassword }) // create an admin account with adminDetails(using admin model)
 
@@ -88,7 +89,14 @@ export class AdminService {
             await this.mailer.setUp();
             await this.mailer.sentMail(receiverInfo.to, receiverInfo.subject, receiverInfo.text);
 
-            return { message: "Account sign up successfull! - backend", verification: `Verified on ${timestamp}` };
+            // Generate JWT after successful signup
+            const token = jwt.sign(
+                { adminId: account._id, adminEmail: account.adminEmail },
+                process.env.JWT_SECRET, // Use an environment variable for the secret key
+                { expiresIn: '1h' }      // Token expires in 1 hour
+            );
+
+            return { message: "Account sign up successfull! - backend", verification: `Verified on ${timestamp}`, token };
         } catch (error) {
             console.log(error);
 
@@ -116,7 +124,7 @@ export class AdminService {
             if (!account) throw new CustomError("Account does not exist! - backend", 404);
 
             // compare passwords(enterPassword, storedPassword)
-            const comparePassword = await bcryt.compare(adminDetails.password, account.password);
+            const comparePassword = await bcrypt.compare(adminDetails.password, account.password);
             if (!comparePassword) throw new CustomError("IncorrectPassword! - backend", 409);
 
             // track the time of an account signIn
@@ -124,7 +132,14 @@ export class AdminService {
 
             const message = `Signed in successfull, ${account.adminName}.`
 
-            return { message, signInAt: timestamp }
+            // Generate JWT after successful sign-in
+            const token = jwt.sign(
+                { adminId: account._id, adminEmail: account.adminEmail },
+                process.env.JWT_SECRET,
+                { expiresIn: '1h' }
+            );
+
+            return { message, signInAt: timestamp, token };
         } catch (error) {
             if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while signing in - backend", 500);

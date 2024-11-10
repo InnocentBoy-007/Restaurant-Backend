@@ -33,7 +33,7 @@ export const adminSignIn = async (req, res) => {
     try {
         const response = await adminService.adminSignIn(adminDetails);
 
-        return res.status(200).json({ message: "Sign in successfully! - backend", response })
+        return res.status(200).json(response);
     } catch (error) {
         if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
     }

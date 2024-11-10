@@ -3,6 +3,7 @@ import { placeOrder, cancelOrder, clientVerification, orderConfirmation } from '
 import { fetchProduct, addProduct, updateProduct, deleteProduct } from './adminPanel/adminHandleProducts.js';
 import { acceptOrder, rejectOrder } from './adminPanel/adminAcceptRejectOrder.js';
 import { adminSignUp, adminSignIn, adminVerification, fetchAdmins, deleteAdmin, updateAdmin } from './adminPanel/adminSignUpSignIn.js';
+import { authMiddleware } from './components/AuthMiddleware.js';
 
 const route = express.Router();
 
@@ -28,5 +29,10 @@ route.get("/fetchAdmins", fetchAdmins);
 route.post("/adminSignIn", adminSignIn);
 route.delete("/deleteAdmin/:adminId", deleteAdmin);
 route.patch("/updateAdmin/:adminId", updateAdmin);
+
+// Other protected routes would use the authMiddleware
+route.get("/protectedRoute", authMiddleware, (req, res) => {
+    res.send("You have access to this protected route.");
+});
 
 export default route;
