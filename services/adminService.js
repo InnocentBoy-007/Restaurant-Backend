@@ -25,9 +25,24 @@ export class AdminService {
         if (!adminDetails || typeof adminDetails !== 'object') {
             throw new CustomError("All fields required!(Bad Request) - backend", 400); // throws a custom error in case the req body is not provided fully or the provided req body is not an object
         }
+
+        /**
+         * use this if you want to validate specific request fields
+         * const { adminName, adminEmail } = adminDetails;
+
+        if (!adminName || typeof adminName !== 'string' || adminName.trim() === '') {
+            throw new CustomError("adminName is required and must be a non-empty string!", 400);
+        }
+        if (!adminEmail || typeof adminEmail !== 'string' || adminEmail.trim() === '') {
+            throw new CustomError("adminEmail is required and must be a non-empty string!", 400);
+        }
+         */
+
         try {
-            const isDuplicate = await AdminModel.findOne({ adminName: adminDetails.adminName }); //check if there's any duplicate account in the database
-            if (isDuplicate) throw new CustomError("Account already exist!(conflict error) - backend", 409);
+            const isDuplicateName = await AdminModel.findOne({ adminName: adminDetails.adminName }); //check if there's any duplicate account in the database
+            if (isDuplicateName) throw new CustomError("Account already exist!(conflict error) - backend", 409);
+            const isDuplicateEmail = await AdminModel.findOne({ adminEmail: adminDetails.adminEmail }); //check if there's any duplicate account in the database
+            if (isDuplicateEmail) throw new CustomError("Account already exist!(conflict error) - backend", 409);
 
             this.adminDetails = adminDetails; // assigning all the req bodies to the instance variable
 
@@ -54,9 +69,8 @@ export class AdminService {
     async adminVerification(otp) {
         if (!otp) throw new CustomError("Invalid otp - backend", 400);
         try {
-            if (!this.adminDetails || typeof this.adminDetails !== 'object') throw new CustomError("All fields required! - backend", 400); // I don't think this is necessary since the validation is already done in the previous method
             if (otp !== this.otp) throw new CustomError("Wrong otp", 409);
-            const hashPassword = await bcryt.hash(this.adminDetails.adminPassword, 10); // encrypt the password using bcryt
+            const hashPassword = await bcryt.hash(this.adminDetails.password, 10); // encrypt the password using bcryt
 
             const account = await AdminModel.create({ ...this.adminDetails, password: hashPassword }) // create an admin account with adminDetails(using admin model)
 
@@ -76,6 +90,8 @@ export class AdminService {
 
             return { message: "Account sign up successfull! - backend", verification: `Verified on ${timestamp}` };
         } catch (error) {
+            console.log(error);
+
             if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while verifying an OTP - backend", 500);
         }
@@ -96,7 +112,7 @@ export class AdminService {
         }
         try {
             // have to use .select("+password") since, 'select:false' in database
-            const account = await AdminModel.findOne({ adminName: adminDetails.adminName }).select("+password");
+            const account = await AdminModel.findOne({ adminEmail: adminDetails.adminEmail }).select("+password");
             if (!account) throw new CustomError("Account does not exist! - backend", 404);
 
             // compare passwords(enterPassword, storedPassword)
@@ -118,37 +134,37 @@ export class AdminService {
     async fetchAdmins() {
         try {
             const admins = await AdminModel.find();
-            if(admins.length === 0) throw new CustomError("No admins found! - backend", 404);
+            if (admins.length === 0) throw new CustomError("No admins found! - backend", 404);
             return admins;
         } catch (error) {
-            if(error instanceof CustomError) throw error;
+            if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while trying to fetch admin details! - backend", 500);
         }
     }
 
     async deleteAdmin(adminId) {
-        if(!adminId || !mongoose.Types.ObjectId.isValid(adminId)) throw new CustomError("Invalid id - backend", 400);
+        if (!adminId || !mongoose.Types.ObjectId.isValid(adminId)) throw new CustomError("Invalid id - backend", 400);
         try {
             const checkAdminId = await AdminModel.findByIdAndDelete(adminId);
-            if(!checkAdminId) throw new CustomError("Admin not found! - backend", 404);
+            if (!checkAdminId) throw new CustomError("Admin not found! - backend", 404);
 
-            return {message:"Admin deleted successfully! - backend"};
+            return { message: "Admin deleted successfully! - backend" };
         } catch (error) {
-            if(error instanceof CustomError) throw error;
+            if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while deleting an admin! - backend", 500);
         }
     }
 
     async updateAdmin(adminId, adminDetails) {
-        if(!adminId || !mongoose.Types.ObjectId.isValid(adminId)) throw new CustomError("Invalid id - backend", 400);
-        if(!adminDetails || typeof adminDetails !== 'object') throw new CustomError("All fields required/the request body should be a JSON structure - backend", 400);
+        if (!adminId || !mongoose.Types.ObjectId.isValid(adminId)) throw new CustomError("Invalid id - backend", 400);
+        if (!adminDetails || typeof adminDetails !== 'object') throw new CustomError("All fields required/the request body should be a JSON structure - backend", 400);
         try {
-            const update = await AdminModel.findByIdAndUpdate(adminId, adminDetails, {new:true});
-            if(!update) throw new CustomError("Admin not found to be updated! - backend", 404);
+            const update = await AdminModel.findByIdAndUpdate(adminId, adminDetails, { new: true });
+            if (!update) throw new CustomError("Admin not found to be updated! - backend", 404);
 
-            return {message:"Admin updated successfully!", update};
+            return { message: "Admin updated successfully!", update };
         } catch (error) {
-            if(error instanceof CustomError) throw error;
+            if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while updating your profile! - backend", 500);
         }
     }

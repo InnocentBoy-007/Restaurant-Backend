@@ -7,8 +7,7 @@ const adminSchema = new mongoose.Schema({
     adminEmail: { type: String, required: true },
     adminGender: {
         type: String,
-        enum: ['male', 'female', 'default'],
-        default: 'default',
+
         required: true
     },
     adminAge: {

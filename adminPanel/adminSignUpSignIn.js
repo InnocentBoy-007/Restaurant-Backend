@@ -22,7 +22,7 @@ export const adminVerification = async (req, res) => {
     try {
         const response = await adminService.adminVerification(otp);
 
-        return res.status(200).json({ response });
+        return res.status(200).json(response);
     } catch (error) {
         if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
     }
@@ -39,32 +39,32 @@ export const adminSignIn = async (req, res) => {
     }
 }
 
-export const fetchAdmins = async(req, res) => {
+export const fetchAdmins = async (req, res) => {
     try {
         const response = await adminService.fetchAdmins();
         return res.status(200).json(response);
     } catch (error) {
-        if(error instanceof CustomError) return res.status(error.errorCode).json({message:error.message});
+        if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
     }
 }
 
-export const deleteAdmin = async(req, res) => {
-    const {adminId} = req.param
+export const deleteAdmin = async (req, res) => {
+    const { adminId } = req.param
     try {
         await adminService.deleteAdmin(adminId);
-        return res.status(200).json({messag:"Admin deleted successfully! - backend"});
+        return res.status(200).json({ messag: "Admin deleted successfully! - backend" });
     } catch (error) {
-        if(error instanceof CustomError) return res.status(error.errorCode).json({message:error.message});
+        if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
     }
 }
 
-export const updateAdmin = async(req, res) => {
-    const {adminId} = req.params;
-    const {adminDetails} = req.body;
+export const updateAdmin = async (req, res) => {
+    const { adminId } = req.params;
+    const { adminDetails } = req.body;
     try {
         const response = await adminService.updateAdmin(adminId, adminDetails);
-        return res.status(201).json({message:"Admin profile updated successfully! - backend", response});
+        return res.status(201).json({ message: "Admin profile updated successfully! - backend", response });
     } catch (error) {
-        if(error instanceof CustomError) return res.status(error.errorCode).json({message:error.message});
+        if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
     }
 }
