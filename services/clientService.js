@@ -63,7 +63,7 @@ export class OrderService {
             this.clientDetails = clientDetails;
 
             const generateOTP = Math.floor(100000 + Math.random() * 900000).toString(); // generate a random 6 digit number
-            const hashOTP = await bcrypt.hash(generateOTP, 10);
+            // const hashOTP = await bcrypt.hash(generateOTP, 10); (can hash otp for more security)
             const expirationCountDown = new Date(Date.now() + this.OTP_EXPIRATION_TIME); // creating a countdown which starts from the OTP creation time untill 1 min.
 
             const mailInfo = {
@@ -78,7 +78,7 @@ export class OrderService {
             const timestamp = new Date().toLocaleString();
 
             await Otp.create({
-                OTP: hashOTP,
+                OTP: generateOTP,
                 expiresAt: expirationCountDown
             })
 
@@ -95,22 +95,18 @@ export class OrderService {
     // (test passed)
     async clientVerification(otp) {
         if (!otp) throw new CustomError("OTP is required!", 400);
-        if (typeof otp !== 'string') throw new CustomError("OTP should be a string! - backend", 400);
 
         try {
-            const findOTP = await Otp.findOne({OTP:otp});
+            const findOTP = await Otp.findOne({OTP:otp.OTP});
             if(!findOTP) throw new CustomError("OTP not found! - backend", 404);
 
             if (findOTP.expiresAt < Date.now()) throw new CustomError("OTP has expired", 401); // Check if the OTP has expired
-
-            const confirmOTP = await bcrypt.compare(otp,findOTP.OTP); // comparing the hashed password
-            if (!confirmOTP) throw new CustomError("Wrong OTP", 409);
 
             /**
              * Removing the product quantity from the product database according to the request orderProduct's quantity
              * Doesn't need to check the order quantity again, since it has already been checked
              */
-            await Otp.deleteOne({ OTP: otp }); // delete the otp collection once the confirmation is done
+            await Otp.deleteOne({ OTP: otp.OTP }); // delete the otp collection once the confirmation is done
 
             this.product.productQuantity -= this.clientDetails.orderQuantity;
             await this.product.save();

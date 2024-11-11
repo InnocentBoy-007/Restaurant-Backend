@@ -30,7 +30,7 @@ class ServerSetUp { // This class encapsulates all the logic related to setting 
          * The instance method 'this.connectServer()' will be automatically called when the instance of the dependant class is created
          */
         this.connectServer(); // instance method
-        this.allowedOrigins = [`${process.env.ORIGIN}`];
+        this.allowedOrigins = [process.env.ORIGIN1, process.env.ORIGIN2]; // allowing multiple origins
     }
 
     async connectDatabase() {
@@ -54,6 +54,7 @@ class ServerSetUp { // This class encapsulates all the logic related to setting 
 
             app.use(cors({
                 origin: (origin, callback) => {
+                    if(!origin) return callback(null, true);
                     if (this.allowedOrigins.indexOf(origin) !== -1 || !origin) {
                         // Allow requests with no origin (like mobile apps or curl requests)
                         callback(null, true);
