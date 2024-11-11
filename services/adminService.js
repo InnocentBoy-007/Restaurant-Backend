@@ -139,7 +139,7 @@ export class AdminService {
                 { expiresIn: '1h' }
             );
 
-            return { message, signInAt: timestamp, token };
+            return { message, signInAt: timestamp, token, adminName: account.adminName };
         } catch (error) {
             if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while signing in - backend", 500);
@@ -191,8 +191,9 @@ export class AdminService {
      * 4. Return the updated orderDetails
      */
     async adminAcceptOrder(orderId, admin) { // (test passed)
+        if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) throw new CustomError("Invalid Id - backend", 400);
+        if (!admin) throw new CustomError("Invalid admin! - backend", 400);
         try {
-            if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) throw new CustomError("Invalid Id - backend", 400);
 
             // track the time of the order acception
             const timestamp = new Date().toLocaleString();
@@ -240,6 +241,17 @@ export class AdminService {
         } catch (error) {
             if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while rejecting an order! - backend", 500);
+        }
+    }
+
+    async fetchOrderDetails() {
+        try {
+            const orders = await OrderDetails.find();
+            if (!orders) throw new CustomError("Oders cannot be fetch! - backend", 500);
+            return orders;
+        } catch (error) {
+            if (error instanceof CustomError) throw error;
+            throw new CustomError("An unexpected error occured while fetching order details! - backend", 500);
         }
     }
 }

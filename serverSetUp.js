@@ -54,7 +54,7 @@ class ServerSetUp { // This class encapsulates all the logic related to setting 
 
             app.use(cors({
                 origin: (origin, callback) => {
-                    if(!origin) return callback(null, true);
+                    if (!origin) return callback(null, true);
                     if (this.allowedOrigins.indexOf(origin) !== -1 || !origin) {
                         // Allow requests with no origin (like mobile apps or curl requests)
                         callback(null, true);

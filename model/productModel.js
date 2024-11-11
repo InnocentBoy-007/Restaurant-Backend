@@ -17,10 +17,10 @@ const productSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    // productAddedBy: {
-    //     type: String,
-    //     required: true
-    // },
+    productAddedBy: {
+        type: String,
+        required: true
+    },
     productUpdatedOn: {
         type: String,
         default: null // set to null if not updated

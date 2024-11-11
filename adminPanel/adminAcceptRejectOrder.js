@@ -5,7 +5,7 @@ const adminService = new AdminService();
 
 // acceptOrder(test successfull)
 export const acceptOrder = async (req, res) => {
-    const { orderId, admin } = req.body;
+    const { orderId, admin } = req.params;
     try {
         const response = await adminService.adminAcceptOrder(orderId, admin);
         // show the client about the dispatch time
@@ -31,5 +31,15 @@ export const rejectOrder = async (req, res) => {
         })
     } catch (error) {
         if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
+    }
+}
+
+export const fetchOrders = async (req, res) => {
+    try {
+        const response = await adminService.fetchOrderDetails();
+        return res.status(200).json(response);
+    } catch (error) {
+        if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message })
+
     }
 }
