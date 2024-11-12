@@ -5,6 +5,7 @@ import OrderDetails from "../model/orderDetailsModel.js";
 import { CustomError } from "../components/CustomError.js";
 import Otp from "../model/otp.js";
 import { SentMail } from "../components/SentMail.js";
+import Cart from '../model/cardModel.js'
 
 export class OrderService {
     /**
@@ -24,6 +25,20 @@ export class OrderService {
         this.mailer = new SentMail();
         this.clientDetails = null;
         this.product = null;
+    }
+
+    // not tested
+    async addToCart(cartDetails) {
+        if(!cartDetails.productId || !mongoose.Types.ObjectId.isValid(cartDetails.productId)) throw new CustomError("Invalid product Id - backend", 400);
+        if(!cartDetails || typeof clientDetails !== 'object') throw new CustomError("Please enter valid information", 400);
+        try {
+            const cart = await Cart.create(cartDetails);
+            if(!cart) throw new CustomError("CartDB cannot be created! - backend", 500);
+            return {message:'Product added to cart successfully! - backend', cart};
+        } catch (error) {
+            if(error instanceof CustomError) throw error;
+            throw new CustomError("An unexpected error occured while trying to add product in the cart! - backend", 500);
+        }
     }
 
     // (test passed)

@@ -132,12 +132,12 @@ export class AdminService {
 
             const message = `Signed in successfull, ${account.adminName}.`
 
-            // Generate JWT after successful sign-in
-            const token = jwt.sign(
-                { adminId: account._id, adminEmail: account.adminEmail },
-                process.env.JWT_SECRET,
-                { expiresIn: '1h' }
-            );
+            // Generate JWT after successful sign-in (use in signup only)
+            // const token = jwt.sign(
+            //     { adminId: account._id, adminEmail: account.adminEmail },
+            //     process.env.JWT_SECRET,
+            //     { expiresIn: '1h' }
+            // );
 
             return { message, signInAt: timestamp, token, adminName: account.adminName };
         } catch (error) {
