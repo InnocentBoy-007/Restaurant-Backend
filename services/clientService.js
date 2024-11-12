@@ -28,6 +28,19 @@ export class OrderService {
     }
 
     // (test passed)
+    async trackOrderDetails(phoneNo) {
+        if (!phoneNo || typeof phoneNo !== 'string') throw new CustomError("Invalid phone number - backend", 400);
+        try {
+            const confirmPhoneNo = await OrderDetails.find({ orderPhoneNo: phoneNo });
+            if (!confirmPhoneNo) throw new CustomError("Orders not found! - backend", 404);
+            return { message: "Orders found! - backend", confirmPhoneNo };
+        } catch (error) {
+            if (error instanceof CustomError) throw error;
+            throw new CustomError("An unexpected error occured while trying to fetch orderDetails - backend", 500);
+        }
+    }
+
+    // (test passed)
     async addToCart(productId, cartDetails) {
         if (!productId || !mongoose.Types.ObjectId.isValid(productId)) throw new CustomError("Invalid product Id - backend", 400);
         if (!cartDetails || typeof cartDetails !== 'object') throw new CustomError("Please enter valid information", 400);

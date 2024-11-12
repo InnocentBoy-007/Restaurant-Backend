@@ -6,14 +6,25 @@ const orderService = new OrderService();
 // Controller functions of OrderService class (standalone functions)
 
 // (test passed)
-export const addToCart = async(req, res) => {
-    const {productId} = req.params;
-    const {cartDetails} = req.body;
+export const trackOrderDetails = async (req, res) => {
+    const { phoneNo } = req.body;
+    try {
+        const response = await orderService.trackOrderDetails(phoneNo);
+        return res.status(200).json(response);
+    } catch (error) {
+        if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
+    }
+}
+
+// (test passed)
+export const addToCart = async (req, res) => {
+    const { productId } = req.params;
+    const { cartDetails } = req.body;
     try {
         const response = await orderService.addToCart(productId, cartDetails);
         return res.status(201).json(response);
     } catch (error) {
-        if(error instanceof CustomError) return res.status(error.errorCode).json({message:error.message});
+        if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
     }
 }
 
