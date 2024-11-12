@@ -7,7 +7,7 @@ import { authMiddleware } from './components/AuthMiddleware.js';
 
 const route = express.Router();
 
-route.post("/addToCard", addToCart);
+route.post("/addToCart/:productId", addToCart);
 route.post("/placeOrder/:productId", placeOrder);
 route.post("/otpverify", clientVerification);
 route.delete("/cancelOrder/:orderId", cancelOrder);

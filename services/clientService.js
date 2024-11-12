@@ -27,16 +27,31 @@ export class OrderService {
         this.product = null;
     }
 
-    // not tested
-    async addToCart(cartDetails) {
-        if(!cartDetails.productId || !mongoose.Types.ObjectId.isValid(cartDetails.productId)) throw new CustomError("Invalid product Id - backend", 400);
-        if(!cartDetails || typeof clientDetails !== 'object') throw new CustomError("Please enter valid information", 400);
+    // (test passed)
+    async addToCart(productId, cartDetails) {
+        if (!productId || !mongoose.Types.ObjectId.isValid(productId)) throw new CustomError("Invalid product Id - backend", 400);
+        if (!cartDetails || typeof cartDetails !== 'object') throw new CustomError("Please enter valid information", 400);
         try {
-            const cart = await Cart.create(cartDetails);
-            if(!cart) throw new CustomError("CartDB cannot be created! - backend", 500);
-            return {message:'Product added to cart successfully! - backend', cart};
+            const checkProduct = await Products.findById(productId);
+            if (!checkProduct) throw new CustomError("Product not found! - backend", 404);
+
+            const totalPrice = cartDetails.productQuantity * checkProduct.productPrice;
+            const timestamp = new Date().toLocaleString();
+
+            const cart = await Cart.create({
+                ...cartDetails,
+                addedProductId: productId,
+                addedProductName: checkProduct.productName,
+                clientEmail: cartDetails.clientEmail,
+                productPrice: checkProduct.productPrice,
+                totalPrice: totalPrice,
+                addedTime: timestamp
+            });
+
+            if (!cart) throw new CustomError("CartDB cannot be created! - backend", 500);
+            return { message: 'Product added to cart successfully! - backend', cart };
         } catch (error) {
-            if(error instanceof CustomError) throw error;
+            if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while trying to add product in the cart! - backend", 500);
         }
     }
@@ -112,8 +127,8 @@ export class OrderService {
         if (!otp) throw new CustomError("OTP is required!", 400);
 
         try {
-            const findOTP = await Otp.findOne({OTP:otp.OTP});
-            if(!findOTP) throw new CustomError("OTP not found! - backend", 404);
+            const findOTP = await Otp.findOne({ OTP: otp.OTP });
+            if (!findOTP) throw new CustomError("OTP not found! - backend", 404);
 
             if (findOTP.expiresAt < Date.now()) throw new CustomError("OTP has expired", 401); // Check if the OTP has expired
 

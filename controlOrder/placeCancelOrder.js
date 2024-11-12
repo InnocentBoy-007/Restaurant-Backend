@@ -5,14 +5,14 @@ const orderService = new OrderService();
 
 // Controller functions of OrderService class (standalone functions)
 
-// not tested
+// (test passed)
 export const addToCart = async(req, res) => {
+    const {productId} = req.params;
     const {cartDetails} = req.body;
     try {
-        const response = await orderService.addToCart(cartDetails);
+        const response = await orderService.addToCart(productId, cartDetails);
         return res.status(201).json(response);
     } catch (error) {
-        console.log(error);
         if(error instanceof CustomError) return res.status(error.errorCode).json({message:error.message});
     }
 }
