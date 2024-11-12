@@ -20,9 +20,9 @@ route.patch("/updateProduct/:id", updateProduct);
 route.delete("/deleteProduct/:id", deleteProduct);
 
 
-route.patch("/acceptOrder/:orderId/:admin", acceptOrder);
+route.patch("/acceptOrder/:orderId/:admin", authMiddleware, acceptOrder);
 route.delete("/rejectOrder/:id", rejectOrder);
-route.get("/fetchOrders", fetchOrders);
+route.get("/fetchOrders", authMiddleware, fetchOrders);
 
 
 route.post("/adminSignUp", adminSignUp);

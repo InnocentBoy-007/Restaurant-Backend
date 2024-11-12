@@ -57,7 +57,6 @@ export class AdminService {
             }
             await this.mailer.setUp();
             await this.mailer.sentMail(receiverInfo.to, receiverInfo.subject, receiverInfo.text); // otp will be sent to the registered email address
-            console.log("OTP is sent to ---> ", adminDetails.adminEmail);
 
             return { message: `OTP is sent to ${adminDetails.adminEmail}` }; // for testing
         } catch (error) {
@@ -74,7 +73,6 @@ export class AdminService {
             const hashPassword = await bcrypt.hash(this.adminDetails.password, 10); // encrypt the password using bcryt
 
             const account = await AdminModel.create({ ...this.adminDetails, password: hashPassword }) // create an admin account with adminDetails(using admin model)
-
             if (!account) throw new CustomError("Account cannot be created! - backend", 500); // if the account cannot be created, throw an error
 
             // track the time of an account creation
@@ -91,10 +89,11 @@ export class AdminService {
 
             // Generate JWT after successful signup
             const token = jwt.sign(
-                { adminId: account._id, adminEmail: account.adminEmail },
+                { adminName: account.adminName },
                 process.env.JWT_SECRET, // Use an environment variable for the secret key
                 { expiresIn: '1h' }      // Token expires in 1 hour
             );
+            console.log("Token--->", token);
 
             return { message: "Account sign up successfull! - backend", verification: `Verified on ${timestamp}`, token };
         } catch (error) {
@@ -131,15 +130,9 @@ export class AdminService {
             const timestamp = new Date().toLocaleString();
 
             const message = `Signed in successfull, ${account.adminName}.`
+            const token = jwt.sign({ adminName: account.adminName }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-            // Generate JWT after successful sign-in (use in signup only)
-            // const token = jwt.sign(
-            //     { adminId: account._id, adminEmail: account.adminEmail },
-            //     process.env.JWT_SECRET,
-            //     { expiresIn: '1h' }
-            // );
-
-            return { message, signInAt: timestamp, token, adminName: account.adminName };
+            return { message, signInAt: timestamp, token };
         } catch (error) {
             if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while signing in - backend", 500);
