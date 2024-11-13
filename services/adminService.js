@@ -89,7 +89,7 @@ export class AdminService {
 
             // Generate JWT after successful signup
             const token = jwt.sign(
-                { adminName: account.adminName },
+                { adminName: account.adminName, accountId: account._id },
                 process.env.JWT_SECRET, // Use an environment variable for the secret key
                 { expiresIn: '1h' }      // Token expires in 1 hour
             );
@@ -130,7 +130,7 @@ export class AdminService {
             const timestamp = new Date().toLocaleString();
 
             const message = `Signed in successfull, ${account.adminName}.`
-            const token = jwt.sign({ adminName: account.adminName }, process.env.JWT_SECRET, { expiresIn: '1h' });
+            const token = jwt.sign({ adminName: account.adminName, accountId:account._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
             return { message, signInAt: timestamp, token };
         } catch (error) {
@@ -223,15 +223,18 @@ export class AdminService {
      * 3. If the orderDetails is not found, throws a custom error
      * 4. Returns the deletion message if the orderDetails deletion is successfull
      */
-    async adminRejectOrder(orderId) {
+    async adminRejectOrder(orderId, admin) {
         try {
             if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) throw new CustomError("Invalid Id", 400);
+            if(!admin) throw new CustomError("Invlid admin name - backend", 400);
 
             const order = await OrderDetails.findByIdAndDelete(orderId); // Directly deletes the orderDetails from the database using orderId
             if (!order) throw new CustomError("Order not found!", 404);
 
             return { message: "Order rejected successfully." }; // Returns only the deletion message without the deleted orderDetails
         } catch (error) {
+            console.log(error);
+
             if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while rejecting an order! - backend", 500);
         }

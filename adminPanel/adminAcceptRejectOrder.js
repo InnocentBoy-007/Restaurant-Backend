@@ -22,13 +22,10 @@ export const acceptOrder = async (req, res) => {
 }
 
 export const rejectOrder = async (req, res) => {
-    const { id } = req.params;
+    const { orderId, admin } = req.params;
     try {
-        const response = await adminService.adminRejectOrder(id);
-        return res.status(200).json({
-            message: "Order rejected! - backend",
-            response
-        })
+        const response = await adminService.adminRejectOrder(orderId, admin);
+        return res.status(200).json({ response })
     } catch (error) {
         if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
     }

@@ -41,24 +41,19 @@ export class OrderService {
     }
 
     // (test passed)
-    async addToCart(productId, cartDetails) {
+    async addToCart(productId) {
         if (!productId || !mongoose.Types.ObjectId.isValid(productId)) throw new CustomError("Invalid product Id - backend", 400);
-        if (!cartDetails || typeof cartDetails !== 'object') throw new CustomError("Please enter valid information", 400);
         try {
             const checkProduct = await Products.findById(productId);
             if (!checkProduct) throw new CustomError("Product not found! - backend", 404);
 
-            const totalPrice = cartDetails.productQuantity * checkProduct.productPrice;
             const timestamp = new Date().toLocaleString();
 
             const cart = await Cart.create({
-                ...cartDetails,
-                addedProductId: productId,
-                addedProductName: checkProduct.productName,
-                clientEmail: cartDetails.clientEmail,
-                productPrice: checkProduct.productPrice,
-                totalPrice: totalPrice,
-                addedTime: timestamp
+                productId:productId, // which is same as checkProduct._id
+               productName:checkProduct.productName,
+               productPrice:checkProduct.productPrice,
+               addedTime:timestamp
             });
 
             if (!cart) throw new CustomError("CartDB cannot be created! - backend", 500);
@@ -66,6 +61,21 @@ export class OrderService {
         } catch (error) {
             if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while trying to add product in the cart! - backend", 500);
+        }
+    }
+
+    // test passed in postman(partially tested - passed)
+    async fetchProductsFromCart(productId) {
+        if(!productId || !mongoose.Types.ObjectId.isValid(productId)) throw new CustomError("Invalid productId - backend", 400);
+        try {
+            const checkProduct = await Cart.find({productId:productId});
+            if(!checkProduct) throw new CustomError("Product not found! - backend", 404);
+            return {message:"Product found inside the cart! - backend", checkProduct};
+        } catch (error) {
+            console.log(error);
+
+            if(error instanceof CustomError) throw error;
+            throw new CustomError("An unexpected error occured while trying to fetch products from cart! - backend", 500);
         }
     }
 

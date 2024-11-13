@@ -19,12 +19,21 @@ export const trackOrderDetails = async (req, res) => {
 // (test passed)
 export const addToCart = async (req, res) => {
     const { productId } = req.params;
-    const { cartDetails } = req.body;
     try {
-        const response = await orderService.addToCart(productId, cartDetails);
+        const response = await orderService.addToCart(productId);
         return res.status(201).json(response);
     } catch (error) {
         if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
+    }
+}
+
+export const fetchProductsFromCart = async(req, res) => {
+    const {productId} = req.params;
+    try {
+        const response = await orderService.fetchProductsFromCart(productId);
+        return res.status(200).json(response);
+    } catch (error) {
+        if(error instanceof CustomError) return res.status(error.errorCode).json({message:error.message});
     }
 }
 
