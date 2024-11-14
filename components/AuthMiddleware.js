@@ -2,6 +2,8 @@ import jwt from 'jsonwebtoken';
 
 export const authMiddleware = (req, res, next) => {
     const token = req.cookies.adminToken; // since I'm using cookies
+    // const signInAdminToken = req.cookies.signInAdminToken; // since I'm using cookies
+    // console.log("Token-->", token);
 
     if (!token) return res.status(401).json({ message: 'Access denied. No token provided.' });
 

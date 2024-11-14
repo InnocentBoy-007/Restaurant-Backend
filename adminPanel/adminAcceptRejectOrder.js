@@ -33,7 +33,9 @@ export const rejectOrder = async (req, res) => {
 
 export const fetchOrders = async (req, res) => {
     try {
-        const response = await adminService.fetchOrderDetails();
+        const adminName = req.admin.adminName;
+        const response = await adminService.fetchOrderDetails(adminName);
+
         return res.status(200).json(response);
     } catch (error) {
         if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message })

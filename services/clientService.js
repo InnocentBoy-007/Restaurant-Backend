@@ -25,6 +25,7 @@ export class OrderService {
         this.mailer = new SentMail();
         this.clientDetails = null;
         this.product = null;
+        this.addToCartOTP = null;
     }
 
     // (test passed)
@@ -40,20 +41,43 @@ export class OrderService {
         }
     }
 
-    // (test passed)
-    async addToCart(productId) {
+    //(test passed)
+    async addToCartVerification(clientEmail, productId) {
+        if (!clientEmail) throw new CustomError("Invalid client email - backend", 400);
         if (!productId || !mongoose.Types.ObjectId.isValid(productId)) throw new CustomError("Invalid product Id - backend", 400);
         try {
             const checkProduct = await Products.findById(productId);
             if (!checkProduct) throw new CustomError("Product not found! - backend", 404);
+            this.product = checkProduct;
+            const generateOTP = Math.floor(100000 + Math.random() * 900000).toString();
+            this.addToCartOTP = generateOTP;
+            const client = {
+                to: clientEmail,
+                subject: "Email verification",
+                text: `Your OTP for order verification is ${generateOTP}. Please enter this OTP to complete the add-to-cart process.`
+            }
+            await this.mailer.setUp();
+            await this.mailer.sentMail(client.to, client.subject, client.text);
+        } catch (error) {
+            console.log(error);
 
+            if (error instanceof CustomError) throw error;
+            throw new CustomError("An unexpected error occured while trying to verify client email - backend", 500);
+        }
+    }
+
+    // (test passed)
+    async addToCart(otp) {
+        if (!otp || typeof otp !== 'string') throw new CustomError("Invalid otp - backend", 400);
+        try {
+            if (otp !== this.addToCartOTP) throw new CustomError("Wrong OTP - backend", 401);
             const timestamp = new Date().toLocaleString();
 
             const cart = await Cart.create({
-                productId:productId, // which is same as checkProduct._id
-               productName:checkProduct.productName,
-               productPrice:checkProduct.productPrice,
-               addedTime:timestamp
+                productId: this.product._id,
+                productName: this.product.productName,
+                productPrice: this.product.productPrice,
+                addedTime: timestamp
             });
 
             if (!cart) throw new CustomError("CartDB cannot be created! - backend", 500);
@@ -66,15 +90,15 @@ export class OrderService {
 
     // test passed in postman(partially tested - passed)
     async fetchProductsFromCart(productId) {
-        if(!productId || !mongoose.Types.ObjectId.isValid(productId)) throw new CustomError("Invalid productId - backend", 400);
+        if (!productId || !mongoose.Types.ObjectId.isValid(productId)) throw new CustomError("Invalid productId - backend", 400);
         try {
-            const checkProduct = await Cart.find({productId:productId});
-            if(!checkProduct) throw new CustomError("Product not found! - backend", 404);
-            return {message:"Product found inside the cart! - backend", checkProduct};
+            const checkProduct = await Cart.find({ productId: productId });
+            if (!checkProduct) throw new CustomError("Product not found! - backend", 404);
+            return { message: "Product found inside the cart! - backend", checkProduct };
         } catch (error) {
             console.log(error);
 
-            if(error instanceof CustomError) throw error;
+            if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while trying to fetch products from cart! - backend", 500);
         }
     }
@@ -109,7 +133,6 @@ export class OrderService {
         try {
             const product = await Products.findById(productId);
             if (!product) throw new CustomError("Cannot find the product! - backend", 404);
-            this.product = product;
 
             if (clientDetails.orderQuantity > product.productQuantity) throw new CustomError(`Not enough ${product.productName}`, 409); // check the order quantity before the client verification (user experience)
 

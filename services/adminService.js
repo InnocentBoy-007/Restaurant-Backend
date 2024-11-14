@@ -88,11 +88,7 @@ export class AdminService {
             await this.mailer.sentMail(receiverInfo.to, receiverInfo.subject, receiverInfo.text);
 
             // Generate JWT after successful signup
-            const token = jwt.sign(
-                { adminName: account.adminName, accountId: account._id },
-                process.env.JWT_SECRET, // Use an environment variable for the secret key
-                { expiresIn: '1h' }      // Token expires in 1 hour
-            );
+            const token = jwt.sign({ adminName: account.adminName, accountId: account._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
             console.log("Token--->", token);
 
             return { message: "Account sign up successfull! - backend", verification: `Verified on ${timestamp}`, token };
@@ -130,7 +126,7 @@ export class AdminService {
             const timestamp = new Date().toLocaleString();
 
             const message = `Signed in successfull, ${account.adminName}.`
-            const token = jwt.sign({ adminName: account.adminName, accountId:account._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+            const token = jwt.sign({ adminName: account.adminName, accountId: account._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
 
             return { message, signInAt: timestamp, token };
         } catch (error) {
@@ -226,7 +222,7 @@ export class AdminService {
     async adminRejectOrder(orderId, admin) {
         try {
             if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) throw new CustomError("Invalid Id", 400);
-            if(!admin) throw new CustomError("Invlid admin name - backend", 400);
+            if (!admin) throw new CustomError("Invlid admin name - backend", 400);
 
             const order = await OrderDetails.findByIdAndDelete(orderId); // Directly deletes the orderDetails from the database using orderId
             if (!order) throw new CustomError("Order not found!", 404);
@@ -240,11 +236,12 @@ export class AdminService {
         }
     }
 
-    async fetchOrderDetails() {
+    async fetchOrderDetails(adminName) {
+        if (!adminName || typeof adminName !== 'string') throw new CustomError("Invalid admin name (unauthorized) - backend", 400);
         try {
             const orders = await OrderDetails.find();
-            if (!orders) throw new CustomError("Oders cannot be fetch! - backend", 500);
-            return orders;
+            if (!orders) throw new CustomError("Orders cannot be fetch! - backend", 500);
+            return { message: `Order details fetched by admin- ${adminName} - backend`, orders };
         } catch (error) {
             if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while fetching order details! - backend", 500);

@@ -17,23 +17,35 @@ export const trackOrderDetails = async (req, res) => {
 }
 
 // (test passed)
-export const addToCart = async (req, res) => {
+export const addToCartVerification = async (req, res) => {
     const { productId } = req.params;
+    const { clientEmail } = req.body;
     try {
-        const response = await orderService.addToCart(productId);
+        const response = await orderService.addToCartVerification(clientEmail, productId);
+        return res.status(200).json(response);
+    } catch (error) {
+        if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
+    }
+}
+
+// (test passed)
+export const addToCart = async (req, res) => {
+    const { otp } = req.body;
+    try {
+        const response = await orderService.addToCart(otp);
         return res.status(201).json(response);
     } catch (error) {
         if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
     }
 }
 
-export const fetchProductsFromCart = async(req, res) => {
-    const {productId} = req.params;
+export const fetchProductsFromCart = async (req, res) => {
+    const { productId } = req.params;
     try {
         const response = await orderService.fetchProductsFromCart(productId);
         return res.status(200).json(response);
     } catch (error) {
-        if(error instanceof CustomError) return res.status(error.errorCode).json({message:error.message});
+        if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
     }
 }
 

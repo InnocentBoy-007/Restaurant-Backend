@@ -1,5 +1,5 @@
 import express from 'express'
-import { placeOrder, cancelOrder, clientVerification, orderConfirmation, addToCart, trackOrderDetails, fetchProductsFromCart } from './controlOrder/placeCancelOrder.js';
+import { placeOrder, cancelOrder, clientVerification, orderConfirmation, addToCart, addToCartVerification, trackOrderDetails, fetchProductsFromCart } from './controlOrder/placeCancelOrder.js';
 import { fetchProduct, addProduct, updateProduct, deleteProduct } from './adminPanel/adminHandleProducts.js';
 import { acceptOrder, rejectOrder, fetchOrders } from './adminPanel/adminAcceptRejectOrder.js';
 import { adminSignUp, adminSignIn, adminVerification, fetchAdmins, deleteAdmin, updateAdmin } from './adminPanel/adminSignUpSignIn.js';
@@ -8,7 +8,8 @@ import { authMiddleware } from './components/AuthMiddleware.js';
 const route = express.Router();
 
 route.get("/trackOrders", trackOrderDetails);
-route.patch("/addToCart/:productId", addToCart);
+route.post("/addToCartVerification/:productId", addToCartVerification);
+route.patch("/addToCart", addToCart);
 route.get("/fetchOrdersCart/:productId", fetchProductsFromCart);
 route.post("/placeOrder/:productId", placeOrder);
 route.post("/otpverify", clientVerification);
@@ -24,7 +25,7 @@ route.delete("/deleteProduct/:id", deleteProduct);
 
 route.patch("/acceptOrder/:orderId/:admin", authMiddleware, acceptOrder);
 route.delete("/rejectOrder/:orderId/:admin", authMiddleware, rejectOrder);
-route.get("/fetchOrders", authMiddleware, fetchOrders);
+route.get("/fetchOrders/:adminName", authMiddleware, fetchOrders);
 
 
 route.post("/adminSignUp", adminSignUp);
