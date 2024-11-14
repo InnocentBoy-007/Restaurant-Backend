@@ -6,6 +6,7 @@ import { CustomError } from "../components/CustomError.js";
 import Otp from "../model/otp.js";
 import { SentMail } from "../components/SentMail.js";
 import Cart from '../model/cardModel.js'
+import jwt from 'jsonwebtoken'
 
 export class OrderService {
     /**
@@ -26,6 +27,7 @@ export class OrderService {
         this.clientDetails = null;
         this.product = null;
         this.addToCartOTP = null;
+        this.clientEmail = null;
     }
 
     // (test passed)
@@ -46,6 +48,7 @@ export class OrderService {
         if (!clientEmail) throw new CustomError("Invalid client email - backend", 400);
         if (!productId || !mongoose.Types.ObjectId.isValid(productId)) throw new CustomError("Invalid product Id - backend", 400);
         try {
+            this.clientEmail = clientEmail;
             const checkProduct = await Products.findById(productId);
             if (!checkProduct) throw new CustomError("Product not found! - backend", 404);
             this.product = checkProduct;
@@ -58,9 +61,9 @@ export class OrderService {
             }
             await this.mailer.setUp();
             await this.mailer.sentMail(client.to, client.subject, client.text);
+            return { message: `Please verify the email sent to ${clientEmail}` }
         } catch (error) {
             console.log(error);
-
             if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while trying to verify client email - backend", 500);
         }
@@ -79,9 +82,12 @@ export class OrderService {
                 productPrice: this.product.productPrice,
                 addedTime: timestamp
             });
-
             if (!cart) throw new CustomError("CartDB cannot be created! - backend", 500);
-            return { message: 'Product added to cart successfully! - backend', cart };
+
+            // add jwt later for client side authorization
+            const token = jwt.sign({ clientEmail: this.clientEmail }, process.env.JWT_SECRET, { expiresIn: '24h' });
+
+            return { message: 'Product added to cart successfully! - backend', cart, token };
         } catch (error) {
             if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while trying to add product in the cart! - backend", 500);
@@ -89,10 +95,10 @@ export class OrderService {
     }
 
     // test passed in postman(partially tested - passed)
-    async fetchProductsFromCart(productId) {
-        if (!productId || !mongoose.Types.ObjectId.isValid(productId)) throw new CustomError("Invalid productId - backend", 400);
+    async fetchProductsFromCart(clientEmail) {
+        if (!clientEmail) throw new CustomError("Invalid client email! - backend", 400);
         try {
-            const checkProduct = await Cart.find({ productId: productId });
+            const checkProduct = await Cart.find();
             if (!checkProduct) throw new CustomError("Product not found! - backend", 404);
             return { message: "Product found inside the cart! - backend", checkProduct };
         } catch (error) {

@@ -40,9 +40,9 @@ export const addToCart = async (req, res) => {
 }
 
 export const fetchProductsFromCart = async (req, res) => {
-    const { productId } = req.params;
     try {
-        const response = await orderService.fetchProductsFromCart(productId);
+        const clientEmail = req.client.clientEmail;
+        const response = await orderService.fetchProductsFromCart(clientEmail);
         return res.status(200).json(response);
     } catch (error) {
         if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });

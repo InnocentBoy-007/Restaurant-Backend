@@ -3,12 +3,12 @@ import { CustomError } from "../components/CustomError.js";
 
 const productControl = new ProductControl();
 
-export const fetchProduct = async(req, res) => {
+export const fetchProduct = async (req, res) => {
     try {
         const response = await productControl.fetchProduct();
         return res.status(200).json(response);
     } catch (error) {
-        if(error instanceof CustomError) return res.status(error.errorCode).json({message:error.message});
+        if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
     }
 }
 

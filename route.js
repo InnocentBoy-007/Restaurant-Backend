@@ -10,7 +10,7 @@ const route = express.Router();
 route.get("/trackOrders", trackOrderDetails);
 route.post("/addToCartVerification/:productId", addToCartVerification);
 route.patch("/addToCart", addToCart);
-route.get("/fetchOrdersCart/:productId", fetchProductsFromCart);
+route.get("/fetchOrdersCart/:clientEmail", authMiddleware, fetchProductsFromCart);
 route.post("/placeOrder/:productId", placeOrder);
 route.post("/otpverify", clientVerification);
 route.delete("/cancelOrder/:orderId", cancelOrder);
