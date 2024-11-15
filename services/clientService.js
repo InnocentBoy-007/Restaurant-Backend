@@ -48,6 +48,10 @@ export class OrderService {
         if (!clientEmail) throw new CustomError("Invalid client email - backend", 400);
         if (!productId || !mongoose.Types.ObjectId.isValid(productId)) throw new CustomError("Invalid product Id - backend", 400);
         try {
+            //check if the product is already inside the cart or not
+            const isDuplicateInsideCart = await Cart.findOne({ productId });
+            if (isDuplicateInsideCart) throw new CustomError(`${isDuplicateInsideCart.productName} is already inside the cart! - backend`, 409);
+
             this.clientEmail = clientEmail;
             const checkProduct = await Products.findById(productId);
             if (!checkProduct) throw new CustomError("Product not found! - backend", 404);
