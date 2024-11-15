@@ -7,15 +7,9 @@ import Otp from "../model/otp.js";
 import { SentMail } from "../components/SentMail.js";
 import Cart from '../model/cardModel.js'
 import jwt from 'jsonwebtoken'
+import Client from '../model/clientModel.js'
 
 export class OrderService {
-    /**
-     * 1. Place order first
-     * 2. Send OTP to the registered phone no
-     * 3. Verify phone no
-     * 4. If the phone no is verified, processed the order
-     * 5. If not throw a custom error
-     */
     constructor() {
         /**
          * If you want to change the duration
@@ -28,6 +22,77 @@ export class OrderService {
         this.product = null;
         this.addToCartOTP = null;
         this.clientEmail = null;
+        this.otp = null;
+    }
+
+    // (test passed)
+    async clientSignUp(clientDetails) {
+        if (!clientDetails || typeof clientDetails !== 'object') throw new CustomError("All fields required! - backend", 400);
+        try {
+            const isAccountDuplicate = await Client.findOne({ email: clientDetails.email });
+            if (isAccountDuplicate) throw new CustomError(`${isAccountDuplicate.email} is already in used! Please try other email - backend`, 401)
+            this.clientDetails = clientDetails;
+
+            const generateOTP = Math.floor(100000 + Math.random() * 900000).toString();
+            this.otp = generateOTP;
+
+            const mailInfo = {
+                to: clientDetails.email,
+                subject: 'Email verification',
+                text: `Please verify your email by using the ${generateOTP} as the OTP`
+            }
+            this.mailer.setUp();
+            this.mailer.sentMail(mailInfo.to, mailInfo.subject, mailInfo.text);
+
+            return { message: `Email verification OTP is send to ${clientDetails.email}. Please verify your OTP to complete the signup process! - backend` }
+        } catch (error) {
+            console.log(error);
+
+            if (error instanceof CustomError) throw error;
+            throw new CustomError("An unexpected error occured while trying to signup! - backend", 500);
+        }
+    }
+
+    // (test passed)
+    async clientSignUpVerification(otp) {
+        if (!otp || typeof otp !== 'string') throw new CustomError("Invalid otp! - backend", 400);
+        if (otp !== this.otp) throw new CustomError("Wrong otp! - backend", 401);
+
+        try {
+            const hashPassword = await bcrypt.hash(this.clientDetails.password, 10);
+            const createClient = await Client.create({ ...this.clientDetails, password: hashPassword });
+            if (!createClient) throw new CustomError("Account cannot be created! - backend", 500);
+
+            this.mailer.setUp();
+            this.mailer.sentMail(this.clientDetails.email, "Signup successfully!", `Thanks for signing up, ${this.clientDetails.name}. From Innocent Restaurant`);
+
+            const token = jwt.sign({ clientName: this.clientDetails.name, clientEmail: this.clientDetails.email, clientId: this.clientDetails._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
+
+            return { message: "Account signup successfully! - backend", createClient, token };
+        } catch (error) {
+            console.log(error);
+            if (error instanceof CustomError) throw error;
+            throw new CustomError("An unexpected error occured while signing up! - backend", 500);
+        }
+    }
+
+    async clientSignIn(clientDetails) {
+        if (!clientDetails || typeof clientDetails !== 'object') throw new CustomError("All fields required!- backend");
+        try {
+            const checkClient = await Client.findOne({ name: clientDetails.name }).select("+password");
+            if (!checkClient) throw new CustomError("Account not found! - backend", 404);
+
+            const isCorrectPassword = await bcrypt.compare(clientDetails.password, checkClient.password);
+            if (!isCorrectPassword) throw new CustomError("Wrong password - backend", 401);
+
+            const token = jwt.sign({ name: checkClient.name }, process.env.JWT_SECRET, { expiresIn: '24h' });
+
+            return { message: "Sign in successfully! - backend", checkClient, token };
+        } catch (error) {
+            console.log(error);
+            if (error instanceof CustomError) throw error;
+            throw new CustomError("An unexpected error occured while signing in - backend", 500);
+        }
     }
 
     // (test passed)

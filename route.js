@@ -1,5 +1,5 @@
 import express from 'express'
-import { placeOrder, cancelOrder, clientVerification, orderConfirmation, addToCart, addToCartVerification, trackOrderDetails, fetchProductsFromCart } from './controlOrder/placeCancelOrder.js';
+import { placeOrder, cancelOrder, clientVerification, orderConfirmation, addToCart, addToCartVerification, trackOrderDetails, fetchProductsFromCart, clientSignUp, clientSignUpVerification } from './controlOrder/placeCancelOrder.js';
 import { fetchProduct, addProduct, updateProduct, deleteProduct } from './adminPanel/adminHandleProducts.js';
 import { acceptOrder, rejectOrder, fetchOrders } from './adminPanel/adminAcceptRejectOrder.js';
 import { adminSignUp, adminSignIn, adminVerification, fetchAdmins, deleteAdmin, updateAdmin } from './adminPanel/adminSignUpSignIn.js';
@@ -7,6 +7,8 @@ import { adminAuthMiddleware, clientAuthMiddleware } from './components/AuthMidd
 
 const route = express.Router();
 
+route.post("/clientSignUp", clientSignUp);
+route.post("/clientSignUpVerification", clientSignUpVerification);
 route.get("/trackOrders", trackOrderDetails);
 route.post("/addToCartVerification/:productId", addToCartVerification);
 route.patch("/addToCart", addToCart);

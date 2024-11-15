@@ -5,6 +5,26 @@ const orderService = new OrderService();
 
 // Controller functions of OrderService class (standalone functions)
 
+export const clientSignUp = async (req, res) => {
+    const { clientDetails } = req.body;
+    try {
+        const response = await orderService.clientSignUp(clientDetails);
+        return res.status(200).json(response);
+    } catch (error) {
+        if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
+    }
+}
+
+export const clientSignUpVerification = async (req, res) => {
+    const { otp } = req.body;
+    try {
+        const response = await orderService.clientSignUpVerification(otp);
+        return res.status(201).json(response);
+    } catch (error) {
+        if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
+    }
+}
+
 // (test passed)
 export const trackOrderDetails = async (req, res) => {
     const { phoneNo } = req.body;
