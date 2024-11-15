@@ -5,6 +5,7 @@ import bcrypt from 'bcrypt'
 import { CustomError } from '../components/CustomError.js';
 import { SentMail } from '../components/SentMail.js';
 import jwt from 'jsonwebtoken'
+import Products from '../model/productModel.js'
 
 /**
  * Inside AdminService
@@ -186,6 +187,14 @@ export class AdminService {
 
             // track the time of the order acception
             const timestamp = new Date().toLocaleString();
+
+            // (test passed)
+            const orderDetails = await OrderDetails.findById(orderId);
+            const producDetails = await Products.findOne({ productName: orderDetails.orderProductName });
+            if (producDetails) {
+                producDetails.productQuantity -= orderDetails.orderQuantity;
+                producDetails.save();
+            }
 
             // It is more conveniet to use {new:true} instead of await order.save() when using .findbyIdAndUpdate
             const order = await OrderDetails.findByIdAndUpdate(orderId,

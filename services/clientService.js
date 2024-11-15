@@ -143,6 +143,7 @@ export class OrderService {
         try {
             const product = await Products.findById(productId);
             if (!product) throw new CustomError("Cannot find the product! - backend", 404);
+            this.product = product;
 
             if (clientDetails.orderQuantity > product.productQuantity) throw new CustomError(`Not enough ${product.productName}`, 409); // check the order quantity before the client verification (user experience)
 
@@ -189,13 +190,15 @@ export class OrderService {
             if (findOTP.expiresAt < Date.now()) throw new CustomError("OTP has expired", 401); // Check if the OTP has expired
 
             /**
+             * THIS IS TO BE DONE AT ADMIN SERVICE AFTER THE ORDER IS CONFIRMED BY THE ADMIN (test passed)
              * Removing the product quantity from the product database according to the request orderProduct's quantity
              * Doesn't need to check the order quantity again, since it has already been checked
              */
             await Otp.deleteOne({ OTP: otp.OTP }); // delete the otp collection once the confirmation is done
 
-            this.product.productQuantity -= this.clientDetails.orderQuantity;
-            await this.product.save();
+            // do the product quantity decremention in admin service (test passed)
+            // this.product.productQuantity -= this.clientDetails.orderQuantity;
+            // await this.product.save();
 
             // when the order is placed, automatically track the order time
             const timestamp = new Date().toLocaleString();
@@ -205,6 +208,11 @@ export class OrderService {
             const orderDetails = await OrderDetails.create({
                 ...this.clientDetails, orderProductName: this.product.productName, productPrice: this.product.productPrice, totalPrice: totalPrice, orderTime: timestamp, status: 'pending', receivedByClient: false
             })
+
+            // const remove_productsFromCart = await Cart.findByIdAndDelete(this.product._id); // testing
+            // if (remove_productsFromCart) {
+            //     var removedMessage = `${this.product.productName} removed from cart! - backend`;
+            // }
 
             return { message: `${this.clientDetails.orderName}, your order is placed succsesfully! Please wait for the order to be dispatched! And please don't forget to send the order reception verification - backend`, orderDetails };
 
