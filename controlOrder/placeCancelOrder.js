@@ -82,19 +82,6 @@ export const placeOrder = async (req, res) => {
     }
 }
 
-// (test passed)
-export const clientVerification = async (req, res) => {
-    const { otp } = req.body;
-    try {
-        const response = await orderService.clientVerification(otp);
-        return res.status(200).json(response);
-    } catch (error) {
-        if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
-    }
-}
-
-
-
 // (not tested)
 export const cancelOrder = async (req, res) => {
     const { orderId } = req.params;

@@ -11,11 +11,6 @@ import Client from '../model/clientModel.js'
 
 export class OrderService {
     constructor() {
-        /**
-         * If you want to change the duration
-         * e.g. ----> this.OTP_EXPIRATION_TIME = 2(first number) * 60 * 1000; // 2mins
-         * Change the first number according to the min you desire
-         */
         this.mailer = new SentMail();
         this.clientDetails = null;
         this.product = null;
@@ -41,7 +36,7 @@ export class OrderService {
             this.mailer.setUp();
             this.mailer.sentMail(mailInfo.to, mailInfo.subject, mailInfo.text);
 
-            return { message: `Email verification OTP is send to ${clientDetails.email}. Please verify your OTP to complete the signup process! - backend` }
+            return { message: `Email verification OTP is sent to ${clientDetails.email}. Please verify your OTP to complete the signup process! - backend` }
         } catch (error) {
             console.log(error);
 
@@ -53,14 +48,14 @@ export class OrderService {
     // (test passed)
     async clientSignUpVerification(otp) {
         if (!otp || typeof otp !== 'string') throw new CustomError("Invalid otp! - backend", 400);
-        if (otp !== this.otp) throw new CustomError("Wrong otp! - backend", 401);
 
         try {
+            if (otp !== this.otp) throw new CustomError("Wrong otp! - backend", 401); // check if the OTP is correct or not
             const hashPassword = await bcrypt.hash(this.clientDetails.password, 10);
 
             const signedUpAt = new Date().toLocaleString();
 
-            const createClient = await Client.create({ ...this.clientDetails, password: hashPassword, signedUpAt: signedUpAt });
+            const createClient = await Client.create({ ...this.clientDetails, password: hashPassword, signUpAt: signedUpAt });
             if (!createClient) throw new CustomError("Account cannot be created! - backend", 500);
 
             this.mailer.setUp();
