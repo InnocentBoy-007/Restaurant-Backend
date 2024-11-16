@@ -1,5 +1,5 @@
 import express from 'express'
-import { placeOrder, cancelOrder, clientVerification, orderConfirmation, addToCart, addToCartVerification, trackOrderDetails, fetchProductsFromCart, clientSignUp, clientSignUpVerification } from './controlOrder/placeCancelOrder.js';
+import { placeOrder, cancelOrder, clientVerification, orderConfirmation, addToCart, trackOrderDetails, fetchProductsFromCart, clientSignUp, clientSignUpVerification, clientSignIn } from './controlOrder/placeCancelOrder.js';
 import { fetchProduct, addProduct, updateProduct, deleteProduct } from './adminPanel/adminHandleProducts.js';
 import { acceptOrder, rejectOrder, fetchOrders } from './adminPanel/adminAcceptRejectOrder.js';
 import { adminSignUp, adminSignIn, adminVerification, fetchAdmins, deleteAdmin, updateAdmin } from './adminPanel/adminSignUpSignIn.js';
@@ -9,9 +9,9 @@ const route = express.Router();
 
 route.post("/clientSignUp", clientSignUp);
 route.post("/clientSignUpVerification", clientSignUpVerification);
-route.get("/trackOrders", trackOrderDetails);
-route.post("/addToCartVerification/:productId", addToCartVerification);
-route.patch("/addToCart", addToCart);
+route.post("/clientSignIn", clientSignIn);
+route.get("/trackOrders/:clientEmail", trackOrderDetails);
+route.patch("/addToCart/:clientEmail/:productId", addToCart);
 route.get("/fetchOrdersCart/:clientEmail", clientAuthMiddleware, fetchProductsFromCart);
 route.post("/placeOrder/:productId", placeOrder);
 route.post("/otpverify", clientVerification);

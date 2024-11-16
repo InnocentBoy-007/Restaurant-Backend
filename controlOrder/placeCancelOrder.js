@@ -25,11 +25,10 @@ export const clientSignUpVerification = async (req, res) => {
     }
 }
 
-// (test passed)
-export const trackOrderDetails = async (req, res) => {
-    const { phoneNo } = req.body;
+export const clientSignIn = async (req, res) => {
+    const { clientDetails } = req.body;
     try {
-        const response = await orderService.trackOrderDetails(phoneNo);
+        const response = await orderService.clientSignIn(clientDetails);
         return res.status(200).json(response);
     } catch (error) {
         if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
@@ -37,11 +36,10 @@ export const trackOrderDetails = async (req, res) => {
 }
 
 // (test passed)
-export const addToCartVerification = async (req, res) => {
-    const { productId } = req.params;
-    const { clientEmail } = req.body;
+export const trackOrderDetails = async (req, res) => {
+    const { clientEmail } = req.params;
     try {
-        const response = await orderService.addToCartVerification(clientEmail, productId);
+        const response = await orderService.trackOrderDetails(clientEmail);
         return res.status(200).json(response);
     } catch (error) {
         if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
@@ -50,9 +48,9 @@ export const addToCartVerification = async (req, res) => {
 
 // (test passed)
 export const addToCart = async (req, res) => {
-    const { otp } = req.body;
+    const { clientEmail, productId } = req.params;
     try {
-        const response = await orderService.addToCart(otp);
+        const response = await orderService.addToCart(clientEmail, productId);
         return res.status(201).json(response);
     } catch (error) {
         if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });

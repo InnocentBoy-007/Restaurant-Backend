@@ -16,12 +16,9 @@ export class OrderService {
          * e.g. ----> this.OTP_EXPIRATION_TIME = 2(first number) * 60 * 1000; // 2mins
          * Change the first number according to the min you desire
          */
-        this.OTP_EXPIRATION_TIME = 3 * 60 * 1000; // 3mins
         this.mailer = new SentMail();
         this.clientDetails = null;
         this.product = null;
-        this.addToCartOTP = null;
-        this.clientEmail = null;
         this.otp = null;
     }
 
@@ -29,7 +26,7 @@ export class OrderService {
     async clientSignUp(clientDetails) {
         if (!clientDetails || typeof clientDetails !== 'object') throw new CustomError("All fields required! - backend", 400);
         try {
-            const isAccountDuplicate = await Client.findOne({ email: clientDetails.email });
+            const isAccountDuplicate = await Client.findOne({ email: clientDetails.email }); // using 'email' as the primary key
             if (isAccountDuplicate) throw new CustomError(`${isAccountDuplicate.email} is already in used! Please try other email - backend`, 401)
             this.clientDetails = clientDetails;
 
@@ -60,13 +57,16 @@ export class OrderService {
 
         try {
             const hashPassword = await bcrypt.hash(this.clientDetails.password, 10);
-            const createClient = await Client.create({ ...this.clientDetails, password: hashPassword });
+
+            const signedUpAt = new Date().toLocaleString();
+
+            const createClient = await Client.create({ ...this.clientDetails, password: hashPassword, signedUpAt: signedUpAt });
             if (!createClient) throw new CustomError("Account cannot be created! - backend", 500);
 
             this.mailer.setUp();
             this.mailer.sentMail(this.clientDetails.email, "Signup successfully!", `Thanks for signing up, ${this.clientDetails.name}. From Innocent Restaurant`);
 
-            const token = jwt.sign({ clientName: this.clientDetails.name, clientEmail: this.clientDetails.email, clientId: this.clientDetails._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
+            const token = jwt.sign({ clientDetails: this.clientDetails }, process.env.JWT_SECRET, { expiresIn: '24h' }); // send the clientDetails as a token to be used for order placement in frontend
 
             return { message: "Account signup successfully! - backend", createClient, token };
         } catch (error) {
@@ -79,15 +79,24 @@ export class OrderService {
     async clientSignIn(clientDetails) {
         if (!clientDetails || typeof clientDetails !== 'object') throw new CustomError("All fields required!- backend");
         try {
-            const checkClient = await Client.findOne({ name: clientDetails.name }).select("+password");
+            const checkClient = await Client.findOne({ email: clientDetails.email }).select("+password");
             if (!checkClient) throw new CustomError("Account not found! - backend", 404);
 
             const isCorrectPassword = await bcrypt.compare(clientDetails.password, checkClient.password);
             if (!isCorrectPassword) throw new CustomError("Wrong password - backend", 401);
 
-            const token = jwt.sign({ name: checkClient.name }, process.env.JWT_SECRET, { expiresIn: '24h' });
+            if (isCorrectPassword) {
+                var newClientDetails = await Client.findOne({ name: checkClient.name }); // use this as a payload for jwt since it doesn't select password
+            }
 
-            return { message: "Sign in successfully! - backend", checkClient, token };
+            this.clientDetails = newClientDetails; // udpate the clientDetails with the latest clientDetails
+
+            const signedInAt = new Date().toLocaleString();
+
+            // (need testing)
+            const token = jwt.sign({ clientDetails: newClientDetails }, process.env.JWT_SECRET, { expiresIn: '24h' }); // send the newClientDetails(without password) as a token to be used for order placement in frontend (test pending)
+
+            return { message: `Sign in successfully! signed in at ${signedInAt} - backend`, token };
         } catch (error) {
             console.log(error);
             if (error instanceof CustomError) throw error;
@@ -96,12 +105,12 @@ export class OrderService {
     }
 
     // (test passed)
-    async trackOrderDetails(phoneNo) {
-        if (!phoneNo || typeof phoneNo !== 'string') throw new CustomError("Invalid phone number - backend", 400);
+    async trackOrderDetails(clientEmail) {
+        if (!clientEmail) throw new CustomError("Invalid user email address - backend", 400);
         try {
-            const confirmPhoneNo = await OrderDetails.find({ orderPhoneNo: phoneNo });
-            if (!confirmPhoneNo) throw new CustomError("Orders not found! - backend", 404);
-            return { message: "Orders found! - backend", confirmPhoneNo };
+            const isValidClient = await OrderDetails.find({ orderEmail: clientEmail });
+            if (!isValidClient) throw new CustomError("No orders found! - backend", 404);
+            return { message: "Orders found! - backend", isValidClient };
         } catch (error) {
             if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while trying to fetch orderDetails - backend", 500);
@@ -109,7 +118,8 @@ export class OrderService {
     }
 
     //(test passed)
-    async addToCartVerification(clientEmail, productId) {
+    // use jwt token for authorization (test pending)
+    async addToCart(clientEmail, productId) {
         if (!clientEmail) throw new CustomError("Invalid client email - backend", 400);
         if (!productId || !mongoose.Types.ObjectId.isValid(productId)) throw new CustomError("Invalid product Id - backend", 400);
         try {
@@ -117,20 +127,19 @@ export class OrderService {
             const isDuplicateInsideCart = await Cart.findOne({ productId });
             if (isDuplicateInsideCart) throw new CustomError(`${isDuplicateInsideCart.productName} is already inside the cart! - backend`, 409);
 
-            this.clientEmail = clientEmail;
             const checkProduct = await Products.findById(productId);
             if (!checkProduct) throw new CustomError("Product not found! - backend", 404);
-            this.product = checkProduct;
-            const generateOTP = Math.floor(100000 + Math.random() * 900000).toString();
-            this.addToCartOTP = generateOTP;
-            const client = {
-                to: clientEmail,
-                subject: "Email verification",
-                text: `Your OTP for order verification is ${generateOTP}. Please enter this OTP to complete the add-to-cart process.`
-            }
-            await this.mailer.setUp();
-            await this.mailer.sentMail(client.to, client.subject, client.text);
-            return { message: `Please verify the email sent to ${clientEmail}` }
+
+            const addedTime = new Date().toLocaleString();
+
+            const isAddedToCart = await Cart.create({
+                productId: productId,
+                productName: checkProduct.productName,
+                productPrice: checkProduct.productPrice,
+                addedTime: addedTime
+            })
+
+            return { message: `${isAddedToCart.productName} is added to cart successfully! - backend`, isAddedToCart };
         } catch (error) {
             console.log(error);
             if (error instanceof CustomError) throw error;
@@ -138,33 +147,8 @@ export class OrderService {
         }
     }
 
-    // (test passed)
-    async addToCart(otp) {
-        if (!otp || typeof otp !== 'string') throw new CustomError("Invalid otp - backend", 400);
-        try {
-            if (otp !== this.addToCartOTP) throw new CustomError("Wrong OTP - backend", 401);
-            const timestamp = new Date().toLocaleString();
-
-            const cart = await Cart.create({
-                productId: this.product._id,
-                productName: this.product.productName,
-                productPrice: this.product.productPrice,
-                addedTime: timestamp
-            });
-            if (!cart) throw new CustomError("CartDB cannot be created! - backend", 500);
-
-            // add jwt later for client side authorization
-            const token = jwt.sign({ clientEmail: this.clientEmail }, process.env.JWT_SECRET, { expiresIn: '24h' });
-
-            return { message: 'Product added to cart successfully! - backend', cart, token };
-        } catch (error) {
-            if (error instanceof CustomError) throw error;
-            throw new CustomError("An unexpected error occured while trying to add product in the cart! - backend", 500);
-        }
-    }
-
     // test passed in postman(partially tested - passed)
-    async fetchProductsFromCart(clientEmail) {
+    async fetchProductsFromCart(clientEmail) { // use token for authorization
         if (!clientEmail) throw new CustomError("Invalid client email! - backend", 400);
         try {
             const checkProduct = await Cart.find();
@@ -212,16 +196,10 @@ export class OrderService {
 
             if (clientDetails.orderQuantity > product.productQuantity) throw new CustomError(`Not enough ${product.productName}`, 409); // check the order quantity before the client verification (user experience)
 
-            this.clientDetails = clientDetails;
-
-            const generateOTP = Math.floor(100000 + Math.random() * 900000).toString(); // generate a random 6 digit number
-            // const hashOTP = await bcrypt.hash(generateOTP, 10); (can hash otp for more security)
-            const expirationCountDown = new Date(Date.now() + this.OTP_EXPIRATION_TIME); // creating a countdown which starts from the OTP creation time untill 1 min.
-
             const mailInfo = {
                 to: clientDetails.orderEmail,
-                subject: "OTP for Order Verification",
-                text: `Your OTP for order verification is ${generateOTP}. Please enter this OTP to complete the order process.`
+                subject: "Order placed successfully! - backend",
+                text: `Sir/Ma'am, your order of ${clientDetails.orderQuantity} ${clientDetails.orderProductName}(s) is on the process. Please wait a minute while the order is being dispatched! - Innocent Restaurant.`
             }
 
             await this.mailer.setUp();
@@ -229,13 +207,10 @@ export class OrderService {
 
             const timestamp = new Date().toLocaleString();
 
-            await Otp.create({
-                OTP: generateOTP,
-                expiresAt: expirationCountDown
-            })
+            await OrderDetails.create({ ...clientDetails, orderTime: timestamp }) // save the order details inside the database
 
             return {
-                message: `Please verify your phone number first before placing the order. Please verify your OTP sent to '${clientDetails.orderEmail}'. Order placed at ${timestamp}`,
+                message: `Order placed successfully!. Please wait a moment untill the placement process is completed and the order is being dispatched. Order placed at ${timestamp}`,
             }
         } catch (error) {
             console.log(error); // debugging
@@ -244,50 +219,6 @@ export class OrderService {
         }
     }
 
-    // (test passed)
-    async clientVerification(otp) {
-        if (!otp) throw new CustomError("OTP is required!", 400);
-
-        try {
-            const findOTP = await Otp.findOne({ OTP: otp.OTP });
-            if (!findOTP) throw new CustomError("OTP not found! - backend", 404);
-
-            if (findOTP.expiresAt < Date.now()) throw new CustomError("OTP has expired", 401); // Check if the OTP has expired
-
-            /**
-             * THIS IS TO BE DONE AT ADMIN SERVICE AFTER THE ORDER IS CONFIRMED BY THE ADMIN (test passed)
-             * Removing the product quantity from the product database according to the request orderProduct's quantity
-             * Doesn't need to check the order quantity again, since it has already been checked
-             */
-            await Otp.deleteOne({ OTP: otp.OTP }); // delete the otp collection once the confirmation is done
-
-            // do the product quantity decremention in admin service (test passed)
-            // this.product.productQuantity -= this.clientDetails.orderQuantity;
-            // await this.product.save();
-
-            // when the order is placed, automatically track the order time
-            const timestamp = new Date().toLocaleString();
-
-            const totalPrice = this.product.productPrice * this.clientDetails.orderQuantity;
-
-            const orderDetails = await OrderDetails.create({
-                ...this.clientDetails, orderProductName: this.product.productName, productPrice: this.product.productPrice, totalPrice: totalPrice, orderTime: timestamp, status: 'pending', receivedByClient: false
-            })
-
-            // const remove_productsFromCart = await Cart.findByIdAndDelete(this.product._id); // testing
-            // if (remove_productsFromCart) {
-            //     var removedMessage = `${this.product.productName} removed from cart! - backend`;
-            // }
-
-            return { message: `${this.clientDetails.orderName}, your order is placed succsesfully! Please wait for the order to be dispatched! And please don't forget to send the order reception verification - backend`, orderDetails };
-
-        } catch (error) {
-            console.log(error);
-
-            if (error instanceof CustomError) throw error;
-            throw new CustomError("An unexpected error occured while verifying an OTP - backend", 500);
-        }
-    }
 
     // (test passed)
     async cancelOrder(orderId) { // send 'orderProductDetails' as req body
@@ -314,7 +245,7 @@ export class OrderService {
         }
     }
 
-    // method for client ordered product received confirmation (test passed)
+    // method for client ordered product received confirmation (test pending)
     async orderConfirmation(orderId) { // clientConfirmation has to be either 'true' or 'false'
         if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) throw new CustomError("Invalid orderId - backend", 400);
         try {
