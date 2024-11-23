@@ -74,17 +74,15 @@ export class OrderService {
     async clientSignIn(clientDetails) {
         if (!clientDetails || typeof clientDetails !== 'object') throw new CustomError("All fields required!- backend");
         try {
-            const checkClient = await Client.findOne({ email: clientDetails.email }).select("+password");
+            const checkClient = await Client.findOne({ email: clientDetails.email }).select("+password"); // using 'email' as a primary key
             if (!checkClient) throw new CustomError("Account not found! - backend", 404);
 
             const isCorrectPassword = await bcrypt.compare(clientDetails.password, checkClient.password);
             if (!isCorrectPassword) throw new CustomError("Wrong password - backend", 401);
 
-            if (isCorrectPassword) {
-                var newClientDetails = await Client.findOne({ name: checkClient.name }); // use this as a payload for jwt since it doesn't select password
-            }
+            const newClientDetails = await Client.findOne({ name: checkClient.name }); // use this as a payload for jwt since it doesn't select password
 
-            this.clientDetails = newClientDetails; // udpate the clientDetails with the latest clientDetails
+            this.clientDetails = newClientDetails; // udpate the clientDetails with the latest clientDetails (password not included)
 
             const signedInAt = new Date().toLocaleString();
 
@@ -171,19 +169,19 @@ export class OrderService {
         if (!productId || !mongoose.Types.ObjectId.isValid(productId)) throw new CustomError("Please enter a valid productId! - backend", 400);
         if (!clientDetails || typeof clientDetails !== 'object') throw new CustomError("Please enter a valid information! - backend", 400);
         // Check for specific fields in clientDetails
-        const requiredFields = [
-            { key: 'orderName', message: 'Wrong name' },
-            { key: 'orderPhoneNo', message: 'Wrong phoneNo' },
-            { key: 'orderEmail', message: 'Wrong email' },
-            { key: 'orderAddress', message: 'Wrong address' },
-            { key: 'orderQuantity', message: 'Wrong quantity' }
-        ];
+        // const requiredFields = [
+        //     { key: 'orderName', message: 'Wrong name' },
+        //     { key: 'orderPhoneNo', message: 'Wrong phoneNo' },
+        //     { key: 'orderEmail', message: 'Wrong email' },
+        //     { key: 'orderAddress', message: 'Wrong address' },
+        //     { key: 'orderQuantity', message: 'Wrong quantity' }
+        // ];
 
-        for (const field of requiredFields) {
-            if (!clientDetails[field.key]) {
-                throw new CustomError(field.message, 400);
-            }
-        }
+        // for (const field of requiredFields) {
+        //     if (!clientDetails[field.key]) {
+        //         throw new CustomError(field.message, 400);
+        //     }
+        // }
         try {
             const product = await Products.findById(productId);
             if (!product) throw new CustomError("Cannot find the product! - backend", 404);
@@ -191,18 +189,11 @@ export class OrderService {
 
             if (clientDetails.orderQuantity > product.productQuantity) throw new CustomError(`Not enough ${product.productName}`, 409); // check the order quantity before the client verification (user experience)
 
-            const mailInfo = {
-                to: clientDetails.orderEmail,
-                subject: "Order placed successfully! - backend",
-                text: `Sir/Ma'am, your order of ${clientDetails.orderQuantity} ${clientDetails.orderProductName}(s) is on the process. Please wait a minute while the order is being dispatched! - Innocent Restaurant.`
-            }
-
-            await this.mailer.setUp();
-            await this.mailer.sentMail(mailInfo.to, mailInfo.subject, mailInfo.text);
+            const totalPrice = product.productPrice * clientDetails.orderQuantity;
 
             const timestamp = new Date().toLocaleString();
 
-            await OrderDetails.create({ ...clientDetails, orderTime: timestamp }) // save the order details inside the database
+            await OrderDetails.create({ ...clientDetails, totalPrice, orderProductName: product.productName, productPrice: product.productPrice, orderTime: timestamp }) // save the order details inside the database
 
             return {
                 message: `Order placed successfully!. Please wait a moment untill the placement process is completed and the order is being dispatched. Order placed at ${timestamp}`,
