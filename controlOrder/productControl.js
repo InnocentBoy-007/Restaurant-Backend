@@ -7,10 +7,10 @@ export class ProductControl {
     async fetchProduct() {
         try {
             const product = await Product.find();
-            if(product.length === 0) throw new CustomError("There are no products in the database! - backend", 404);
+            if (product.length === 0) throw new CustomError("There are no products in the database! - backend", 404);
             return product;
         } catch (error) {
-            if(error instanceof CustomError) throw error;
+            if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while fetching products details from the database - backend", 500);
         }
     }

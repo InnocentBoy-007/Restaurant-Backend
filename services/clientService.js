@@ -97,6 +97,19 @@ export class OrderService {
         }
     }
 
+    // needs to review(bug)
+    async clientLogout(clientToken) {
+        if (!clientToken) throw new CustomError("Invalid token! - backend", 400);
+
+        try {
+            return { message: "Logout successful! - backend" };
+        } catch (error) {
+            console.log(error);
+            if (error instanceof CustomError) throw error;
+            throw new CustomError("An unexpected error occured while trying to logout! - backend", 500);
+        }
+    }
+
     // (test passed)
     async trackOrderDetails(clientEmail) {
         if (!clientEmail) throw new CustomError("Invalid user email address - backend", 400);
@@ -112,8 +125,8 @@ export class OrderService {
 
     //(test passed)
     // use jwt token for authorization (test pending)
-    async addToCart(clientEmail, productId) {
-        if (!clientEmail) throw new CustomError("Invalid client email - backend", 400);
+    async addToCart(clientEmail, productId) { // using client Email as a primary key
+        if (!clientEmail || typeof clientEmail !== 'string') throw new CustomError("Invalid client email - backend", 400);
         if (!productId || !mongoose.Types.ObjectId.isValid(productId)) throw new CustomError("Invalid product Id - backend", 400);
         try {
             //check if the product is already inside the cart or not
@@ -127,6 +140,7 @@ export class OrderService {
 
             const isAddedToCart = await Cart.create({
                 productId: productId,
+                email: clientEmail,
                 productName: checkProduct.productName,
                 productPrice: checkProduct.productPrice,
                 addedTime: addedTime
@@ -144,8 +158,8 @@ export class OrderService {
     async fetchProductsFromCart(clientEmail) { // use token for authorization
         if (!clientEmail) throw new CustomError("Invalid client email! - backend", 400);
         try {
-            const checkProduct = await Cart.find();
-            if (!checkProduct) throw new CustomError("Product not found! - backend", 404);
+            const checkProduct = await Cart.find({ email: clientEmail });
+            if (!checkProduct) throw new CustomError("There are no products in the cart! - backend", 404);
             return { message: "Product found inside the cart! - backend", checkProduct };
         } catch (error) {
             console.log(error);
