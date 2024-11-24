@@ -13,7 +13,10 @@ export const adminAuthMiddleware = (req, res, next) => {
 };
 
 export const clientAuthMiddleware = (req, res, next) => {
-    const clientToken = req.cookies.clientToken;
+    // const clientToken = req.cookies.clientToken;
+    const authHeader = req.headers['Authorization'];
+    const clientToken = authHeader && authHeader.split('')[1];
+    if(clientToken === null) return res.status(401).json({message:"Token is null! - auth backend"});
 
     if (!clientToken) return res.status(401).json({ message: 'Access denied. No client token provided.' });
 

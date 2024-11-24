@@ -22,6 +22,10 @@ export class AdminService {
         this.mailer = new SentMail();
     }
 
+    async generateToken(payload) {
+        return jwt.sign(payload, process.env.JWT_SECRET, {'expiresIn':'1h'});
+    }
+
     // (test passed)
     async adminSignUp(adminDetails) { // adminDetails is a req body
         if (!adminDetails || typeof adminDetails !== 'object') {
@@ -89,7 +93,7 @@ export class AdminService {
             await this.mailer.sentMail(receiverInfo.to, receiverInfo.subject, receiverInfo.text);
 
             // Generate JWT after successful signup
-            const token = jwt.sign({ adminName: account.adminName, accountId: account._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
+            const token = await this.generateToken({adminName:account.adminName, accountId:account._id});
             console.log("Token--->", token);
 
             return { message: "Account sign up successfull! - backend", verification: `Verified on ${timestamp}`, token };
@@ -127,7 +131,8 @@ export class AdminService {
             const timestamp = new Date().toLocaleString();
 
             const message = `Signed in successfull, ${account.adminName}.`
-            const token = jwt.sign({ adminName: account.adminName, accountId: account._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
+
+            const token = await this.generateToken({adminName:account.adminName, accountId:account._id});
 
             return { message, signInAt: timestamp, token };
         } catch (error) {
