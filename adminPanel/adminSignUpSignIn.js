@@ -39,6 +39,18 @@ export const adminSignIn = async (req, res) => {
     }
 }
 
+
+// this needs to be finished (later)
+export const adminLogOut = async (req, res) => {
+    try {
+        const adminToken = req.admin;
+        const response = await adminService.adminLogOut(adminToken);
+        return res.status(200).json(response);
+    } catch (error) {
+
+    }
+}
+
 export const fetchAdmins = async (req, res) => {
     try {
         const response = await adminService.fetchAdmins();

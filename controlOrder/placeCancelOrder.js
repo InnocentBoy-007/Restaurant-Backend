@@ -38,10 +38,9 @@ export const clientSignIn = async (req, res) => {
 // needs review (bug)
 export const clientLogOut = async (req, res) => {
     try {
-        const clientToken = req.clientToken;
+        const clientToken = req.client;
 
         const response = await orderService.clientLogout(clientToken);
-        res.clearCookie('clientToken');
         return res.status(200).json(response);
     } catch (error) {
         console.log(error);

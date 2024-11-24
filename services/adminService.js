@@ -23,7 +23,7 @@ export class AdminService {
     }
 
     async generateToken(payload) {
-        return jwt.sign(payload, process.env.JWT_SECRET, {'expiresIn':'1h'});
+        return jwt.sign(payload, process.env.JWT_SECRET, { 'expiresIn': '1h' });
     }
 
     // (test passed)
@@ -93,7 +93,7 @@ export class AdminService {
             await this.mailer.sentMail(receiverInfo.to, receiverInfo.subject, receiverInfo.text);
 
             // Generate JWT after successful signup
-            const token = await this.generateToken({adminName:account.adminName, accountId:account._id});
+            const token = await this.generateToken({ adminName: account.adminName }); // using the adminName as the  token for authorization
             console.log("Token--->", token);
 
             return { message: "Account sign up successfull! - backend", verification: `Verified on ${timestamp}`, token };
@@ -132,12 +132,22 @@ export class AdminService {
 
             const message = `Signed in successfull, ${account.adminName}.`
 
-            const token = await this.generateToken({adminName:account.adminName, accountId:account._id});
+            const token = await this.generateToken({ adminName: account.adminName }); // using the adminName as the token for authorization
 
             return { message, signInAt: timestamp, token };
         } catch (error) {
             if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while signing in - backend", 500);
+        }
+    }
+
+    async adminLogOut(adminToken) {
+        if (!adminToken) throw new CustomError("Invalid token - backend", 400);
+        try {
+            return { message: "Logout successfully! - backend" };
+        } catch (error) {
+            if (error instanceof CustomError) throw error;
+            throw new CustomError("An unexpected error occured while trying to logout! - backend", 500);
         }
     }
 
