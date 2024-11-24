@@ -42,7 +42,7 @@ export const clientLogOut = async (req, res) => {
 
         const response = await orderService.clientLogout(clientToken);
         res.clearCookie('clientToken');
-        return res.status(200).json({ response });
+        return res.status(200).json(response);
     } catch (error) {
         console.log(error);
 

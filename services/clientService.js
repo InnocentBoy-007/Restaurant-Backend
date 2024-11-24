@@ -18,7 +18,7 @@ export class OrderService {
     }
 
     async generateToken(payload) {
-        return jwt.sign(payload, process.env.JWT_SECRET, {'expiresIn':'1h'});
+        return jwt.sign(payload, process.env.JWT_SECRET, { 'expiresIn': '1h' });
     }
 
     // (test passed)
@@ -65,7 +65,7 @@ export class OrderService {
             this.mailer.setUp();
             this.mailer.sentMail(this.clientDetails.email, "Signup successfully!", `Thanks for signing up, ${this.clientDetails.name}. From Innocent Restaurant`);
 
-            const token = await this.generateToken({clientDetails: this.clientDetails}); // send the clientDetails as a token to be used for order placement in frontend
+            const token = await this.generateToken({ clientDetails: this.clientDetails }); // send the clientDetails as a token to be used for order placement in frontend
             // const token = jwt.sign({ clientDetails: this.clientDetails }, process.env.JWT_SECRET, { expiresIn: '24h' }); // send the clientDetails as a token to be used for order placement in frontend
 
             return { message: "Account signup successfully! - backend", createClient, token };
@@ -92,10 +92,10 @@ export class OrderService {
             const signedInAt = new Date().toLocaleString();
 
             // (need testing)
-            const token = await this.generateToken({clientDetails: newClientDetails}); // send the newClientDetails(without password) as a token to be used for order placement in frontend (test pending)
+            const token = await this.generateToken({ clientDetails: newClientDetails.name }); // send the newClientDetails(only client name) as a token to be used for order placement in frontend (test pending)
             // const token = jwt.sign({ clientDetails: newClientDetails }, process.env.JWT_SECRET, { expiresIn: '24h' }); // send the newClientDetails(without password) as a token to be used for order placement in frontend (test pending)
 
-            return { message: `Sign in successfully! signed in at ${signedInAt} - backend`, token };
+            return { message: `Sign in successfully! signed in at ${signedInAt} - backend`, newClientDetails, token }; // needs testing
         } catch (error) {
             console.log(error);
             if (error instanceof CustomError) throw error;
