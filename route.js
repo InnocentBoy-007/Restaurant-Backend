@@ -1,5 +1,5 @@
 import express from 'express'
-import { placeOrder, cancelOrder, orderConfirmation, addToCart, trackOrderDetails, fetchProductsFromCart, clientSignUp, clientSignUpVerification, clientSignIn, clientLogOut } from './controlOrder/placeCancelOrder.js';
+import { placeOrder, cancelOrder, orderConfirmation, addToCart, removeFromCart, trackOrderDetails, fetchProductsFromCart, clientSignUp, clientSignUpVerification, clientSignIn, clientLogOut } from './controlOrder/placeCancelOrder.js';
 import { fetchProduct, addProduct, updateProduct, deleteProduct } from './adminPanel/adminHandleProducts.js';
 import { acceptOrder, rejectOrder, fetchOrders } from './adminPanel/adminAcceptRejectOrder.js';
 import { adminSignUp, adminSignIn, adminVerification, adminLogOut, fetchAdmins, deleteAdmin, updateAdmin } from './adminPanel/adminSignUpSignIn.js';
@@ -13,6 +13,7 @@ route.post("/clientSignIn", clientSignIn);
 route.post("/clientLogOut", clientAuthMiddleware, clientLogOut);
 route.get("/trackOrders/:clientEmail", trackOrderDetails);
 route.patch("/addToCart/:clientEmail/:productId", addToCart);
+route.delete("/removeFromCart/:productId", clientAuthMiddleware, removeFromCart);
 route.get("/fetchOrdersCart/:clientEmail", clientAuthMiddleware, fetchProductsFromCart);
 route.post("/placeOrder/:productId", placeOrder);
 route.delete("/cancelOrder/:orderId", cancelOrder);

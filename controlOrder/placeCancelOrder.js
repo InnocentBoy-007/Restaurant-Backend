@@ -71,6 +71,19 @@ export const addToCart = async (req, res) => {
     }
 }
 
+// test passed
+export const removeFromCart = async (req, res) => {
+    req.client.clientToken;
+    const { productId } = req.params;
+    try {
+        const response = await orderService.removeProductFromCart(productId);
+        return res.status(200).json(response);
+    } catch (error) {
+        console.log(error);
+        if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
+    }
+}
+
 export const fetchProductsFromCart = async (req, res) => {
     try {
         const clientEmail = req.client.clientDetails.email;

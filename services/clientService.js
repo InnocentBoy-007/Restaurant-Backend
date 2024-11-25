@@ -92,7 +92,7 @@ export class OrderService {
             const signedInAt = new Date().toLocaleString();
 
             // (need testing)
-            const token = await this.generateToken({ clientDetails: newClientDetails.name }); // send the newClientDetails(only client name) as a token to be used for order placement in frontend (test pending)
+            const token = await this.generateToken({ clientDetails: newClientDetails }); // send the newClientDetails(only client name) as a token to be used for order placement in frontend (test pending)
             // const token = jwt.sign({ clientDetails: newClientDetails }, process.env.JWT_SECRET, { expiresIn: '24h' }); // send the newClientDetails(without password) as a token to be used for order placement in frontend (test pending)
 
             return { message: `Sign in successfully! signed in at ${signedInAt} - backend`, newClientDetails, token }; // needs testing
@@ -157,6 +157,21 @@ export class OrderService {
             console.log(error);
             if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while trying to verify client email - backend", 500);
+        }
+    }
+
+    // test passed
+    async removeProductFromCart(productId) {
+        if (!productId || !mongoose.Types.ObjectId.isValid(productId)) throw new CustomError("Invalid product Id - backend", 400);
+        try {
+            const product = await Cart.findOneAndDelete(productId);
+            if (!product) throw new CustomError("Product not found! - backend", 404);
+
+            return { message: `${product.productName} deleted from cart successfully! - backend` }
+        } catch (error) {
+            console.log(error);
+            if (error instanceof CustomError) throw error;
+            throw new CustomError("An unexpected error occured while trying to delete products from cart! - backend", 500);
         }
     }
 
