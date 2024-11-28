@@ -7,10 +7,11 @@ import { adminAuthMiddleware, clientAuthMiddleware } from './components/AuthMidd
 
 const route = express.Router();
 
-route.post("/clientSignUp", clientSignUp);
-route.post("/clientSignUpVerification", clientSignUpVerification);
-route.post("/clientSignIn", clientSignIn);
-route.post("/clientLogOut", clientAuthMiddleware, clientLogOut);
+// *change the routes to RESTful APIs
+route.post("/user/signup", clientSignUp);
+route.post("/user/signup/verify", clientSignUpVerification);
+route.post("/user/signin", clientSignIn);
+route.delete("/user/logout", clientAuthMiddleware, clientLogOut);
 route.get("/trackOrders/:clientEmail", trackOrderDetails);
 route.patch("/addToCart/:clientEmail/:productId", addToCart);
 route.delete("/removeFromCart/:productId", clientAuthMiddleware, removeFromCart);
