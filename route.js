@@ -12,13 +12,13 @@ route.post("/user/signup", clientSignUp);
 route.post("/user/signup/verify", clientSignUpVerification);
 route.post("/user/signin", clientSignIn);
 route.delete("/user/logout", clientAuthMiddleware, clientLogOut);
-route.get("/trackOrders/:clientEmail", trackOrderDetails);
-route.patch("/addToCart/:clientEmail/:productId", addToCart);
-route.delete("/removeFromCart/:productId", clientAuthMiddleware, removeFromCart);
-route.get("/fetchOrdersCart/:clientEmail", clientAuthMiddleware, fetchProductsFromCart);
-route.post("/placeOrder/:productId", placeOrder);
-route.delete("/cancelOrder/:orderId", cancelOrder);
-route.patch("/orderConfirmation/:orderId", orderConfirmation);
+route.get("/user/orders/:clientEmail", trackOrderDetails); // haven't create a UI for this API
+route.patch("/user/cart/add/:clientEmail/:productId", addToCart);
+route.delete("/user/cart/remove/:productId", clientAuthMiddleware, removeFromCart);
+route.get("/user/cart/products/:clientEmail", clientAuthMiddleware, fetchProductsFromCart);
+route.post("/user/products/placeorder/:productId", placeOrder);
+route.delete("/user/products/cancelorder/:orderId", cancelOrder);
+route.patch("/user/confirmorder/:orderId", orderConfirmation);
 
 
 route.get("/fetchProduct", fetchProduct);
@@ -27,17 +27,17 @@ route.patch("/updateProduct/:id", updateProduct);
 route.delete("/deleteProduct/:id", deleteProduct);
 
 
-route.patch("/acceptOrder/:orderId/:admin", adminAuthMiddleware, acceptOrder);
-route.delete("/rejectOrder/:orderId/:admin", adminAuthMiddleware, rejectOrder);
-route.get("/fetchOrders/:adminName", adminAuthMiddleware, fetchOrders);
+route.patch("/admin/orders/accept/:orderId/:admin", adminAuthMiddleware, acceptOrder);
+route.delete("/admin/orders/reject/:orderId/:admin", adminAuthMiddleware, rejectOrder);
+route.get("/admin/orders/:adminName", adminAuthMiddleware, fetchOrders);
 
 
-route.post("/adminSignUp", adminSignUp);
-route.post("/adminVerification", adminVerification);
-route.post("/adminLogOut", adminAuthMiddleware, adminLogOut);
-route.get("/fetchAdmins", fetchAdmins);
-route.post("/adminSignIn", adminSignIn);
-route.delete("/deleteAdmin/:adminId", deleteAdmin);
-route.patch("/updateAdmin/:adminId", updateAdmin);
+route.post("/admin/signup", adminSignUp);
+route.post("/admin/verify", adminVerification);
+route.delete("/admin/logout", adminAuthMiddleware, adminLogOut);
+route.get("/admin/details", fetchAdmins);
+route.post("/admin/signin", adminSignIn);
+route.delete("/admin/details/delete/:adminId", deleteAdmin);
+route.patch("/admin/details/update/:adminId", updateAdmin);
 
 export default route;
