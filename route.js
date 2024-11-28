@@ -12,7 +12,7 @@ route.post("/user/signup", clientSignUp);
 route.post("/user/signup/verify", clientSignUpVerification);
 route.post("/user/signin", clientSignIn);
 route.delete("/user/logout", clientAuthMiddleware, clientLogOut);
-route.get("/user/orders/:clientEmail", trackOrderDetails); // haven't create a UI for this API
+route.get("/user/orders/:clientEmail", clientAuthMiddleware, trackOrderDetails); // haven't create a UI for this API
 route.patch("/user/cart/add/:clientEmail/:productId", addToCart);
 route.delete("/user/cart/remove/:productId", clientAuthMiddleware, removeFromCart);
 route.get("/user/cart/products/:clientEmail", clientAuthMiddleware, fetchProductsFromCart);

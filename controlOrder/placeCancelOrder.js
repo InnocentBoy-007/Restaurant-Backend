@@ -51,6 +51,7 @@ export const clientLogOut = async (req, res) => {
 
 // (test passed)
 export const trackOrderDetails = async (req, res) => {
+    req.client.clientToken;
     const { clientEmail } = req.params;
     try {
         const response = await orderService.trackOrderDetails(clientEmail);
