@@ -59,11 +59,9 @@ export class OrderService {
             if (otp !== this.otp) throw new CustomError("Wrong otp! - backend", 401); // check if the OTP is correct or not
             const hashPassword = await bcrypt.hash(this.clientDetails.password, 10);
 
-            const signedUpAt = new Date().toLocaleString();
-
             const token = await this.generateToken({ clientDetails: this.clientDetails }); // send the clientDetails as a token to be used for order placement in frontend
 
-            const createClient = await Client.create({ ...this.clientDetails, password: hashPassword, signUpAt: signedUpAt, refreshToken: token }); // adding the refresh token as well for future use
+            const createClient = await Client.create({ ...this.clientDetails, password: hashPassword, signUpAt: new Date().toLocaleString(), refreshToken: token }); // adding the refresh token as well for future use
             if (!createClient) throw new CustomError("Account cannot be created! - backend", 500);
 
             this.mailer.setUp();
