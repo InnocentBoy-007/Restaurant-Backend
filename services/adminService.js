@@ -23,7 +23,11 @@ export class AdminService {
     }
 
     async generateToken(payload) {
-        return jwt.sign(payload, process.env.JWT_SECRET, { 'expiresIn': '15m' });
+        return jwt.sign(payload, process.env.JWT_SECRET, { 'expiresIn': '15s' });
+    }
+
+    async generateRefreshToken(payload) {
+        return jwt.sign(payload, process.env.BACKUP_JWT_SECRET);
     }
 
     // (test passed)
@@ -77,7 +81,12 @@ export class AdminService {
             if (otp !== this.otp) throw new CustomError("Wrong otp", 409);
             const hashPassword = await bcrypt.hash(this.adminDetails.password, 10); // encrypt the password using bcryt
 
-            const account = await AdminModel.create({ ...this.adminDetails, password: hashPassword }) // create an admin account with adminDetails(using admin model)
+            // Generate JWT after successful signup
+            const token = await this.generateToken({ adminName: this.adminDetails.adminName }); // using the adminName as the  token for authorization
+            const refreshToken = await this.generateRefreshToken({ adminName: this.adminDetails.adminName });
+            console.log("Token--->", token);
+
+            const account = await AdminModel.create({ ...this.adminDetails, password: hashPassword, refreshToken }) // create an admin account with adminDetails(using admin model)
             if (!account) throw new CustomError("Account cannot be created! - backend", 500); // if the account cannot be created, throw an error
 
             // track the time of an account creation
@@ -92,11 +101,9 @@ export class AdminService {
             await this.mailer.setUp();
             await this.mailer.sentMail(receiverInfo.to, receiverInfo.subject, receiverInfo.text);
 
-            // Generate JWT after successful signup
-            const token = await this.generateToken({ adminName: account.adminName }); // using the adminName as the  token for authorization
-            console.log("Token--->", token);
 
-            return { message: "Account sign up successfull! - backend", verification: `Verified on ${timestamp}`, token };
+
+            return { message: "Account sign up successfull! - backend", verification: `Verified on ${timestamp}`, token, refreshToken };
         } catch (error) {
             console.log(error);
 
@@ -133,8 +140,9 @@ export class AdminService {
             const message = `Signed in successfull, ${account.adminName}.`
 
             const token = await this.generateToken({ adminName: account.adminName }); // using the adminName as the token for authorization
+            const refreshToken = await this.generateRefreshToken({ adminName: account.adminName });
 
-            return { message, signInAt: timestamp, token };
+            return { message, signInAt: timestamp, token, refreshToken };
         } catch (error) {
             if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while signing in - backend", 500);

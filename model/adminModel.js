@@ -23,6 +23,9 @@ const adminSchema = new mongoose.Schema({
     updatedAtLocaleTime: {
         type: String,
         default: () => new Date().toLocaleString()
+    },
+    refreshToken: {
+        type: String, required: true, select: false
     }
 }, { timestamps: true });
 

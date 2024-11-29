@@ -32,8 +32,8 @@ export const rejectOrder = async (req, res) => {
 }
 
 export const fetchOrders = async (req, res) => {
+    const { adminName } = req.params;
     try {
-        const adminName = req.admin.adminName;
         const response = await adminService.fetchOrderDetails(adminName);
 
         return res.status(200).json(response);
