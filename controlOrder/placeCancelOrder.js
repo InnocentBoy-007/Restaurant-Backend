@@ -74,7 +74,7 @@ export const addToCart = async (req, res) => {
 
 // test passed
 export const removeFromCart = async (req, res) => {
-    req.client.clientToken;
+    // req.client.clientToken; // there is no use for the token here
     const { productId } = req.params;
     try {
         const response = await orderService.removeProductFromCart(productId);

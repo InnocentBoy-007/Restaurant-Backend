@@ -18,10 +18,11 @@ export class OrderService {
     }
 
     async generateToken(payload) {
-        return jwt.sign(payload, process.env.JWT_SECRET, { 'expiresIn': '1h' });
+        return jwt.sign(payload, process.env.JWT_SECRET, { 'expiresIn': '15m' });
     }
 
     // (test passed)
+    // endpoint ---> 'user/singup'
     async clientSignUp(clientDetails) {
         if (!clientDetails || typeof clientDetails !== 'object') throw new CustomError("All fields required! - backend", 400);
         try {
@@ -50,6 +51,7 @@ export class OrderService {
     }
 
     // (test passed)
+    // endpoint ---> 'user/singup/verify'
     async clientSignUpVerification(otp) {
         if (!otp || typeof otp !== 'string') throw new CustomError("Invalid otp! - backend", 400);
 
@@ -59,14 +61,13 @@ export class OrderService {
 
             const signedUpAt = new Date().toLocaleString();
 
-            const createClient = await Client.create({ ...this.clientDetails, password: hashPassword, signUpAt: signedUpAt });
+            const token = await this.generateToken({ clientDetails: this.clientDetails }); // send the clientDetails as a token to be used for order placement in frontend
+
+            const createClient = await Client.create({ ...this.clientDetails, password: hashPassword, signUpAt: signedUpAt, refreshToken: token }); // adding the refresh token as well for future use
             if (!createClient) throw new CustomError("Account cannot be created! - backend", 500);
 
             this.mailer.setUp();
             this.mailer.sentMail(this.clientDetails.email, "Signup successfully!", `Thanks for signing up, ${this.clientDetails.name}. From Innocent Restaurant`);
-
-            const token = await this.generateToken({ clientDetails: this.clientDetails }); // send the clientDetails as a token to be used for order placement in frontend
-            // const token = jwt.sign({ clientDetails: this.clientDetails }, process.env.JWT_SECRET, { expiresIn: '24h' }); // send the clientDetails as a token to be used for order placement in frontend
 
             return { message: "Account signup successfully! - backend", createClient, token };
         } catch (error) {
@@ -76,6 +77,7 @@ export class OrderService {
         }
     }
 
+    //endpoint ---> 'user/signin'
     async clientSignIn(clientDetails) {
         if (!clientDetails || typeof clientDetails !== 'object') throw new CustomError("All fields required!- backend");
         try {
@@ -87,13 +89,12 @@ export class OrderService {
 
             const newClientDetails = await Client.findOne({ name: checkClient.name }); // use this as a payload for jwt since it doesn't select password
 
+            // adding the refresh token inside the clientDetails
+            const token = await this.generateToken({ clientDetails: newClientDetails }); // send the newClientDetails(only client name) as a token to be used for order placement in frontend (test pending)
+
             this.clientDetails = newClientDetails; // udpate the clientDetails with the latest clientDetails (password not included)
 
             const signedInAt = new Date().toLocaleString();
-
-            // (need testing)
-            const token = await this.generateToken({ clientDetails: newClientDetails }); // send the newClientDetails(only client name) as a token to be used for order placement in frontend (test pending)
-            // const token = jwt.sign({ clientDetails: newClientDetails }, process.env.JWT_SECRET, { expiresIn: '24h' }); // send the newClientDetails(without password) as a token to be used for order placement in frontend (test pending)
 
             return { message: `Sign in successfully! signed in at ${signedInAt} - backend`, newClientDetails, token }; // needs testing
         } catch (error) {
