@@ -35,7 +35,7 @@ export const clientAuthMiddleware = (req, res, next) => {
 
         next();
     } catch (err) {
-        console.log("Auth error --->", err);
+        // console.log("Auth error --->", err);
         res.status(400).json({ message: 'Invalid token.' });
     }
 };

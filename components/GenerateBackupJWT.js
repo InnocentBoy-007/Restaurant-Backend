@@ -10,16 +10,29 @@ export const generateBackUpJWT = async (req, res) => {
     const { clientId } = req.params;
     if (!clientId) throw new CustomError("Invalid clientId", 400);
     try {
-        const isRefreshToken = await Client.findById(clientId).select("refreshToken"); // this query makes sure that only the value of refreshToken is returned
-        if (!isRefreshToken) throw new CustomError("User not found! - backend", 404);
+        // const isRefreshToken = await Client.findById(clientId).select("refreshToken"); // this query makes sure that only the value of refreshToken is returned
+        // console.log("Refresh Token --->", isRefreshToken.refreshToken);
+
+        // if (!isRefreshToken) throw new CustomError("User not found! - backend", 404);
 
         // validating the refresh token to create a new primary token (middleware)
-        const verifyToken = jwt.verify(isRefreshToken.refreshToken, process.env.BACKUP_JWT_SECRET);
-        if (!verifyToken) throw new CustomError("Invalid refresh token - backend", 403);
+        // const verifyToken = jwt.verify(isRefreshToken.refreshToken, process.env.JWT_SECRET);
+        // if (!verifyToken) throw new CustomError("Invalid refresh token - backend", 403);
 
-        const payload = await Client.findById(clientId); // fetching the same user detail without the properties marked 'select: false'
+        const authHeader = req.headers['authorization'];
+        const clientToken = authHeader && authHeader.split(' ')[1]; // refresh token
 
-        const token = jwt.sign({ payload }, process.env.JWT_SECRET, { expiresIn: '15m' });
+        if (clientToken === null) return res.status(401).json({ message: "Token is null! - auth backend" });
+        if (!clientToken) return res.status(401).json({ message: 'Access denied. No client token provided.' });
+
+        const getTokenFromDB = await Client.findById(clientId).select("refreshToken");
+        if (!getTokenFromDB) throw new CustomError("Token not found! - backend", 404);
+
+        if (clientToken !== getTokenFromDB) throw new CustomError("Incorrect token! New token generation failed! - backend", 500);
+
+        const payload = req.client; // fetching the previous payload
+
+        const token = jwt.sign({ payload }, process.env.JWT_SECRET, { expiresIn: '15s' }); // need testing
         console.log("New token generated --->", token);
 
         return res.status(200).json(token);

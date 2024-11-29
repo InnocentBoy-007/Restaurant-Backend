@@ -18,7 +18,11 @@ export class OrderService {
     }
 
     async generateToken(payload) {
-        return jwt.sign(payload, process.env.JWT_SECRET, { 'expiresIn': '15m' });
+        return jwt.sign(payload, process.env.JWT_SECRET, { 'expiresIn': '15s' }); // it's working
+    }
+
+    async generateRefreshToken(payload) {
+        return jwt.sign(payload, process.env.BACKUP_JWT_SECRET);
     }
 
     // (test passed)
@@ -60,14 +64,15 @@ export class OrderService {
             const hashPassword = await bcrypt.hash(this.clientDetails.password, 10);
 
             const token = await this.generateToken({ clientDetails: this.clientDetails }); // send the clientDetails as a token to be used for order placement in frontend
+            const refreshToken = await this.generateRefreshToken({ clientDetails: this.clientDetails }); // refresh token
 
-            const createClient = await Client.create({ ...this.clientDetails, password: hashPassword, signUpAt: new Date().toLocaleString(), refreshToken: token }); // adding the refresh token as well for future use
+            const createClient = await Client.create({ ...this.clientDetails, password: hashPassword, signUpAt: new Date().toLocaleString() }); // adding the refresh token as well for future use
             if (!createClient) throw new CustomError("Account cannot be created! - backend", 500);
 
             this.mailer.setUp();
             this.mailer.sentMail(this.clientDetails.email, "Signup successfully!", `Thanks for signing up, ${this.clientDetails.name}. From Innocent Restaurant`);
 
-            return { message: "Account signup successfully! - backend", createClient, token };
+            return { message: "Account signup successfully! - backend", createClient, token, refreshToken };
         } catch (error) {
             console.log(error);
             if (error instanceof CustomError) throw error;
@@ -89,12 +94,13 @@ export class OrderService {
 
             // adding the refresh token inside the clientDetails
             const token = await this.generateToken({ clientDetails: newClientDetails }); // send the newClientDetails(only client name) as a token to be used for order placement in frontend (test pending)
+            const refreshToken = await this.generateRefreshToken({ clientDetails: newClientDetails }); // refresh token
 
             this.clientDetails = newClientDetails; // udpate the clientDetails with the latest clientDetails (password not included)
 
             const signedInAt = new Date().toLocaleString();
 
-            return { message: `Sign in successfully! signed in at ${signedInAt} - backend`, newClientDetails, token }; // needs testing
+            return { message: `Sign in successfully! signed in at ${signedInAt} - backend`, newClientDetails, token, refreshToken }; // needs testing
         } catch (error) {
             console.log(error);
             if (error instanceof CustomError) throw error;
