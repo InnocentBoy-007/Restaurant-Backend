@@ -63,11 +63,14 @@ export class OrderService {
             if (otp !== this.otp) throw new CustomError("Wrong otp! - backend", 401); // check if the OTP is correct or not
             const hashPassword = await bcrypt.hash(this.clientDetails.password, 10);
 
-            const token = await this.generateToken({ clientDetails: this.clientDetails }); // send the clientDetails as a token to be used for order placement in frontend
-            const refreshToken = await this.generateRefreshToken({ clientDetails: this.clientDetails }); // refresh token
-
             const createClient = await Client.create({ ...this.clientDetails, password: hashPassword, signUpAt: new Date().toLocaleString() }); // adding the refresh token as well for future use
             if (!createClient) throw new CustomError("Account cannot be created! - backend", 500);
+
+            const token = await this.generateToken({ clientId: createClient._id }); // send the clientDetails as a token to be used for order placement in frontend
+            const refreshToken = await this.generateRefreshToken({ clientId: createClient._id }); // refresh token
+
+            createClient.refreshToken = refreshToken; // update the refresh token
+            await createClient.save();
 
             this.mailer.setUp();
             this.mailer.sentMail(this.clientDetails.email, "Signup successfully!", `Thanks for signing up, ${this.clientDetails.name}. From Innocent Restaurant`);
@@ -93,8 +96,8 @@ export class OrderService {
             const newClientDetails = await Client.findOne({ name: checkClient.name }); // use this as a payload for jwt since it doesn't select password
 
             // adding the refresh token inside the clientDetails
-            const token = await this.generateToken({ clientDetails: newClientDetails }); // send the newClientDetails(only client name) as a token to be used for order placement in frontend (test pending)
-            const refreshToken = await this.generateRefreshToken({ clientDetails: newClientDetails }); // refresh token
+            const token = await this.generateToken({ clientId: checkClient._id, name: checkClient.name }); // send the newClientDetails(only client name) as a token to be used for order placement in frontend (test pending)
+            const refreshToken = await this.generateRefreshToken({ clientId: checkClient._id }); // refresh token
 
             this.clientDetails = newClientDetails; // udpate the clientDetails with the latest clientDetails (password not included)
 
@@ -136,32 +139,30 @@ export class OrderService {
 
     //(test passed)
     // use jwt token for authorization (test pending)
-    async addToCart(clientEmail, productId) { // using client Email as a primary key
-        if (!clientEmail || typeof clientEmail !== 'string') throw new CustomError("Invalid client email - backend", 400);
+    async addToCart(clientId, productId) { // using client Email as a primary key
+        if (!clientId || !mongoose.Types.ObjectId.isValid(clientId)) throw new CustomError("Invalid clientId - backend", 400);
         if (!productId || !mongoose.Types.ObjectId.isValid(productId)) throw new CustomError("Invalid product Id - backend", 400);
         try {
             //check if the product is already inside the cart or not
             const isDuplicateInsideCart = await Cart.findOne({ productId });
             if (isDuplicateInsideCart) throw new CustomError(`${isDuplicateInsideCart.productName} is already inside the cart! - backend`, 409);
 
-            const checkProduct = await Products.findById(productId);
-            if (!checkProduct) throw new CustomError("Product not found! - backend", 404);
-
-            const addedTime = new Date().toLocaleString();
+            const product = await Products.findById(productId);
+            if (!product) throw new CustomError("There's a problem while adding checking the product in the product database - backend", 500);
 
             const isAddedToCart = await Cart.create({
-                productId: productId,
-                email: clientEmail,
-                productName: checkProduct.productName,
-                productPrice: checkProduct.productPrice,
-                addedTime: addedTime
+                clientId,
+                productId,
+                productName: product.productName,
+                productPrice: product.productPrice,
+                addedTime: new Date().toLocaleString()
             })
 
-            return { message: `${isAddedToCart.productName} is added to cart successfully! - backend`, isAddedToCart };
+            return { message: `${isAddedToCart.productName} is added to cart successfully on ${isAddedToCart.addedTime} - backend`, isAddedToCart };
         } catch (error) {
             console.log(error);
             if (error instanceof CustomError) throw error;
-            throw new CustomError("An unexpected error occured while trying to verify client email - backend", 500);
+            throw new CustomError("An unexpected error occured while trying to add the product to cart - backend", 500);
         }
     }
 
@@ -181,15 +182,17 @@ export class OrderService {
     }
 
     // test passed in postman(partially tested - passed)
-    async fetchProductsFromCart(clientEmail) { // use token for authorization
-        if (!clientEmail) throw new CustomError("Invalid client email! - backend", 400);
+    async fetchProductsFromCart(clientId) { // use token for authorization
+        if (!clientId || !mongoose.Types.ObjectId.isValid(clientId)) throw new CustomError("Invalid clientID - backend", 400);
         try {
-            const checkProduct = await Cart.find({ email: clientEmail });
-            if (!checkProduct) throw new CustomError("There are no products in the cart! - backend", 404);
-            return { message: "Product found inside the cart! - backend", checkProduct };
+            const cartDetails = await Cart.find({ clientId: clientId });
+            if (!cartDetails) throw new CustomError("No items inside the cart - backend", 404);
+
+            // if (clientId !== cartDetails[0].clientId.toString()) throw new CustomError("Incorrect clientId - backend", 409); // don't need to add this validation
+
+            return { message: "Product found inside the cart! - backend", cartDetails };
         } catch (error) {
             console.log(error);
-
             if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while trying to fetch products from cart! - backend", 500);
         }

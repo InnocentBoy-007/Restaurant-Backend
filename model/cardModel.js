@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
 
 const cart = new mongoose.Schema({
+    clientId: { type: mongoose.Types.ObjectId, required: true }, // Id of the client who added the product
     productId: { type: mongoose.Types.ObjectId, required: true },
-    email: { type: String, required: true },
     productName: { type: String, required: true },
     productPrice: { type: Number, required: true },
     addedTime: { type: String, required: true }

@@ -1,5 +1,6 @@
 import { OrderService } from "../services/clientService.js";
 import { CustomError } from "../components/CustomError.js";
+import jwt from 'jsonwebtoken'
 
 const orderService = new OrderService();
 
@@ -37,14 +38,17 @@ export const clientSignIn = async (req, res) => {
 
 // needs review (bug)
 export const clientLogOut = async (req, res) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader.split(' ')[1];
+    if (!token) throw new CustomError("Invalid token - backend", 401);
     try {
-        const clientToken = req.client;
+        const verification = jwt.verify(token, process.env.JWT_SECRET);
+        if (!verification) throw new CustomError("Incorrect token", 409);
 
-        const response = await orderService.clientLogout(clientToken);
+        const response = await orderService.clientLogout(token);
         return res.status(200).json(response);
     } catch (error) {
         console.log(error);
-
         if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
     }
 }
@@ -63,9 +67,16 @@ export const trackOrderDetails = async (req, res) => {
 
 // (test passed)
 export const addToCart = async (req, res) => {
-    const { clientEmail, productId } = req.params;
+    const authHeader = req.headers['authorization'];
+    const token = authHeader.split(' ')[1];
+    if (!token) return res.status(401).json({ message: "Invalid token - backend" });
+
+    const { productId } = req.params;
     try {
-        const response = await orderService.addToCart(clientEmail, productId);
+        const verifyToken = jwt.verify(token, process.env.JWT_SECRET);
+        const clientId = verifyToken.clientId; // clientId for further validation
+
+        const response = await orderService.addToCart(clientId, productId);
         return res.status(201).json(response);
     } catch (error) {
         if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
@@ -86,15 +97,19 @@ export const removeFromCart = async (req, res) => {
 }
 
 export const fetchProductsFromCart = async (req, res) => {
-    try {
-        const clientEmail = req.client.clientDetails.email;
-        // console.log("ClientEmail from controller --->", clientEmail);
+    const authHeader = req.headers['authorization'];
+    const token = authHeader.split(' ')[1];
+    if (!token) return res.status(401).json({ message: "Invalid token" });
 
-        const response = await orderService.fetchProductsFromCart(clientEmail);
+    try {
+        const verifyToken = jwt.verify(token, process.env.JWT_SECRET); // decoding
+        const clientId = verifyToken.clientId; // getting the payload, 'clientId' for futher validation
+        // console.log("ClientId --> ", clientId); // it's working
+
+        const response = await orderService.fetchProductsFromCart(clientId);
         return res.status(200).json(response);
     } catch (error) {
         console.log(error);
-
         if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
     }
 }

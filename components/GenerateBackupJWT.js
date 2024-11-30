@@ -8,23 +8,13 @@ import jwt from 'jsonwebtoken'
  */
 export const generateBackUpJWT = async (req, res) => {
     // the clientId comes from the payload or the token
-    const { clientId } = req.params;
-    if (!clientId) throw new CustomError("Invalid clientId", 400);
+    const authHeader = req.headers['authorization'];
+    const clientToken = authHeader && authHeader.split(' ')[1]; // refresh token
+
+    if (!clientToken) return res.status(401).json({ message: 'Access denied. No client token provided.' });
     try {
-        // const isRefreshToken = await Client.findById(clientId).select("refreshToken"); // this query makes sure that only the value of refreshToken is returned
-        // console.log("Refresh Token --->", isRefreshToken.refreshToken);
-
-        // if (!isRefreshToken) throw new CustomError("User not found! - backend", 404);
-
-        // validating the refresh token to create a new primary token (middleware)
-        // const verifyToken = jwt.verify(isRefreshToken.refreshToken, process.env.JWT_SECRET);
-        // if (!verifyToken) throw new CustomError("Invalid refresh token - backend", 403);
-
-        const authHeader = req.headers['authorization'];
-        const clientToken = authHeader && authHeader.split(' ')[1]; // refresh token
-
-        if (clientToken === null) return res.status(401).json({ message: "Token is null! - auth backend" });
-        if (!clientToken) return res.status(401).json({ message: 'Access denied. No client token provided.' });
+        const isValidToken = jwt.verify(clientToken, process.env.BACKUP_JWT_SECRET);
+        const clientId = isValidToken.clientId;
 
         const getTokenFromDB = await Client.findById(clientId).select("refreshToken"); // bug (there is no 'refreshToken' in the model)
         if (!getTokenFromDB) throw new CustomError("Token not found! - backend", 404);
@@ -49,7 +39,6 @@ export const adminGenerateBackUpJWT = async (req, res) => {
     const authHeader = req.headers['authorization'];
     const adminToken = authHeader && authHeader.split(' ')[1]; // refresh token
 
-    if (adminToken === null) return res.status(401).json({ message: "Token is null! - auth backend" });
     if (!adminToken) return res.status(401).json({ message: 'Access denied. No admin token provided.' });
 
     try {

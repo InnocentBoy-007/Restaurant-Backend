@@ -5,7 +5,7 @@ import { acceptOrder, rejectOrder, fetchOrders } from './adminPanel/adminAcceptR
 import { adminSignUp, adminSignIn, adminVerification, adminLogOut, fetchAdmins, deleteAdmin, updateAdmin } from './adminPanel/adminSignUpSignIn.js';
 import { adminAuthMiddleware, clientAuthMiddleware } from './components/AuthMiddleware.js';
 import { generateBackUpJWT, adminGenerateBackUpJWT } from './components/GenerateBackupJWT.js';
-import { fetchAdminDetails } from './components/FetchAdminDetails.js';
+import { fetchAdminDetails, fetchClientDetails } from './components/FetchUserDetails.js';
 
 const route = express.Router();
 
@@ -13,11 +13,12 @@ const route = express.Router();
 route.post("/user/signup", clientSignUp);
 route.post("/user/signup/verify", clientSignUpVerification);
 route.post("/user/signin", clientSignIn);
-route.delete("/user/logout", clientAuthMiddleware, clientLogOut);
+route.get("/user/details", fetchClientDetails);
+route.delete("/user/logout", clientLogOut);
 route.get("/user/orders/:clientEmail", clientAuthMiddleware, trackOrderDetails); // haven't create a UI for this API
-route.patch("/user/cart/add/:clientEmail/:productId", addToCart);
+route.post("/user/cart/add/:productId", addToCart);
 route.delete("/user/cart/remove/:productId", clientAuthMiddleware, removeFromCart);
-route.get("/user/cart/products/:clientEmail", clientAuthMiddleware, fetchProductsFromCart);
+route.get("/user/cart/products", fetchProductsFromCart);
 route.post("/user/products/placeorder/:productId", placeOrder);
 route.delete("/user/products/cancelorder/:orderId", cancelOrder);
 route.patch("/user/confirmorder/:orderId", orderConfirmation);
