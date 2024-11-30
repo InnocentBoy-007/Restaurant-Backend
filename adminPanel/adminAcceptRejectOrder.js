@@ -32,9 +32,10 @@ export const rejectOrder = async (req, res) => {
 }
 
 export const fetchOrders = async (req, res) => {
-    const { adminName } = req.params;
+    const { adminId } = req.params; // adminId from refreshToken
+
     try {
-        const response = await adminService.fetchOrderDetails(adminName);
+        const response = await adminService.fetchOrderDetails(adminId);
 
         return res.status(200).json(response);
     } catch (error) {

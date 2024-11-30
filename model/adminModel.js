@@ -1,16 +1,16 @@
 import mongoose from "mongoose";
 
 const adminSchema = new mongoose.Schema({
-    adminName: { type: String, required: true },
+    name: { type: String, required: true },
     password: { type: String, required: true, select: false },
-    adminPhoneNo: { type: String, required: true },
-    adminEmail: { type: String, required: true },
-    adminGender: {
+    phoneNo: { type: String, required: true },
+    email: { type: String, required: true },
+    gender: {
         type: String,
 
         required: true
     },
-    adminAge: {
+    age: {
         type: Number,
         required: true,
         min: 20,
@@ -25,7 +25,7 @@ const adminSchema = new mongoose.Schema({
         default: () => new Date().toLocaleString()
     },
     refreshToken: {
-        type: String, required: true, select: false
+        type: String, select: false
     }
 }, { timestamps: true });
 

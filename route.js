@@ -5,6 +5,7 @@ import { acceptOrder, rejectOrder, fetchOrders } from './adminPanel/adminAcceptR
 import { adminSignUp, adminSignIn, adminVerification, adminLogOut, fetchAdmins, deleteAdmin, updateAdmin } from './adminPanel/adminSignUpSignIn.js';
 import { adminAuthMiddleware, clientAuthMiddleware } from './components/AuthMiddleware.js';
 import { generateBackUpJWT, adminGenerateBackUpJWT } from './components/GenerateBackupJWT.js';
+import { fetchAdminDetails } from './components/FetchAdminDetails.js';
 
 const route = express.Router();
 
@@ -22,7 +23,7 @@ route.delete("/user/products/cancelorder/:orderId", cancelOrder);
 route.patch("/user/confirmorder/:orderId", orderConfirmation);
 
 route.post("/user/refresh-token/:clientId", generateBackUpJWT); // to generate a new refreshed token
-route.post("/admin/refresh-token/:adminName", adminGenerateBackUpJWT); // to generate a new refreshed token for admin
+route.post("/admin/refresh-token", adminGenerateBackUpJWT); // to generate a new refreshed token for admin
 
 route.get("/fetchProduct", fetchProduct);
 route.post("/addProduct", addProduct);
@@ -32,12 +33,13 @@ route.delete("/deleteProduct/:id", deleteProduct);
 
 route.patch("/admin/orders/accept/:orderId/:admin", adminAuthMiddleware, acceptOrder);
 route.delete("/admin/orders/reject/:orderId/:admin", adminAuthMiddleware, rejectOrder);
-route.get("/admin/orders/:adminName", fetchOrders);
+route.get("/admin/orders/:adminId", fetchOrders);
 
 
 route.post("/admin/signup", adminSignUp);
 route.post("/admin/verify", adminVerification);
-route.delete("/admin/logout", adminAuthMiddleware, adminLogOut);
+route.get("/admin/adminDetails", fetchAdminDetails);
+route.delete("/admin/logout", adminLogOut);
 route.get("/admin/details", fetchAdmins);
 route.post("/admin/signin", adminSignIn);
 route.delete("/admin/details/delete/:adminId", deleteAdmin);

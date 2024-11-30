@@ -1,5 +1,7 @@
 import { AdminService } from "../services/adminService.js";
 import { CustomError } from "../components/CustomError.js";
+import jwt from 'jsonwebtoken'
+import AdminModel from '../model/adminModel.js'
 
 const adminService = new AdminService(); // Creating an instance of AdminService class
 
@@ -40,14 +42,20 @@ export const adminSignIn = async (req, res) => {
 }
 
 
-// this needs to be finished (later)
+// logout - test passed
 export const adminLogOut = async (req, res) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader.split(' ')[1];
+    if (!token) throw new CustomError("Invalid token - backend", 401);
     try {
-        const adminToken = req.admin;
-        const response = await adminService.adminLogOut(adminToken);
+        const verification = jwt.verify(token, process.env.JWT_SECRET); // verifying the admin logout process using the primary token
+        if (!verification) return res.status(409).json({ message: "Incorrect token" });
+
+        const response = await adminService.adminLogOut(token);
         return res.status(200).json(response);
     } catch (error) {
-
+        console.log(error);
+        if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
     }
 }
 

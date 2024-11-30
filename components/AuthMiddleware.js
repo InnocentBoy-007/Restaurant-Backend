@@ -5,7 +5,7 @@ export const adminAuthMiddleware = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const adminToken = authHeader && authHeader.split(' ')[1];
 
-    if (adminToken === null) return res.status(401).json({ message: "Token is null! - auth abckend" });
+    if (adminToken === null) return res.status(401).json({ message: "Token is null! - auth backend" });
     if (!adminToken) return res.status(401).json({ message: 'Access denied. No admin token provided.' });
     try {
         const adminTokenDecoded = jwt.verify(adminToken, process.env.JWT_SECRET);
@@ -13,6 +13,8 @@ export const adminAuthMiddleware = (req, res, next) => {
 
         next();
     } catch (err) {
+        console.log("Error in admin auth middleware", err);
+
         res.status(400).json({ message: 'Invalid token.' });
     }
 };

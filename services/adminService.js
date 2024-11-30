@@ -31,10 +31,8 @@ export class AdminService {
     }
 
     // (test passed)
-    async adminSignUp(adminDetails) { // adminDetails is a req body
-        if (!adminDetails || typeof adminDetails !== 'object') {
-            throw new CustomError("All fields required!(Bad Request) - backend", 400); // throws a custom error in case the req body is not provided fully or the provided req body is not an object
-        }
+    async adminSignUp(adminDetails) {
+        if (!adminDetails || typeof adminDetails !== 'object') throw new CustomError("All fields required!(Bad Request) - backend", 400);
 
         /**
          * use this if you want to validate specific request fields
@@ -49,10 +47,11 @@ export class AdminService {
          */
 
         try {
-            const isDuplicateName = await AdminModel.findOne({ adminName: adminDetails.adminName }); //check if there's any duplicate account in the database
-            if (isDuplicateName) throw new CustomError("Account already exist!(conflict error) - backend", 409);
-            const isDuplicateEmail = await AdminModel.findOne({ adminEmail: adminDetails.adminEmail }); //check if there's any duplicate account in the database
-            if (isDuplicateEmail) throw new CustomError("Account already exist!(conflict error) - backend", 409);
+            const isAdminNameDuplicate = await AdminModel.findOne({ name: adminDetails.name }); // checking for account duplicacy using 'adminName'
+            if (isAdminNameDuplicate) throw new CustomError("Username already exist! Please try other username - backend", 409);
+
+            const isAdminEmailDuplicate = await AdminModel.findOne({ email: adminDetails.email });
+            if (isAdminEmailDuplicate) throw new CustomError("User email already exist! Please try other email - backend", 409);
 
             this.adminDetails = adminDetails; // assigning all the req bodies to the instance variable
 
@@ -60,9 +59,9 @@ export class AdminService {
             this.otp = generateOTP;
 
             const receiverInfo = { // (object)
-                to: adminDetails.adminEmail,
+                to: adminDetails.email,
                 subject: "OTP confirmation",
-                text: `Use this OTP for the signup process ${this.otp}. Thanks from Innocent Team.`
+                text: `Use this OTP for the signup process ${generateOTP}. Thanks from Innocent Team.`
             }
             await this.mailer.setUp();
             await this.mailer.sentMail(receiverInfo.to, receiverInfo.subject, receiverInfo.text); // otp will be sent to the registered email address
@@ -76,37 +75,38 @@ export class AdminService {
 
     // (test passed)
     async adminVerification(otp) {
-        if (!otp) throw new CustomError("Invalid otp - backend", 400);
+        if (!otp || typeof otp !== 'string') throw new CustomError("Invalid otp - backend", 400);
         try {
             if (otp !== this.otp) throw new CustomError("Wrong otp", 409);
             const hashPassword = await bcrypt.hash(this.adminDetails.password, 10); // encrypt the password using bcryt
 
-            // Generate JWT after successful signup
-            const token = await this.generateToken({ adminName: this.adminDetails.adminName }); // using the adminName as the  token for authorization
-            const refreshToken = await this.generateRefreshToken({ adminName: this.adminDetails.adminName });
-            console.log("Token--->", token);
-
-            const account = await AdminModel.create({ ...this.adminDetails, password: hashPassword, refreshToken }) // create an admin account with adminDetails(using admin model)
+            const account = await AdminModel.create({ ...this.adminDetails, password: hashPassword }) // create an admin account with adminDetails(using admin model)
             if (!account) throw new CustomError("Account cannot be created! - backend", 500); // if the account cannot be created, throw an error
 
-            // track the time of an account creation
-            const timestamp = new Date().toLocaleString();
+            // Generate JWT after successful signup
+            const token = await this.generateToken({ adminId: account._id }); //(primary token)  // using the admin_id as the token for authorization
+            const refreshToken = await this.generateRefreshToken({ adminId: account._id });
+            console.log("Primary token backend--->", token);
+            console.log("Refresh token backend--->", refreshToken);
+
+            // updating the account with the refreshToken
+            account.refreshToken = refreshToken;
+            await account.save();
+
+            const timestamp = new Date().toLocaleString(); // track the time of an account creation
 
             const receiverInfo = {
-                to: this.adminDetails.adminEmail,
+                to: this.adminDetails.email,
                 subject: "Successfull sign up!",
-                text: `Thanks ${this.adminDetails.adminName} for choosing Innocent Restaurant. From Innocent Team.`
+                text: `Thanks ${this.adminDetails.name} for choosing Innocent Restaurant — From Innocent Team. Signed up on ${timestamp}.`
             }
 
             await this.mailer.setUp();
             await this.mailer.sentMail(receiverInfo.to, receiverInfo.subject, receiverInfo.text);
 
-
-
-            return { message: "Account sign up successfull! - backend", verification: `Verified on ${timestamp}`, token, refreshToken };
+            return { message: "Account sign up successfull! - backend", adminDetails: account, verification: `Verified on ${timestamp}`, token, refreshToken };
         } catch (error) {
             console.log(error);
-
             if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while verifying an OTP - backend", 500);
         }
@@ -121,10 +121,9 @@ export class AdminService {
      * 6. Added a timestamp to track the time of an account signIn
      * 7. Finally, return the signedIn account's details along with the timstamp
      */
-    async adminSignIn(adminDetails) {//{adminDetails} as req.body
-        if (!adminDetails || typeof adminDetails !== 'object') {
-            throw new CustomError("All fields required! - backend", 400);
-        }
+    async adminSignIn(adminDetails) {
+        if (!adminDetails || typeof adminDetails !== 'object') throw new CustomError("All fields required! - backend", 400);
+
         try {
             // have to use .select("+password") since, 'select:false' in database
             const account = await AdminModel.findOne({ adminEmail: adminDetails.adminEmail }).select("+password");
@@ -139,8 +138,8 @@ export class AdminService {
 
             const message = `Signed in successfull, ${account.adminName}.`
 
-            const token = await this.generateToken({ adminName: account.adminName }); // using the adminName as the token for authorization
-            const refreshToken = await this.generateRefreshToken({ adminName: account.adminName });
+            const token = await this.generateToken({ adminId: account._id }); // using the adminName as the token for authorization
+            const refreshToken = await this.generateRefreshToken({ adminId: account._id });
 
             return { message, signInAt: timestamp, token, refreshToken };
         } catch (error) {
@@ -149,7 +148,7 @@ export class AdminService {
         }
     }
 
-    async adminLogOut(adminToken) {
+    async adminLogOut(adminToken) { // add email and password validating codes
         if (!adminToken) throw new CustomError("Invalid token - backend", 400);
         try {
             return { message: "Logout successfully! - backend" };
@@ -268,9 +267,10 @@ export class AdminService {
         }
     }
 
-    async fetchOrderDetails(adminName) {
-        if (!adminName || typeof adminName !== 'string') throw new CustomError("Invalid admin name (unauthorized) - backend", 400);
+    async fetchOrderDetails(adminId) {
+        if (!adminId || !mongoose.Types.ObjectId.isValid(adminId)) throw new CustomError("Invalid admin (unauthorized) - backend", 400);
         try {
+            const adminName = await AdminModel.findById(adminId).select("name");
             const orders = await OrderDetails.find();
             if (!orders) throw new CustomError("Orders cannot be fetch! - backend", 500);
             return { message: `Order details fetched by admin- ${adminName} - backend`, orders };
