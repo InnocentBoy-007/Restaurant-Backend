@@ -17,7 +17,7 @@ route.get("/user/details", fetchClientDetails);
 route.delete("/user/logout", clientLogOut);
 route.get("/user/orders/:clientEmail", clientAuthMiddleware, trackOrderDetails); // haven't create a UI for this API
 route.post("/user/cart/add/:productId", addToCart);
-route.delete("/user/cart/remove/:productId", clientAuthMiddleware, removeFromCart);
+route.delete("/user/cart/remove/:productId", removeFromCart);
 route.get("/user/cart/products", fetchProductsFromCart);
 route.post("/user/products/placeorder/:productId", placeOrder);
 route.delete("/user/products/cancelorder/:orderId", cancelOrder);

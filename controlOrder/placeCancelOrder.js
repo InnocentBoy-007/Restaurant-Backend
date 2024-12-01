@@ -85,10 +85,16 @@ export const addToCart = async (req, res) => {
 
 // test passed
 export const removeFromCart = async (req, res) => {
-    // req.client.clientToken; // there is no use for the token here
+    const authHeader = req.headers['authorization'];
+    const token = authHeader.split(" ")[1];
+    if (!token || token == 'null') throw new CustomError("Invalid token - backend", 401);
+
     const { productId } = req.params;
     try {
-        const response = await orderService.removeProductFromCart(productId);
+        const verifyToken = jwt.verify(token, process.env.JWT_SECRET);
+        const clientId = verifyToken.clientId;
+
+        const response = await orderService.removeProductFromCart(productId, clientId);
         return res.status(200).json(response);
     } catch (error) {
         console.log(error);

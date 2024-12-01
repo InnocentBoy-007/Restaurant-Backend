@@ -23,7 +23,7 @@ export const generateBackUpJWT = async (req, res) => {
 
         const payload = req.client; // fetching the previous payload
 
-        const token = jwt.sign({ payload }, process.env.JWT_SECRET, { expiresIn: '15s' }); // need testing
+        const token = jwt.sign({ payload }, process.env.JWT_SECRET, { expiresIn: '15m' }); // need testing
         console.log("New token generated --->", token);
 
         return res.status(200).json(token);
@@ -64,7 +64,7 @@ export const adminGenerateBackUpJWT = async (req, res) => {
 
         if (adminToken !== getTokenFromDB) throw new CustomError("Incorrect token! New token generation failed! - backend", 500);
 
-        const token = jwt.sign({ adminId }, process.env.JWT_SECRET, { expiresIn: '15s' }); // the payload contains the adminId
+        const token = jwt.sign({ adminId }, process.env.JWT_SECRET, { expiresIn: '15m' }); // the payload contains the adminId
         console.log("New token generated --->", token);
 
         return res.status(200).json(token);

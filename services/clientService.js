@@ -3,7 +3,7 @@ import bcrypt from 'bcrypt'
 import Products from '../model/productModel.js'
 import OrderDetails from "../model/orderDetailsModel.js";
 import { CustomError } from "../components/CustomError.js";
-import Otp from "../model/otp.js";
+import Otp from "../model/otp.js"; // for future use
 import { SentMail } from "../components/SentMail.js";
 import Cart from '../model/cardModel.js'
 import jwt from 'jsonwebtoken'
@@ -18,7 +18,7 @@ export class OrderService {
     }
 
     async generateToken(payload) {
-        return jwt.sign(payload, process.env.JWT_SECRET, { 'expiresIn': '15s' }); // it's working
+        return jwt.sign(payload, process.env.JWT_SECRET, { 'expiresIn': '15m' }); // it's working
     }
 
     async generateRefreshToken(payload) {
@@ -167,11 +167,15 @@ export class OrderService {
     }
 
     // test passed
-    async removeProductFromCart(productId) {
+    async removeProductFromCart(productId, clientId) {
         if (!productId || !mongoose.Types.ObjectId.isValid(productId)) throw new CustomError("Invalid product Id - backend", 400);
+        if (!clientId || !mongoose.Types.ObjectId.isValid(clientId)) throw new CustomError("Invalid clientId - backend", 400);
+
         try {
-            const product = await Cart.findOneAndDelete(productId);
+            const product = await Cart.findOne({ productId, clientId }); // using productId and clientId for validating
             if (!product) throw new CustomError("Product not found! - backend", 404);
+
+            await product.deleteOne();
 
             return { message: `${product.productName} deleted from cart successfully! - backend` }
         } catch (error) {
