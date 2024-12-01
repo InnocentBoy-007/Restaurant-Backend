@@ -87,17 +87,17 @@ export class OrderService {
     async clientSignIn(clientDetails) {
         if (!clientDetails || typeof clientDetails !== 'object') throw new CustomError("All fields required!- backend");
         try {
-            const checkClient = await Client.findOne({ email: clientDetails.email }).select("+password"); // using 'email' as a primary key
-            if (!checkClient) throw new CustomError("Account not found! - backend", 404);
+            const isValidClient = await Client.findOne({ email: clientDetails.email }).select("+password"); // using 'email' as a primary key
+            if (!isValidClient) throw new CustomError("Account not found! - backend", 404);
 
-            const isCorrectPassword = await bcrypt.compare(clientDetails.password, checkClient.password);
+            const isCorrectPassword = await bcrypt.compare(clientDetails.password, isValidClient.password);
             if (!isCorrectPassword) throw new CustomError("Wrong password - backend", 401);
 
-            const newClientDetails = await Client.findOne({ name: checkClient.name }); // use this as a payload for jwt since it doesn't select password
+            const newClientDetails = await Client.findOne({ name: isValidClient.name }); // use this as a payload for jwt since it doesn't select password
 
             // adding the refresh token inside the clientDetails
-            const token = await this.generateToken({ clientId: checkClient._id, name: checkClient.name }); // send the newClientDetails(only client name) as a token to be used for order placement in frontend (test pending)
-            const refreshToken = await this.generateRefreshToken({ clientId: checkClient._id }); // refresh token
+            const token = await this.generateToken({ clientId: isValidClient._id, name: isValidClient.name }); // send the newClientDetails(only client name) as a token to be used for order placement in frontend (test pending)
+            const refreshToken = await this.generateRefreshToken({ clientId: isValidClient._id }); // refresh token
 
             this.clientDetails = newClientDetails; // udpate the clientDetails with the latest clientDetails (password not included)
 
@@ -125,13 +125,15 @@ export class OrderService {
     }
 
     // (test passed)
-    async trackOrderDetails(clientEmail) {
-        if (!clientEmail) throw new CustomError("Invalid user email address - backend", 400);
+    async trackOrderDetails(clientId) {
+        if (!clientId || !mongoose.Types.ObjectId.isValid(clientId)) throw new CustomError("Invalid user email address - backend", 400);
         try {
-            const isValidClient = await OrderDetails.find({ orderEmail: clientEmail });
-            if (!isValidClient) throw new CustomError("No orders found! - backend", 404);
-            return { message: "Orders found! - backend", isValidClient };
+            const orderDetails = await OrderDetails.find({ clientId });
+            if (!orderDetails) throw new CustomError("No orders found! - backend", 404);
+            return { message: "Orders found! - backend", orderDetails };
         } catch (error) {
+            console.log(error);
+
             if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while trying to fetch orderDetails - backend", 500);
         }
@@ -203,47 +205,43 @@ export class OrderService {
     }
 
     // (test passed)
-    async placeOrder(productId, clientDetails) { // send the request body along with the same phone number
-        /**
-         * Properties needed in clientDetails
-         * 1. clientDetails.PhoneNo
-         * 2. clientDetails.orderName
-         * 3. clientDetails.orderQuantity
-         * 4. clientDetails.orderAddress
-         * 5. clientDetails.productId
-         * 6. clientDetails.orderEmail
-         */
+    async placeOrder(clientId, orderDetails) {
+        if (!clientId || !mongoose.Types.ObjectId.isValid(clientId)) throw new CustomError("Invalid clientId - backend", 401);
+        if (!orderDetails || typeof orderDetails !== 'object') throw new CustomError("Please enter a valid information! - backend", 400);
+        const productId = orderDetails.productId;
+        const productQuantity = orderDetails.productQuantity
         if (!productId || !mongoose.Types.ObjectId.isValid(productId)) throw new CustomError("Please enter a valid productId! - backend", 400);
-        if (!clientDetails || typeof clientDetails !== 'object') throw new CustomError("Please enter a valid information! - backend", 400);
-        // Check for specific fields in clientDetails
-        // const requiredFields = [
-        //     { key: 'orderName', message: 'Wrong name' },
-        //     { key: 'orderPhoneNo', message: 'Wrong phoneNo' },
-        //     { key: 'orderEmail', message: 'Wrong email' },
-        //     { key: 'orderAddress', message: 'Wrong address' },
-        //     { key: 'orderQuantity', message: 'Wrong quantity' }
-        // ];
-
-        // for (const field of requiredFields) {
-        //     if (!clientDetails[field.key]) {
-        //         throw new CustomError(field.message, 400);
-        //     }
-        // }
         try {
-            const product = await Products.findById(productId);
-            if (!product) throw new CustomError("Cannot find the product! - backend", 404);
-            this.product = product;
+            const isValidProduct = await Products.findById(productId);
+            if (!isValidProduct) throw new CustomError("Cannot find the product! - backend", 404);
+            this.product = isValidProduct;
 
-            if (clientDetails.orderQuantity > product.productQuantity) throw new CustomError(`Not enough ${product.productName}`, 409); // check the order quantity before the client verification (user experience)
+            const isValidClient = await Client.findById(clientId);
+            if (!isValidClient) throw new CustomError("Unauthorized user! - backend", 409);
 
-            const totalPrice = product.productPrice * clientDetails.orderQuantity;
+            // compare the order product quantity and the existing product quantity. If the order product quantity is more than the existing product quantity, throw an error
+            if (orderDetails.productQuantity > isValidProduct.productQuantity) throw new CustomError(`Not enough ${isValidProduct.productName}`, 409);
 
-            const timestamp = new Date().toLocaleString();
+            const totalPrice = isValidProduct.productPrice * orderDetails.productQuantity;
 
-            await OrderDetails.create({ ...clientDetails, totalPrice, orderProductName: product.productName, productPrice: product.productPrice, orderTime: timestamp }) // save the order details inside the database
+            await OrderDetails.create({
+                clientId: isValidClient._id,
+                clientName: isValidClient.name,
+                email: isValidClient.email,
+                address: isValidClient.address,
+                phoneNo: isValidClient.phoneNo,
+
+                productId: isValidProduct._id,
+                productName: isValidProduct.productName,
+                productPrice: isValidProduct.productPrice,
+                totalPrice,
+                productQuantity,
+
+                orderTime: new Date().toLocaleString()
+            });
 
             return {
-                message: `Order placed successfully!. Please wait a moment untill the placement process is completed and the order is being dispatched. Order placed at ${timestamp}`,
+                message: `Order placed successfully! Please wait a moment untill the placement process is completed and the order is being dispatched.`,
             }
         } catch (error) {
             console.log(error); // debugging
@@ -282,11 +280,13 @@ export class OrderService {
     async orderConfirmation(orderId) { // clientConfirmation has to be either 'true' or 'false'
         if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) throw new CustomError("Invalid orderId - backend", 400);
         try {
-            const confirmation = await OrderDetails.findByIdAndUpdate(orderId,
-                { receivedByClient: true }, // boolean value
-                { new: true }
-            );
-            if (!confirmation) throw new Error("Order not found! - backend", 404);
+            const isValidOrderId = await OrderDetails.findById(orderId);
+            if (!isValidOrderId) throw new Error("Order not found! - backend", 404);
+
+            const update = isValidOrderId.receivedByClient = true;
+            if (!update) throw new CustomError("Update failed! - backend", 500);
+
+            await isValidOrderId.save();
 
             return { message: "Product received by client! - backend" };
 

@@ -55,10 +55,13 @@ export const clientLogOut = async (req, res) => {
 
 // (test passed)
 export const trackOrderDetails = async (req, res) => {
-    req.client.clientToken;
-    const { clientEmail } = req.params;
+    const authHeader = req.headers['authorization'];
+    const token = authHeader.split(' ')[1];
+    if (!token || token == null) throw new CustomError("Invalid token - backend", 401);
     try {
-        const response = await orderService.trackOrderDetails(clientEmail);
+        const verifyToken = jwt.verify(token, process.env.JWT_SECRET);
+        const clientId = verifyToken.clientId;
+        const response = await orderService.trackOrderDetails(clientId);
         return res.status(200).json(response);
     } catch (error) {
         if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
@@ -87,7 +90,7 @@ export const addToCart = async (req, res) => {
 export const removeFromCart = async (req, res) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader.split(" ")[1];
-    if (!token || token == 'null') throw new CustomError("Invalid token - backend", 401);
+    if (!token || token == null) throw new CustomError("Invalid token - backend", 401);
 
     const { productId } = req.params;
     try {
@@ -122,11 +125,17 @@ export const fetchProductsFromCart = async (req, res) => {
 
 // (test passed)
 export const placeOrder = async (req, res) => {
-    const { productId } = req.params;
-    const { clientDetails } = req.body;
+    const authHeader = req.headers['authorization'];
+    const token = authHeader.split(' ')[1];
+    if (!token) return res.status(401).json({ message: "Invalid token" });
+
+    const { orderDetails } = req.body;
 
     try {
-        const response = await orderService.placeOrder(productId, clientDetails);
+        const verifyToken = jwt.verify(token, process.env.JWT_SECRET);
+        const clientId = verifyToken.clientId;
+
+        const response = await orderService.placeOrder(clientId, orderDetails);
         return res.status(200).json(response)
 
     } catch (error) {
@@ -148,8 +157,15 @@ export const cancelOrder = async (req, res) => {
 
 // (test passed)
 export const orderConfirmation = async (req, res) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader.split(' ')[1];
+    if (!token || token === null) throw new CustomError("Invalid token", 401);
+
     const { orderId } = req.params;
     try {
+        const verifyToken = jwt.verify(token, process.env.JWT_SECRET);
+        if (!verifyToken) throw new CustomError("Token verification process failed! - backend", 409);
+
         const response = await orderService.orderConfirmation(orderId);
         return res.status(200).json(response);
     } catch (error) {

@@ -23,7 +23,7 @@ export class AdminService {
     }
 
     async generateToken(payload) {
-        return jwt.sign(payload, process.env.JWT_SECRET, { 'expiresIn': '15s' });
+        return jwt.sign(payload, process.env.JWT_SECRET, { 'expiresIn': '15m' });
     }
 
     async generateRefreshToken(payload) {
@@ -196,49 +196,43 @@ export class AdminService {
         }
     }
 
-    /**
-     * 1. Validate the orderId first (throws a custom error if it goes wrong)
-     * 2. Find and update the orderDetails using orderId, updates the default status with 'accepted'
-     * 3. If the orderDetails is not found, throw a custom error
-     * 4. Return the updated orderDetails
-     */
-    async adminAcceptOrder(orderId, admin) { // (test passed)
-        if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) throw new CustomError("Invalid Id - backend", 400);
-        if (!admin) throw new CustomError("Invalid admin! - backend", 400);
+
+    async adminAcceptOrder(orderId, productId, adminId) { // (test passed)
+        if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) throw new CustomError("Invalid order Id - backend", 400);
+        if (!productId || !mongoose.Types.ObjectId.isValid(productId)) throw new CustomError("Invalid product Id - backend", 400);
+        if (!adminId) throw new CustomError("Invalid admin Id! - backend", 400);
         try {
+            const isValidOrder = await OrderDetails.findById(orderId);
+            if (!isValidOrder) throw new CustomError("Order not found! - backend", 404);
 
-            // track the time of the order acception
-            const timestamp = new Date().toLocaleString();
+            const isValidProduct = await Products.findById(productId);
+            if (!isValidProduct) throw new CustomError("Product not found! - backend", 404);
 
-            // (test passed)
-            const orderDetails = await OrderDetails.findById(orderId);
-            const producDetails = await Products.findOne({ productName: orderDetails.orderProductName });
-            if (producDetails) {
-                producDetails.productQuantity -= orderDetails.orderQuantity;
-                producDetails.save();
-            }
+            const isValidAdmin = await AdminModel.findById(adminId);
+            if (!isValidAdmin) throw new CustomError("Unauthorized admin! - backend", 409);
 
-            // It is more conveniet to use {new:true} instead of await order.save() when using .findbyIdAndUpdate
-            const order = await OrderDetails.findByIdAndUpdate(orderId,
-                {
-                    acceptedByAdmin: 'accepted',
-                    orderDispatchedTime: timestamp,
-                    orderDispatchedBy: admin
-                },
-                { new: true } // Return the updated document
-            );
+            const alterProductQuantity = isValidProduct.productQuantity -= isValidOrder.productQuantity;
+            if (!alterProductQuantity) throw new CustomError("An error occured while trying to alter product Quantity - backend", 500);
+            await isValidProduct.save();
+
+            isValidOrder.orderDispatchedTime = new Date().toLocaleString();
+            isValidOrder.acceptedByAdmin = 'accepted';
+            isValidOrder.orderDispatchedBy = isValidAdmin.name;
+            await isValidOrder.save();
 
             const mailInfo = {
-                to: order.orderEmail,
+                to: isValidOrder.email,
                 subject: 'Order Accepted',
-                text: `Thanks, ${order.orderName} for choosing us and ordering ${order.orderQuantity} ${order.orderProductName}. Please order again. From Innocent Team.`
+                text: `Thanks, ${isValidOrder.clientName} for choosing us and ordering ${isValidOrder.productQuantity} ${isValidOrder.productName}. Please order again. From Innocent Team.`
             }
 
             await this.mailer.setUp();
             await this.mailer.sentMail(mailInfo.to, mailInfo.subject, mailInfo.text);
 
-            return order;
+            return { message: "Order accepted succesfully! - backend" };
         } catch (error) {
+            console.log(error);
+
             if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while accepting an order - backend", 500);
         }

@@ -15,13 +15,13 @@ route.post("/user/signup/verify", clientSignUpVerification);
 route.post("/user/signin", clientSignIn);
 route.get("/user/details", fetchClientDetails);
 route.delete("/user/logout", clientLogOut);
-route.get("/user/orders/:clientEmail", clientAuthMiddleware, trackOrderDetails); // haven't create a UI for this API
+route.get("/user/orders", trackOrderDetails); // haven't create a UI for this API
 route.post("/user/cart/add/:productId", addToCart);
 route.delete("/user/cart/remove/:productId", removeFromCart);
 route.get("/user/cart/products", fetchProductsFromCart);
-route.post("/user/products/placeorder/:productId", placeOrder);
+route.post("/user/products/placeorder", placeOrder);
 route.delete("/user/products/cancelorder/:orderId", cancelOrder);
-route.patch("/user/confirmorder/:orderId", orderConfirmation);
+route.post("/user/order/confirm/:orderId", orderConfirmation);
 
 route.post("/user/refresh-token/:clientId", generateBackUpJWT); // to generate a new refreshed token
 route.post("/admin/refresh-token", adminGenerateBackUpJWT); // to generate a new refreshed token for admin
@@ -32,8 +32,8 @@ route.patch("/updateProduct/:id", updateProduct);
 route.delete("/deleteProduct/:id", deleteProduct);
 
 
-route.patch("/admin/orders/accept/:orderId/:admin", adminAuthMiddleware, acceptOrder);
-route.delete("/admin/orders/reject/:orderId/:admin", adminAuthMiddleware, rejectOrder);
+route.post("/admin/orders/accept/:orderId/:productId", acceptOrder);
+route.delete("/admin/orders/reject/:orderId", rejectOrder);
 route.get("/admin/orders/:adminId", fetchOrders);
 
 
