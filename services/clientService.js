@@ -66,7 +66,7 @@ export class OrderService {
             const createClient = await Client.create({ ...this.clientDetails, password: hashPassword, signUpAt: new Date().toLocaleString() }); // adding the refresh token as well for future use
             if (!createClient) throw new CustomError("Account cannot be created! - backend", 500);
 
-            const token = await this.generateToken({ clientId: createClient._id }); // send the clientDetails as a token to be used for order placement in frontend
+            const token = await this.generateToken({ clientId: createClient._id, name: createClient.name }); // send the clientDetails as a token to be used for order placement in frontend
             const refreshToken = await this.generateRefreshToken({ clientId: createClient._id }); // refresh token
 
             createClient.refreshToken = refreshToken; // update the refresh token
@@ -189,12 +189,15 @@ export class OrderService {
 
     // test passed in postman(partially tested - passed)
     async fetchProductsFromCart(clientId) { // use token for authorization
-        if (!clientId || !mongoose.Types.ObjectId.isValid(clientId)) throw new CustomError("Invalid clientID - backend", 400);
+        if (!clientId || !mongoose.Types.ObjectId.isValid(clientId)) throw new CustomError("Invalid clientID - backend", 401);
         try {
-            const cartDetails = await Cart.find({ clientId: clientId });
-            if (!cartDetails) throw new CustomError("No items inside the cart - backend", 404);
+            const cartDetails = await Cart.find({ clientId });
 
-            // if (clientId !== cartDetails[0].clientId.toString()) throw new CustomError("Incorrect clientId - backend", 409); // don't need to add this validation
+            if (!cartDetails) throw new CustomError("An unexpected error occured while fetching order details! - backend", 401);
+
+            if (cartDetails.length === 0) {
+                return { message: "No items inside the cart! - backend", cartDetails };
+            }
 
             return { message: "Product found inside the cart! - backend", cartDetails };
         } catch (error) {

@@ -18,17 +18,24 @@ export const acceptOrder = async (req, res) => {
         const response = await adminService.adminAcceptOrder(orderId, productId, adminId);
 
         // return the response along with the order time and the dispatched time
-        return res.status(200).json({ message: "Order has been dispatched! - backend", response })
+        return res.status(200).json(response);
     } catch (error) {
         if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
     }
 }
 
 export const rejectOrder = async (req, res) => {
-    const { orderId, admin } = req.params;
+    const authHeader = req.headers['authorization'];
+    const token = authHeader.split(' ')[1];
+    if (!token || token == null) throw new CustomError("Invlid token - backend", 401);
+    const { orderId } = req.params;
     try {
-        const response = await adminService.adminRejectOrder(orderId, admin);
-        return res.status(200).json({ response })
+        const verifyToken = jwt.verify(token, process.env.JWT_SECRET);
+        const adminId = verifyToken.adminId;
+
+        const response = await adminService.adminRejectOrder(orderId, adminId);
+
+        return res.status(200).json(response)
     } catch (error) {
         if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
     }

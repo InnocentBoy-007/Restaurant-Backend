@@ -12,7 +12,7 @@ export const adminSignUp = async (req, res) => {
     try {
         const response = await adminService.adminSignUp(adminDetails); // Calling the instance method, adminSignUp
 
-        return res.status(201).json({ message: "Please enter the OTP to complete the signup process - backend", response })
+        return res.status(201).json(response);
     } catch (error) {
         if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
     }
