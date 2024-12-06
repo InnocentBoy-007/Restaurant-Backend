@@ -6,16 +6,10 @@ const adminService = new AdminService();
 
 // acceptOrder(test successfull)
 export const acceptOrder = async (req, res) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader.split(' ')[1];
-    if (!token || token === null) throw new CustomError("Invalid token! - backend", 401);
-
-    const { orderId, productId } = req.params;
+    const adminId = req.adminId;
+    const { orderId } = req.params;
     try {
-        const verifyToken = jwt.verify(token, process.env.JWT_SECRET);
-        const adminId = verifyToken.adminId;
-
-        const response = await adminService.adminAcceptOrder(orderId, productId, adminId);
+        const response = await adminService.adminAcceptOrder(orderId, adminId);
 
         // return the response along with the order time and the dispatched time
         return res.status(200).json(response);
@@ -25,14 +19,9 @@ export const acceptOrder = async (req, res) => {
 }
 
 export const rejectOrder = async (req, res) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader.split(' ')[1];
-    if (!token || token == null) throw new CustomError("Invlid token - backend", 401);
+    const adminId = req.adminId;
     const { orderId } = req.params;
     try {
-        const verifyToken = jwt.verify(token, process.env.JWT_SECRET);
-        const adminId = verifyToken.adminId;
-
         const response = await adminService.adminRejectOrder(orderId, adminId);
 
         return res.status(200).json(response)
@@ -42,7 +31,7 @@ export const rejectOrder = async (req, res) => {
 }
 
 export const fetchOrders = async (req, res) => {
-    const { adminId } = req.params; // adminId from refreshToken
+    const adminId = req.adminId; // adminId from refreshToken
 
     try {
         const response = await adminService.fetchOrderDetails(adminId);

@@ -1,21 +1,20 @@
 import jwt from 'jsonwebtoken';
 
 export const adminAuthMiddleware = (req, res, next) => {
-    // const adminToken = req.cookies.adminToken; // since I'm using cookies
     const authHeader = req.headers['authorization'];
     const adminToken = authHeader && authHeader.split(' ')[1];
 
-    if (adminToken === null) return res.status(401).json({ message: "Token is null! - auth backend" });
     if (!adminToken) return res.status(401).json({ message: 'Access denied. No admin token provided.' });
     try {
-        const adminTokenDecoded = jwt.verify(adminToken, process.env.JWT_SECRET);
-        req.admin = adminTokenDecoded;
+        const verifyTokenAndDecoding = jwt.verify(adminToken, process.env.JWT_SECRET);
+        req.adminId = verifyTokenAndDecoding.adminId;
 
         next();
     } catch (err) {
-        console.log("Error in admin auth middleware", err);
-
-        res.status(400).json({ message: 'Invalid token.' });
+        console.error("Error in admin auth middleware", err.message);
+        if (err.name == 'JsonWebTokenError') return res.status(409).json({ message: "Invalid token! Authorization denied! - backend" });
+        if (err.name == 'TokenExpiredError') return res.status(401).json({ message: "Token expired! Authrorization denied! - backend" })
+        return res.status(500).json({ message: "An unexpected error occured while trying to verify the token - backend" });
     }
 };
 

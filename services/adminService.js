@@ -24,7 +24,7 @@ export class AdminService {
     }
 
     async generateToken(payload) {
-        return jwt.sign(payload, process.env.JWT_SECRET, { 'expiresIn': '15m' });
+        return jwt.sign(payload, process.env.JWT_SECRET, { 'expiresIn': '50m' });
     }
 
     async generateRefreshToken(payload) {
@@ -88,7 +88,7 @@ export class AdminService {
             await this.mailer.setUp();
             await this.mailer.sentMail(receiverInfo.to, receiverInfo.subject, receiverInfo.text);
 
-            let title = (account.gender === 'Male') ? 'Mr' : 'Ms';
+            let title = (account.gender === 'male') ? 'Mr' : 'Ms';
 
             return { message: `account sign up successfully! Welcome to Coffee, ${title}. ${account.name} - backend`, verification: `Verified on ${timestamp}`, token, refreshToken };
         } catch (error) {
@@ -171,33 +171,33 @@ export class AdminService {
 
 
     // (test passed)
-    async adminAcceptOrder(orderId, productId, adminId) {
+    async adminAcceptOrder(orderId, adminId) {
         if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) throw new CustomError("Invalid order Id - backend", 400);
-        if (!productId || !mongoose.Types.ObjectId.isValid(productId)) throw new CustomError("Invalid product Id - backend", 400);
         if (!adminId) throw new CustomError("Invalid admin Id! - backend", 400);
         try {
             const isValidOrder = await OrderDetails.findById(orderId);
             if (!isValidOrder) throw new CustomError("Order not found! - backend", 404);
 
-            const isValidProduct = await Products.findById(productId);
-            if (!isValidProduct) throw new CustomError("Product not found! - backend", 404);
-
             const isAdminDuplicate = await AdminModel.findById(adminId);
             if (!isAdminDuplicate) throw new CustomError("Unauthorized admin! - backend", 409);
+
+            const isValidProduct = await Products.findById(isValidOrder.productId);
 
             const alterProductQuantity = isValidProduct.productQuantity -= isValidOrder.productQuantity;
             if (!alterProductQuantity) throw new CustomError("An error occured while trying to alter product Quantity - backend", 500);
             await isValidProduct.save();
 
-            isValidOrder.orderDispatchedTime = new Date().toLocaleString();
-            isValidOrder.acceptedByAdmin = 'accepted';
-            isValidOrder.orderDispatchedBy = isAdminDuplicate.name;
-            await isValidOrder.save();
+            if (isValidOrder) {
+                isValidOrder.orderDispatchedTime = new Date().toLocaleString();
+                isValidOrder.acceptedByAdmin = 'accepted';
+                isValidOrder.orderDispatchedBy = isAdminDuplicate.name;
+                await isValidOrder.save();
+            }
 
             const mailInfo = {
                 to: isValidOrder.email,
                 subject: 'Order Accepted!',
-                text: `Thanks, ${isValidOrder.clientName} for choosing us and ordering ${isValidOrder.productQuantity} ${isValidOrder.productName}. Please order again. From Innocent Team.`
+                text: `Thanks, ${isValidOrder.clientName} for choosing us and ordering ${isValidOrder.productQuantity} ${isValidOrder.productName}. Please order again. From Innocent Team. Order dispatched at ${isValidOrder.orderDispatchedTime}.`
             }
 
             await this.mailer.setUp();
@@ -218,10 +218,11 @@ export class AdminService {
      * 3. If the orderDetails is not found, throws a custom error
      * 4. Returns the deletion message if the orderDetails deletion is successfull
      */
+    // (test passed)
     async adminRejectOrder(orderId, adminId) {
         try {
             if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) throw new CustomError("Invalid order Id", 401);
-            if (!adminId || !mongoose.Types.ObjectId.isValid(adminId)) throw new CustomError("Unauthorized admin - backend", 401); // this comes from authorization header (from controller section)
+            if (!adminId || !mongoose.Types.ObjectId.isValid(adminId)) throw new CustomError("Unauthorized admin - backend", 401);
 
             const isValidOrder = await OrderDetails.findById(orderId);
             if (!isValidOrder) throw new CustomError("Order not found!", 404);
@@ -231,7 +232,7 @@ export class AdminService {
 
             const isValidClient = await ClientModel.findById(isValidOrder.clientId);
             if (!isValidClient) throw new CustomError("Client not found! - backend", 404);
-            const title = isValidClient.gender == 'Male' ? 'Mr' : 'Ms';
+            const title = (isValidClient.gender == 'male') ? 'Mr' : 'Ms';
 
             await isValidOrder.deleteOne();
 
@@ -256,10 +257,13 @@ export class AdminService {
     async fetchOrderDetails(adminId) {
         if (!adminId || !mongoose.Types.ObjectId.isValid(adminId)) throw new CustomError("Invalid admin (unauthorized) - backend", 400);
         try {
-            const adminName = await AdminModel.findById(adminId).select("name");
+            const isValidAdmin = await AdminModel.findById(adminId);
+            if (!isValidAdmin) throw new CustomError("Unauthorized admin - backend", 409);
+
             const orders = await OrderDetails.find();
             if (!orders) throw new CustomError("Orders cannot be fetch! - backend", 500);
-            return { message: `Order details fetched by admin- ${adminName} - backend`, orders };
+
+            return { orders };
         } catch (error) {
             if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while fetching order details! - backend", 500);

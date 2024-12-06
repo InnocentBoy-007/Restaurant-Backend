@@ -2,7 +2,7 @@ import express from 'express'
 import { placeOrder, cancelOrder, orderConfirmation, addToCart, removeFromCart, trackOrderDetails, fetchProductsFromCart, clientSignUp, clientSignUpVerification, clientSignIn, clientLogOut } from './controlOrder/placeCancelOrder.js';
 import { fetchProduct, addProduct, updateProduct, deleteProduct } from './adminPanel/adminHandleProducts.js';
 import { acceptOrder, rejectOrder, fetchOrders } from './adminPanel/adminAcceptRejectOrder.js';
-import { adminSignUp, adminSignIn, adminVerification, adminLogOut, fetchAdmins, deleteAdmin, updateAdmin } from './adminPanel/adminSignUpSignIn.js';
+import { adminSignUp, adminSignIn, adminVerification, adminLogOut, deleteAdmin, updateAdmin } from './adminPanel/adminSignUpSignIn.js';
 import { adminAuthMiddleware, clientAuthMiddleware } from './components/AuthMiddleware.js';
 import { generateBackUpJWT, adminGenerateBackUpJWT } from './components/GenerateBackupJWT.js';
 import { fetchAdminDetails, fetchClientDetails } from './components/FetchUserDetails.js';
@@ -32,17 +32,16 @@ route.patch("/updateProduct/:id", updateProduct);
 route.delete("/deleteProduct/:id", deleteProduct);
 
 
-route.post("/admin/orders/accept/:orderId/:productId", acceptOrder);
-route.delete("/admin/orders/reject/:orderId", rejectOrder);
-route.get("/admin/orders/:adminId", fetchOrders);
+route.post("/admin/orders/accept/:orderId/:productId", adminAuthMiddleware, acceptOrder);
+route.delete("/admin/orders/reject/:orderId", adminAuthMiddleware, rejectOrder);
+route.get("/admin/orders", adminAuthMiddleware, fetchOrders);
 
 
 route.post("/admin/signup", adminSignUp);
 route.post("/admin/verify", adminVerification);
-route.get("/admin/adminDetails", fetchAdminDetails);
-route.delete("/admin/logout", adminLogOut);
-route.get("/admin/details", fetchAdmins);
 route.post("/admin/signin", adminSignIn);
+route.get("/admin/details", adminAuthMiddleware, fetchAdminDetails);
+route.delete("/admin/logout", adminLogOut);
 route.delete("/admin/details/delete/:adminId", deleteAdmin);
 route.patch("/admin/details/update/:adminId", updateAdmin);
 

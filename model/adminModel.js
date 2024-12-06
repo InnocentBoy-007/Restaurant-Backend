@@ -5,9 +5,10 @@ const adminSchema = new mongoose.Schema({
     password: { type: String, required: true, select: false },
     phoneNo: { type: String, required: true },
     email: { type: String, required: true },
+    address: { type: String, required: true },
     gender: {
-        type: String,
-        required: true
+        type: String, required: true,
+        enum: ['male', 'female']
     },
     age: {
         type: Number,
@@ -22,9 +23,6 @@ const adminSchema = new mongoose.Schema({
     updatedAtLocaleTime: {
         type: String,
         default: () => new Date().toLocaleString()
-    },
-    refreshToken: {
-        type: String, select: false
     }
 }, { timestamps: true });
 
