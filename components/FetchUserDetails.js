@@ -1,11 +1,12 @@
 import AdminModel from '../model/adminModel.js'
 import ClientModel from '../model/clientModel.js';
 import jwt from 'jsonwebtoken'
+import bcrypt from 'bcrypt'
 
 export const fetchAdminDetails = async (req, res) => {
     const adminId = req.adminId;
     try {
-        const adminDetails = await AdminModel.findById(adminId);
+        const adminDetails = await AdminModel.findById(adminId).select("+password");
         if (!adminDetails) return res.status(404).json({ message: "Admin not found! - backend" });
 
         return res.status(200).json({ adminDetails }); // can send the full adminDetails as well

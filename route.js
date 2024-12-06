@@ -32,17 +32,17 @@ route.patch("/updateProduct/:id", updateProduct);
 route.delete("/deleteProduct/:id", deleteProduct);
 
 
-route.post("/admin/orders/accept/:orderId/:productId", adminAuthMiddleware, acceptOrder);
-route.delete("/admin/orders/reject/:orderId", adminAuthMiddleware, rejectOrder);
-route.get("/admin/orders", adminAuthMiddleware, fetchOrders);
+route.post("/admin/orders/accept/:orderId/:productId", adminAuthMiddleware, acceptOrder); // test passed
+route.delete("/admin/orders/reject/:orderId", adminAuthMiddleware, rejectOrder); // test passed
+route.get("/admin/orders", adminAuthMiddleware, fetchOrders); // test passed
 
 
-route.post("/admin/signup", adminSignUp);
-route.post("/admin/verify", adminVerification);
-route.post("/admin/signin", adminSignIn);
-route.get("/admin/details", adminAuthMiddleware, fetchAdminDetails);
-route.delete("/admin/logout", adminLogOut);
-route.delete("/admin/details/delete/:adminId", deleteAdmin);
-route.patch("/admin/details/update/:adminId", updateAdmin);
+route.post("/admin/signup", adminSignUp); // test passed
+route.post("/admin/verify", adminVerification); // test passed
+route.post("/admin/signin", adminSignIn); // test passed
+route.get("/admin/details", adminAuthMiddleware, fetchAdminDetails); // test passed
+route.delete("/admin/logout", adminLogOut); // test passed
+route.delete("/admin/details/delete", adminAuthMiddleware, deleteAdmin); // test passed
+route.patch("/admin/details/update", adminAuthMiddleware, updateAdmin); // test passed
 
 export default route;

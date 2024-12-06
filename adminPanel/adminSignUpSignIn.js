@@ -69,17 +69,17 @@ export const fetchAdmins = async (req, res) => {
 }
 
 export const deleteAdmin = async (req, res) => {
-    const { adminId } = req.param
+    const adminId = req.adminId;
     try {
         await adminService.deleteAdmin(adminId);
-        return res.status(200).json({ messag: "Admin deleted successfully! - backend" });
+        return res.status(200).json({ message: "Admin deleted successfully! - backend" });
     } catch (error) {
         if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
     }
 }
 
 export const updateAdmin = async (req, res) => {
-    const { adminId } = req.params;
+    const adminId = req.adminId;
     const { adminDetails } = req.body;
     try {
         const response = await adminService.updateAdmin(adminId, adminDetails);
