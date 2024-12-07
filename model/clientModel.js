@@ -11,7 +11,6 @@ const clientSchema = new mongoose.Schema({
     phoneNo: { type: String, required: true },
     address: { type: String, required: true },
     signUpAt: { type: String, required: true },
-    refreshToken: { type: String, select: false }
 });
 
 export default mongoose.model("client", clientSchema);

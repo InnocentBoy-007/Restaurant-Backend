@@ -18,7 +18,7 @@ export class OrderService {
     }
 
     async generateToken(payload) {
-        return jwt.sign(payload, process.env.JWT_SECRET, { 'expiresIn': '15m' }); // it's working
+        return jwt.sign(payload, process.env.JWT_SECRET, { 'expiresIn': '1h' }); // it's working
     }
 
     async generateRefreshToken(payload) {
@@ -55,9 +55,8 @@ export class OrderService {
     }
 
     // (test passed)
-    // endpoint ---> 'user/singup/verify'
     async clientSignUpVerification(otp) {
-        if (!otp || typeof otp !== 'string') throw new CustomError("Invalid otp! - backend", 400);
+        if (!otp) throw new CustomError("Invalid otp! - backend", 400);
 
         try {
             if (otp !== this.otp) throw new CustomError("Wrong otp! - backend", 401); // check if the OTP is correct or not
@@ -66,16 +65,16 @@ export class OrderService {
             const createClient = await Client.create({ ...this.clientDetails, password: hashPassword, signUpAt: new Date().toLocaleString() }); // adding the refresh token as well for future use
             if (!createClient) throw new CustomError("Account cannot be created! - backend", 500);
 
-            const token = await this.generateToken({ clientId: createClient._id, name: createClient.name }); // send the clientDetails as a token to be used for order placement in frontend
+            const token = await this.generateToken({ clientId: createClient._id });
             const refreshToken = await this.generateRefreshToken({ clientId: createClient._id }); // refresh token
 
-            createClient.refreshToken = refreshToken; // update the refresh token
-            await createClient.save();
+            // createClient.refreshToken = refreshToken; // update the refresh token
+            // await createClient.save();
 
             this.mailer.setUp();
             this.mailer.sentMail(this.clientDetails.email, "Signup successfully!", `Thanks for signing up, ${this.clientDetails.name}. From Innocent Restaurant`);
 
-            return { message: "Account signup successfully! - backend", createClient, token, refreshToken };
+            return { message: "Account signup successfully! - backend", token, refreshToken };
         } catch (error) {
             console.log(error);
             if (error instanceof CustomError) throw error;
@@ -125,10 +124,10 @@ export class OrderService {
     }
 
     // (test passed)
-    async trackOrderDetails(clientId) {
-        if (!clientId || !mongoose.Types.ObjectId.isValid(clientId)) throw new CustomError("Invalid user email address - backend", 400);
+    async trackOrderDetails(email) {
+        if (!email) throw new CustomError("Invalid email! - backend", 409);
         try {
-            const orderDetails = await OrderDetails.find({ clientId });
+            const orderDetails = await OrderDetails.find({ email });
             if (!orderDetails) throw new CustomError("No orders found! - backend", 404);
             return { message: "Orders found! - backend", orderDetails };
         } catch (error) {
@@ -157,6 +156,7 @@ export class OrderService {
                 productId,
                 productName: product.productName,
                 productPrice: product.productPrice,
+                productQuantity: product.productQuantity,
                 addedTime: new Date().toLocaleString()
             })
 
@@ -280,11 +280,15 @@ export class OrderService {
     }
 
     // method for client ordered product received confirmation (test pending)
-    async orderConfirmation(orderId) { // clientConfirmation has to be either 'true' or 'false'
-        if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) throw new CustomError("Invalid orderId - backend", 400);
+    async orderConfirmation(orderId, email) { // clientConfirmation has to be either 'true' or 'false'
+        if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) throw new CustomError("Invalid orderId - backend", 401);
+
+        if (!email) throw new CustomError("Invalid email! Authorization revoked! - backend", 401);
         try {
             const isValidOrderId = await OrderDetails.findById(orderId);
             if (!isValidOrderId) throw new Error("Order not found! - backend", 404);
+
+            if (email !== isValidOrderId.email) throw new CustomError("Incorrect email! Authorization denied! - backend", 409);
 
             const update = isValidOrderId.receivedByClient = true;
             if (!update) throw new CustomError("Update failed! - backend", 500);
@@ -294,6 +298,7 @@ export class OrderService {
             return { message: "Product received by client! - backend" };
 
         } catch (error) {
+            console.log(error);
             if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while confirming an order - backend", 500);
         }

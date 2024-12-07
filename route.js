@@ -10,26 +10,27 @@ import { fetchAdminDetails, fetchClientDetails } from './components/FetchUserDet
 const route = express.Router();
 
 // *change the routes to RESTful APIs
-route.post("/user/signup", clientSignUp);
-route.post("/user/signup/verify", clientSignUpVerification);
-route.post("/user/signin", clientSignIn);
-route.get("/user/details", fetchClientDetails);
-route.delete("/user/logout", clientLogOut);
-route.get("/user/orders", trackOrderDetails); // haven't create a UI for this API
-route.post("/user/cart/add/:productId", addToCart);
-route.delete("/user/cart/remove/:productId", removeFromCart);
-route.get("/user/cart/products", fetchProductsFromCart);
-route.post("/user/products/placeorder", placeOrder);
-route.delete("/user/products/cancelorder/:orderId", cancelOrder);
-route.post("/user/order/confirm/:orderId", orderConfirmation);
+// add an API for FORGET PASSWORD
+route.post("/user/signup", clientSignUp); // test passed
+route.post("/user/signup/verify", clientSignUpVerification); // test passed
+route.post("/user/signin", clientSignIn); // test passed
+route.get("/user/details", clientAuthMiddleware, fetchClientDetails); // test passed
+route.delete("/user/logout", clientLogOut); // test passed
+route.get("/user/orders/:email", clientAuthMiddleware, trackOrderDetails); // haven't create a UI for this API
+route.post("/user/cart/add/:productId", clientAuthMiddleware, addToCart); // test passed
+route.delete("/user/cart/remove/:productId", clientAuthMiddleware, removeFromCart); // test passed
+route.get("/user/cart/products", clientAuthMiddleware, fetchProductsFromCart); // test passed
+route.post("/user/products/placeorder", clientAuthMiddleware, placeOrder); // test passed
+route.delete("/user/products/cancelorder/:orderId", cancelOrder); // (not yet testing)
+route.post("/user/order/confirm/:orderId/:email", clientAuthMiddleware, orderConfirmation);
 
-route.post("/user/refresh-token/:clientId", generateBackUpJWT); // to generate a new refreshed token
-route.post("/admin/refresh-token", adminGenerateBackUpJWT); // to generate a new refreshed token for admin
+route.post("/user/refresh-token/:clientId", generateBackUpJWT); // to generate a new refreshed token (not yet testing)
+route.post("/admin/refresh-token", adminGenerateBackUpJWT); // to generate a new refreshed token for admin (not yet testing)
 
-route.get("/fetchProduct", fetchProduct);
-route.post("/addProduct", addProduct);
-route.patch("/updateProduct/:id", updateProduct);
-route.delete("/deleteProduct/:id", deleteProduct);
+route.get("/products", fetchProduct); // this should be accessible by both admin and client (client side (test passed) | admin side (not yet testing))
+route.post("/addProduct", addProduct); // (not yet testing)
+route.patch("/updateProduct/:id", updateProduct); // (not yet testing)
+route.delete("/deleteProduct/:id", deleteProduct); // (not yet testing)
 
 
 route.post("/admin/orders/accept/:orderId/:productId", adminAuthMiddleware, acceptOrder); // test passed
