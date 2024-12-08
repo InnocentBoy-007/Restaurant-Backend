@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import Product from '../model/productModel.js'
 import { CustomError } from '../components/CustomError.js';
-import AdminModel from '../model/adminModel.js'
+import AdminModel from '../model/usermodel/adminModel.js'
 
 export class ProductControl {
     async fetchProduct() {

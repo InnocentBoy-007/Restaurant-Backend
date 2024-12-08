@@ -1,12 +1,12 @@
 import mongoose from 'mongoose';
-import AdminModel from '../model/adminModel.js'
+import AdminModel from '../model/usermodel/adminModel.js'
 import OrderDetails from '../model/orderDetailsModel.js'
 import bcrypt from 'bcrypt'
 import { CustomError } from '../components/CustomError.js';
-import { SentMail } from '../components/SentMail.js';
+import { SentMail } from '../components/middlewares/SentMail.js';
 import jwt from 'jsonwebtoken'
 import Products from '../model/productModel.js'
-import ClientModel from '../model/clientModel.js';
+import ClientModel from '../model/usermodel/clientModel.js';
 
 /**
  * Inside AdminService

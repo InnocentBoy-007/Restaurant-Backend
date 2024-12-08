@@ -1,6 +1,6 @@
-import Client from '../model/clientModel.js'
-import Admin from '../model/adminModel.js'
-import { CustomError } from './CustomError.js';
+import Client from '../../model/usermodel/clientModel.js'
+import Admin from '../../model/usermodel/adminModel.js'
+import { CustomError } from '../CustomError.js';
 import jwt from 'jsonwebtoken'
 
 /**

@@ -3,13 +3,16 @@ import { placeOrder, cancelOrder, orderConfirmation, addToCart, removeFromCart, 
 import { fetchProduct, addProduct, updateProduct, deleteProduct } from './adminPanel/adminHandleProducts.js';
 import { acceptOrder, rejectOrder, fetchOrders } from './adminPanel/adminAcceptRejectOrder.js';
 import { adminSignUp, adminSignIn, adminVerification, adminLogOut, deleteAdmin, updateAdmin } from './adminPanel/adminSignUpSignIn.js';
-import { adminAuthMiddleware, clientAuthMiddleware } from './components/AuthMiddleware.js';
-import { generateBackUpJWT, adminGenerateBackUpJWT } from './components/GenerateBackupJWT.js';
+import { adminAuthMiddleware, clientAuthMiddleware } from './components/middlewares/AuthMiddleware.js';
+import { generateBackUpJWT, adminGenerateBackUpJWT } from './components/middlewares/GenerateBackupJWT.js';
 import { fetchAdminDetails, fetchClientDetails } from './components/FetchUserDetails.js';
 
 const route = express.Router();
 
-// *change the routes to RESTful APIs
+/**
+ * use a single database for both client and admin, seperated by roles
+ */
+
 // add an API for FORGET PASSWORD
 route.post("/user/signup", clientSignUp); // test passed
 route.post("/user/signup/verify", clientSignUpVerification); // test passed

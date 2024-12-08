@@ -1,7 +1,7 @@
 import { AdminService } from "../services/adminService.js";
 import { CustomError } from "../components/CustomError.js";
 import jwt from 'jsonwebtoken'
-import AdminModel from '../model/adminModel.js'
+import AdminModel from '../model/usermodel/adminModel.js'
 
 const adminService = new AdminService(); // Creating an instance of AdminService class
 
