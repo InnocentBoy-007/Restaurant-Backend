@@ -2,7 +2,9 @@ import express from 'express'
 import mongoose from "mongoose"; //ODM (Object Data Modeling) library for MongoDB and NodeJs
 import cors from 'cors'
 import dotenv from 'dotenv'
-import route from './route.js';
+import AdminRoute from './routes/adminRoutes.js';
+import ClientRoute from './routes/clientRoutes.js';
+import route from './routes/route.js';
 import cookieParser from 'cookie-parser';
 import { CustomError } from './components/CustomError.js';
 /**
@@ -58,6 +60,8 @@ class ServerSetUp { // This class encapsulates all the logic related to setting 
             })); // enables CORS for the application
 
             app.use("/api", route); // Sets up routing for the API
+            app.use("/api/client", ClientRoute);
+            app.use("/api/admin", AdminRoute);
 
             // Global error handler
             app.use((err, req, res, next) => {
