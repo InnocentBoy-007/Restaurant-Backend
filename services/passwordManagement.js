@@ -1,38 +1,23 @@
-// send OTP to the registered email first
-// verify the OTP
-// enter a new password
-
-import mongoose from "mongoose";
 import ClientModel from '../model/usermodel/clientModel.js'
-import { SentMail } from "../components/middlewares/SentMail.js";
+import { SentMail } from "../components/middlewares/SentMail.js"
+import bcrypt from 'bcrypt'
 
 class ClientPasswordManagement {
     constructor() {
         this.otp = null;
         this.mailer = new SentMail();
-        this.clientId = null;
-    }
-
-    validateClientId(req, res) {
-        const clientId = req.clientId;
-        if (!clientId || !mongoose.Types.ObjectId.isValid(clientId)) {
-            return res.status(401).json({ message: "Invalid clientId! Authorization denied! - backend" });
-        }
-        this.clientId = clientId;
-
-        return true; // return 'true' if the validation is correct
+        this.clientDetails = null;
     }
 
     verifyClient = async (req, res) => {
-        if (!this.validateClientId(req, res)) return;
-
         const { email } = req.body;
         if (!email) return res.status(400).json({ message: "Invalid email! - backend" });
         try {
             const isValidClient = await ClientModel.findById(this.clientId).select("+password");
             if (!isValidClient) return res.status(404).json({ message: "Account not found! - backend" });
+            this.clientDetails = isValidClient; // this contains the password as well
 
-            if (email !== isValidClient.email) return res.status(409).json({ message: "Incorrect email! Authorization denied! - backend" });
+            if (email !== isValidClient.email) return res.status(403).json({ message: "Incorrect email! Authorization denied! - backend" });
 
             const title = (isValidClient.gender === 'male') ? 'Mr' : 'Ms';
 
@@ -57,8 +42,6 @@ class ClientPasswordManagement {
     }
 
     verifyOTP = async (req, res) => {
-        if (!this.validateClientId(req, res)) return;
-
         const { otp } = req.body;
         if (!otp) return res.status(400).json({ message: "Invalid otp! - backend" });
         try {
@@ -71,4 +54,32 @@ class ClientPasswordManagement {
             return res.status(500).json({ message: "An unexpected error occured while trying to verify the OTP! - backend" });
         }
     }
+
+    changePassword = async (req, res) => {
+        const { newPassword } = req.body; // current password and new password (as an object)
+        if (!newPassword) return res.status(400).json({ message: "Invalid password!- backend" });
+        try {
+            const duplicatePassword = await bcrypt.compare(newPassword, this.clientDetails.password); // check if the new password is same as the old password
+            if (duplicatePassword) return res.status(409).json({ message: "You cannot set the old password as the new password! Please try other passwords! - backend" });
+
+            // if the new password !== the old password, update the old password with the new hashed password
+            if (!duplicatePassword) {
+                const hashedPassword = await bcrypt.hash(newPassword, 10);
+                this.clientDetails.password = hashedPassword;
+                await this.clientDetails.save();
+            }
+
+            return res.status(201).json({ message: "New password updated! - backend" });
+        } catch (error) {
+            console.error(error);
+
+            return res.status(500).json({ message: "An unexpected error occured while trying to change the password - backend!" });
+        }
+    }
 }
+
+const passwordManagement = new ClientPasswordManagement();
+
+export const verifyClient = passwordManagement.verifyClient.bind(passwordManagement);
+export const verifyOTP = passwordManagement.verifyOTP.bind(passwordManagement);
+export const changePassword = passwordManagement.changePassword.bind(passwordManagement);
