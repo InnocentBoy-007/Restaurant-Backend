@@ -10,7 +10,7 @@ export class ProductControl {
             // track the time of product addition
             const productAddedOn = new Date().toLocaleString();
 
-            const productAddedByAdmin = await AdminModel.findOne({ adminName: productDetails.productAddedBy }); // check if the admin adding the product exists
+            const productAddedByAdmin = await AdminModel.findOne({ name: productDetails.productAddedBy }); // check if the admin adding the product exists
             if (!productAddedByAdmin) throw new CustomError(`Product cannot be added since ${productDetails.productAddedBy} is not an admin. - backend`, 401);
 
             const duplicateProduct = await Product.findOne({ productName: productDetails.productName });
@@ -75,8 +75,9 @@ export class ProductControl {
 export const fetchProducts = async (req, res) => {
     try {
         const products = await Product.find();
-        if (products.length === 0) throw new CustomError("There are no products in the database! - backend", 404);
-        return { products };
+        if (!products) throw new CustomError("Products cannot be fetch from database! - backend", 500);
+        if (products.length === 0) return res.status(404).json({ message: "There are no products in the database! - backend" });
+        return res.status(200).json({ products });
     } catch (error) {
         console.log("Error while fetching products in product control --->", error);
 
