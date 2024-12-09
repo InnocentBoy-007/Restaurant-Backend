@@ -5,6 +5,7 @@ import { adminSignUp, adminSignIn, adminVerification, adminLogOut, deleteAdmin, 
 import { adminAuthMiddleware } from '../components/middlewares/AuthMiddleware.js';
 import { adminGenerateBackUpJWT } from '../components/middlewares/GenerateBackupJWT.js';
 import { fetchAdminDetails } from '../components/FetchUserDetails.js';
+import { addProduct, updateProduct, deleteProduct } from '../adminPanel/adminHandleProducts.js';
 
 const router = express.Router();
 
@@ -21,5 +22,9 @@ router.get("/details", adminAuthMiddleware, fetchAdminDetails); // test passed
 router.delete("/logout", adminLogOut); // test passed
 router.delete("/details/delete", adminAuthMiddleware, deleteAdmin); // test passed
 router.patch("/details/update", adminAuthMiddleware, updateAdmin); // test passed
+
+router.post("/addProduct", addProduct); // (not yet testing)
+router.patch("/updateProduct/:id", updateProduct); // (not yet testing)
+router.delete("/deleteProduct/:id", deleteProduct); // (not yet testing)
 
 export default router;

@@ -4,17 +4,6 @@ import { CustomError } from '../components/CustomError.js';
 import AdminModel from '../model/usermodel/adminModel.js'
 
 export class ProductControl {
-    async fetchProduct() {
-        try {
-            const product = await Product.find();
-            if (product.length === 0) throw new CustomError("There are no products in the database! - backend", 404);
-            return { product };
-        } catch (error) {
-            if (error instanceof CustomError) throw error;
-            throw new CustomError("An unexpected error occured while fetching products details from the database - backend", 500);
-        }
-    }
-
     async addProduct(productDetails) {
         if (!productDetails || typeof productDetails !== 'object') throw new CustomError("Product details are necessary!", 400);
         try {
@@ -80,5 +69,18 @@ export class ProductControl {
             if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while deleting a product! - backend", 500);
         }
+    }
+}
+
+export const fetchProducts = async (req, res) => {
+    try {
+        const products = await Product.find();
+        if (products.length === 0) throw new CustomError("There are no products in the database! - backend", 404);
+        return { products };
+    } catch (error) {
+        console.log("Error while fetching products in product control --->", error);
+
+        if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
+        return res.status(500).json({ message: "An unexpected error occured while trying to fetch products from the database! - backend" });
     }
 }

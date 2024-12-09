@@ -32,7 +32,7 @@ class ServerSetUp { // This class encapsulates all the logic related to setting 
          * The instance method 'this.connectServer()' will be automatically called when the instance of the dependant class is created
          */
         this.connectServer(); // instance method
-        this.allowedOrigins = [process.env.ORIGIN1, process.env.ORIGIN2]; // allowing multiple origins
+        // this.allowedOrigins = [process.env.ORIGIN1, process.env.ORIGIN2]; // allowing multiple origins
     }
 
     async connectDatabase() {
@@ -88,4 +88,5 @@ class ServerSetUp { // This class encapsulates all the logic related to setting 
  * The constructor method (constructor()) is called when an instance of the class is created. It initializes the instance variables and starts the server setup process by calling this.connectServer().
  */
 
+// directly calling the class
 new ServerSetUp(); // instance of the class ServerSetUp
