@@ -1,6 +1,7 @@
 import ClientModel from '../model/usermodel/clientModel.js'
 import { SentMail } from "../components/middlewares/SentMail.js"
 import bcrypt from 'bcrypt'
+import jwt from 'jsonwebtoken'
 
 class ClientPasswordManagement {
     constructor() {
@@ -13,7 +14,7 @@ class ClientPasswordManagement {
         const { email } = req.body;
         if (!email) return res.status(400).json({ message: "Invalid email! - backend" });
         try {
-            const isValidClient = await ClientModel.findById(this.clientId).select("+password");
+            const isValidClient = await ClientModel.findOne({ email }).select("+password");
             if (!isValidClient) return res.status(404).json({ message: "Account not found! - backend" });
             this.clientDetails = isValidClient; // this contains the password as well
 
@@ -27,13 +28,13 @@ class ClientPasswordManagement {
             const mailBody = {
                 to: isValidClient.email,
                 subject: "Changing password",
-                text: `Hi! ${title}. ${isValidClient.name}, your OTP for changing password is ${generatedOTP}. Thanks, Coffee Team.`
+                text: `Hi ${title}. ${isValidClient.name}, your OTP for changing password is ${generatedOTP}. Use the OTP to change your password one time. Thanks, Coffee Team.`
             }
 
             this.mailer.setUp();
             await this.mailer.sentMail(mailBody.to, mailBody.subject, mailBody.text); // 'await' is optional here
 
-            return res.status(200).json({ message: "OTP sent successfully!" });
+            return res.status(200).json({ message: `OTP is sent successfully to "${isValidClient.email}"` });
         } catch (error) {
             console.error(error);
 

@@ -24,7 +24,7 @@ router.post("/order/confirm/:orderId/:email", clientAuthMiddleware, orderConfirm
 router.post("/refresh-token/:clientId", generateBackUpJWT); // to generate a new refreshed token (not yet testing)
 
 // routes for changing password
-router.post("/forgot-password/verify/email/:email", verifyClient);
+router.post("/forgot-password/verify/email", verifyClient);
 router.post("/forgot-password/verify/otp", verifyOTP);
 router.post("/forget-password/change-password", changePassword);
 
