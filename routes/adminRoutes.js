@@ -6,6 +6,7 @@ import { adminAuthMiddleware } from '../components/middlewares/AuthMiddleware.js
 import { adminGenerateBackUpJWT } from '../components/middlewares/GenerateBackupJWT.js';
 import { fetchAdminDetails } from '../components/FetchUserDetails.js';
 import { addProduct, updateProduct, deleteProduct } from '../adminPanel/adminHandleProducts.js';
+import { verifyAdmin, verifyOTPAdmin, changePasswordAdmin } from '../services/passwordManagement.js';
 
 const router = express.Router();
 
@@ -26,5 +27,9 @@ router.patch("/details/update", adminAuthMiddleware, updateAdmin); // test passe
 router.post("/addProduct", addProduct); // (not yet testing)
 router.patch("/updateProduct/:id", updateProduct); // (not yet testing)
 router.delete("/deleteProduct/:id", deleteProduct); // (not yet testing)
+
+router.post("/forgot-password/verify/email", verifyAdmin);
+router.post("/forgot-password/verify/otp", verifyOTPAdmin);
+router.post("/forgot-password/change-password", changePasswordAdmin);
 
 export default router;

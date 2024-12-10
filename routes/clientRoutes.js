@@ -3,7 +3,7 @@ import { placeOrder, cancelOrder, orderConfirmation, addToCart, removeFromCart, 
 import { clientAuthMiddleware } from '../components/middlewares/AuthMiddleware.js';
 import { fetchClientDetails } from '../components/FetchUserDetails.js';
 import { generateBackUpJWT } from '../components/middlewares/GenerateBackupJWT.js';
-import { verifyClient, verifyOTP, changePassword } from '../services/passwordManagement.js';
+import { verifyClient, verifyOTPClient, changePasswordClient } from '../services/passwordManagement.js';
 
 const router = express.Router();
 
@@ -25,7 +25,7 @@ router.post("/refresh-token/:clientId", generateBackUpJWT); // to generate a new
 
 // routes for changing password
 router.post("/forgot-password/verify/email", verifyClient);
-router.post("/forgot-password/verify/otp", verifyOTP);
-router.post("/forget-password/change-password", changePassword);
+router.post("/forgot-password/verify/otp", verifyOTPClient);
+router.post("/forget-password/change-password", changePasswordClient);
 
 export default router;
