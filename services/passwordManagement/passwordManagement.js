@@ -1,6 +1,6 @@
-import ClientModel from '../model/usermodel/clientModel.js'
-import AdminModel from '../model/usermodel/adminModel.js'
-import { SentMail } from "../components/middlewares/SentMail.js"
+import ClientModel from '../../model/usermodel/clientModel.js'
+import AdminModel from '../../model/usermodel/adminModel.js'
+import { SentMail } from "../../components/middlewares/SentMail.js"
 import bcrypt from 'bcrypt'
 
 const mailer = new SentMail();
@@ -164,6 +164,6 @@ class AdminPasswordManagement {
 
 const adminPasswordManagement = new AdminPasswordManagement();
 
-export const verifyAdmin = clientPasswordManagement.verifyClient.bind(clientPasswordManagement);
-export const verifyOTPAdmin = clientPasswordManagement.verifyOTP.bind(clientPasswordManagement);
-export const changePasswordAdmin = clientPasswordManagement.changePassword.bind(clientPasswordManagement);
+export const verifyAdmin = adminPasswordManagement.verifyClient.bind(adminPasswordManagement);
+export const verifyOTPAdmin = adminPasswordManagement.verifyOTP.bind(adminPasswordManagement);
+export const changePasswordAdmin = adminPasswordManagement.changePassword.bind(adminPasswordManagement);
