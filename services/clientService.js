@@ -8,6 +8,7 @@ import { SentMail } from "../components/middlewares/SentMail.js";
 import Cart from '../model/cardModel.js'
 import jwt from 'jsonwebtoken'
 import Client from '../model/usermodel/clientModel.js'
+import clientModel from "../model/usermodel/clientModel.js";
 
 export class OrderService {
     constructor() {
@@ -120,6 +121,25 @@ export class OrderService {
             console.log(error);
             if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while trying to logout! - backend", 500);
+        }
+    }
+
+    async deleteClient(clientId, confirmPassword) {
+        if (!clientId || !mongoose.Types.ObjectId.isValid(clientId)) throw new CustomError("Invalid clientId! - backend", 400);
+        try {
+            const isValidClient = await clientModel.findById(clientId).select("+password");
+            if (!isValidClient) throw new CustomError("Account not found! - backend", 404);
+
+            const isValidPassword = await bcrypt.compare(confirmPassword, isValidClient.password);
+            if (!isValidPassword) throw new CustomError("Incorrect password! - backend", 403);
+            await isValidClient.deleteOne();
+
+            return { message: "Account deleted successfully! - backend" };
+        } catch (error) {
+            console.log(error);
+
+            if (error instanceof CustomError) throw error;
+            throw new CustomError("An unexpected error occured while trying to delete your account! - backend", 500);
         }
     }
 

@@ -53,6 +53,20 @@ export const clientLogOut = async (req, res) => {
     }
 }
 
+export const deleteClient = async (req, res) => {
+    const clientId = req.clientId;
+    const { password } = req.body;
+
+    try {
+        const response = await orderService.deleteClient(clientId, password);
+        return res.status(200).json(response);
+    } catch (error) {
+        console.log(error);
+
+        if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
+    }
+}
+
 // (test passed)
 export const trackOrderDetails = async (req, res) => {
     const { email } = req.params;
