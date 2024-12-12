@@ -70,9 +70,11 @@ export const fetchAdmins = async (req, res) => {
 
 export const deleteAdmin = async (req, res) => {
     const adminId = req.adminId;
+    const { password } = req.body;
+
     try {
-        await adminService.deleteAdmin(adminId);
-        return res.status(200).json({ message: "Admin deleted successfully! - backend" });
+        const response = await adminService.deleteAdmin(adminId, password);
+        return res.status(203).json(response);
     } catch (error) {
         if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
     }

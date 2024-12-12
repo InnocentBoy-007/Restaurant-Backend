@@ -72,7 +72,7 @@ export const trackOrderDetails = async (req, res) => {
     const { email } = req.params;
     try {
         const response = await orderService.trackOrderDetails(email);
-        return res.status(200).json(response);
+        return res.status(203).json(response);
     } catch (error) {
         if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
     }

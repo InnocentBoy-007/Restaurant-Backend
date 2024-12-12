@@ -142,14 +142,21 @@ export class AdminService {
         }
     }
 
-    async deleteAdmin(adminId) {
+    async deleteAdmin(adminId, confirmPassword) {
         if (!adminId || !mongoose.Types.ObjectId.isValid(adminId)) throw new CustomError("Invalid id - backend", 400);
+        if (!confirmPassword) throw new CustomError("Invalid password - backend", 400);
         try {
-            const checkAdminId = await AdminModel.findByIdAndDelete(adminId);
-            if (!checkAdminId) throw new CustomError("Admin not found! - backend", 404);
+            const isValidAdmin = await AdminModel.findByIdAndDelete(adminId).select("+password");
+            if (!isValidAdmin) throw new CustomError("Admin not found! - backend", 404);
 
-            return { message: "Admin deleted successfully! - backend" };
+            const isValidPassword = await bcrypt.compare(confirmPassword, isValidAdmin.password);
+            if (!isValidPassword) throw new CustomError("Incorrect password! - backend", 403);
+            await isValidAdmin.deleteOne();
+
+            return { message: "Account deleted successfully! - backend" };
         } catch (error) {
+            console.log(error);
+
             if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while deleting an admin! - backend", 500);
         }

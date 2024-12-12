@@ -22,7 +22,7 @@ router.post("/verify", adminVerification); // test passed
 router.post("/signin", adminSignIn); // test passed
 router.get("/details", adminAuthMiddleware, fetchAdminDetails); // test passed
 router.delete("/logout", adminLogOut); // test passed
-router.delete("/details/delete", adminAuthMiddleware, deleteAdmin); // test passed
+router.post("/details/delete", adminAuthMiddleware, deleteAdmin); // test passed
 router.patch("/details/update", adminAuthMiddleware, updateAdmin); // test passed
 
 router.post("/addProduct", addProduct); // (not yet testing)
