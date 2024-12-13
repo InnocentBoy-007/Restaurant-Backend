@@ -1,71 +1,69 @@
 import mongoose from 'mongoose';
-import Product from '../model/productModel.js'
+import ProductModel from '../model/productModel.js'
 import { CustomError } from '../components/CustomError.js';
 import AdminModel from '../model/usermodel/adminModel.js'
 
 export class ProductControl {
-    async addProduct(productDetails) {
+    async addProduct(adminId, productDetails) {
         if (!productDetails || typeof productDetails !== 'object') throw new CustomError("Product details are necessary!", 400);
         try {
-            // track the time of product addition
-            const productAddedOn = new Date().toLocaleString();
+            const isValidAdmin = await AdminModel.findById(adminId).select("name");
+            if (!isValidAdmin) throw new CustomError(`Product cannot be added since ${isValidAdmin.name} is not an admin. - backend`, 401);
 
-            const productAddedByAdmin = await AdminModel.findOne({ name: productDetails.productAddedBy }); // check if the admin adding the product exists
-            if (!productAddedByAdmin) throw new CustomError(`Product cannot be added since ${productDetails.productAddedBy} is not an admin. - backend`, 401);
-
-            const duplicateProduct = await Product.findOne({ productName: productDetails.productName });
+            const duplicateProduct = await ProductModel.findOne({ productName: productDetails.productName });
             if (duplicateProduct) throw new CustomError(`${productDetails.productName} is already inside the database.`, 409); // http status code 409 for 'duplicate'
 
-            const addProductResponse = await Product.create({ ...productDetails, productAddedOn: productAddedOn })
+            const addedProduct = await ProductModel.create({ ...productDetails, productAddedBy: isValidAdmin.name, productAddedOn: new Date().toLocaleString() });
 
-            return {
-                message: "Product added successfully! - backend",
-                addProductResponse
-            }
+            return { message: `Product added successfully! Product added on ${addedProduct.productAddedOn} - backend`, }
+
         } catch (error) {
             if (error instanceof CustomError) throw error;
             throw new CustomError("An internal server error while adding a product! - backend", 500);
         }
     }
 
-    async updateProduct(id, productDetails) {
-        if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new CustomError("Invalid ID - backend", 409);
+    async updateProduct(adminId, productId, productDetails) {
+        if (!adminId) throw new CustomError("Invalid adminId - backend", 400);
+        if (!productId || !mongoose.Types.ObjectId.isValid(productId)) throw new CustomError("Invalid productId - backend", 400);
         if (!productDetails || typeof productDetails !== 'object') throw new CustomError("Product details are necessary!", 400);
         try {
-            const product = await Product.findById(id);
-            if (!product) throw new CustomError("Product not found! - backend", 404);
+            const isValidAdmin = await AdminModel.findById(adminId).select("name");
+            if (!isValidAdmin) throw new CustomError("Invalid admin! Authorization revoked! - backend", 403);
 
-            if (productDetails.productName) product.productName = productDetails.productName;
-
-            if (productDetails.productPrice) product.productPrice = productDetails.productPrice;
-
-            if (productDetails.productQuantity) {
-                // add product quantity on top of the existing quantity
-                product.productQuantity += productDetails.productQuantity;
-            }
+            const isValidProduct = await ProductModel.findByIdAndUpdate(productId, {
+                ...productDetails
+            });
+            if (!isValidProduct) throw new CustomError("Product not found! - backend", 404);
 
             // the productUpdatedOn field must be updated everytime there is an update on the product details
-            product.productUpdatedOn = new Date().toLocaleString();
-            await product.save(); // saving the updated product
+            isValidProduct.productUpdatedOn = new Date().toLocaleString();
+            isValidProduct.productUpdatedBy = isValidAdmin.name;
+            await isValidProduct.save(); // saving the updated product
 
-            return {
-                message: "Product updated successfully! - backend",
-                product
-            }
+            return { message: `Product updated successfully on ${isValidProduct.productAddedOn} by ${isValidAdmin.name} - backend`, }
         } catch (error) {
+            console.log(error);
             if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while updating a product! - backend", 500);
         }
     }
 
-    async deleteProduct(id) {
-        if (!id || !mongoose.Types.ObjectId.isValid(id)) throw new CustomError("Invalid Id - backend!", 409);
+    async deleteProduct(adminId, productId) {
+        if (!adminId) throw new CustomError("Invalid adminId - backend", 400);
+        if (!productId || !mongoose.Types.ObjectId.isValid(productId)) throw new CustomError("Invalid productId - backend!", 409);
         try {
-            const product = await Product.findByIdAndDelete(id); // find the product by using req params product id and delete if it exist
-            if (!product) throw new CustomError("Product cannot be deleted! - backend", 500);
+            const isValidAdmin = await AdminModel.findById(adminId).select("name");
+            if (!isValidAdmin) throw new CustomError(`Invalid admin! Authorization revoked! - backend`, 403);
 
-            return { message: "Product deleted successfully! - backend", product };
+            const isValidProduct = await ProductModel.findByIdAndDelete(productId);
+            if (!isValidProduct) throw new CustomError("Product cannot be deleted! - backend", 500);
+
+            const timestamp = new Date().toLocaleString();
+
+            return { message: `Product deleted successfully by ${isValidAdmin.name} on ${timestamp} - backend` };
         } catch (error) {
+            console.log(error);
             if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while deleting a product! - backend", 500);
         }
@@ -74,7 +72,7 @@ export class ProductControl {
 
 export const fetchProducts = async (req, res) => {
     try {
-        const products = await Product.find();
+        const products = await ProductModel.find();
         if (!products) throw new CustomError("Products cannot be fetch from database! - backend", 500);
         if (products.length === 0) return res.status(404).json({ message: "There are no products in the database! - backend" });
         return res.status(200).json({ products });

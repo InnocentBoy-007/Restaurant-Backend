@@ -25,14 +25,16 @@ router.delete("/logout", adminLogOut); // test passed
 router.post("/details/delete", adminAuthMiddleware, deleteAdmin); // test passed
 router.patch("/details/update", adminAuthMiddleware, updateAdmin); // test passed
 
-router.post("/addProduct", addProduct); // (not yet testing)
-router.patch("/updateProduct/:id", updateProduct); // (not yet testing)
-router.delete("/deleteProduct/:id", deleteProduct); // (not yet testing)
+router.post("/products/add", adminAuthMiddleware, addProduct); // test passed
+router.patch("/products/update/:productId", adminAuthMiddleware, updateProduct); // (testing)
+router.delete("/products/delete/:productId", adminAuthMiddleware, deleteProduct); // test passed
 
+// APIs for changing password after forgotten password
 router.post("/forgot-password/verify/email", verifyAdmin);
 router.post("/forgot-password/verify/otp", verifyOTPAdmin);
 router.post("/forgot-password/change-password", changePasswordAdmin);
 
+// normal password change
 router.patch("/change-password", adminAuthMiddleware, updateAdminPassword);
 
 export default router;

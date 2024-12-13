@@ -6,7 +6,8 @@ const productSchema = new mongoose.Schema({
     productQuantity: { type: Number, required: true },
     productAddedOn: { type: String, required: true },
     productAddedBy: { type: String, required: true },
-    productUpdatedOn: { type: String, default: null } // set to null if not updated
+    productUpdatedOn: { type: String, default: null }, // set to null if not updated
+    productUpdatedBy: { type: String, default: null }
 })
 
 export default mongoose.model("product", productSchema);
