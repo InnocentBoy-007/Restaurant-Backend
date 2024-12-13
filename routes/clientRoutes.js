@@ -1,5 +1,5 @@
 import express from 'express'
-import { placeOrder, cancelOrder, orderConfirmation, addToCart, removeFromCart, trackOrderDetails, fetchProductsFromCart, clientSignUp, clientSignUpVerification, clientSignIn, clientLogOut, deleteClient } from '../controlOrder/placeCancelOrder.js';
+import { placeOrder, cancelOrder, orderConfirmation, addToCart, removeFromCart, trackOrderDetails, fetchProductsFromCart, clientSignUp, clientSignUpVerification, clientSignIn, clientLogOut, deleteClient, updateClient } from '../controlOrder/placeCancelOrder.js';
 import { clientAuthMiddleware } from '../components/middlewares/AuthMiddleware.js';
 import { fetchClientDetails } from '../components/FetchUserDetails.js';
 import { generateBackUpJWT } from '../components/middlewares/GenerateBackupJWT.js';
@@ -14,7 +14,8 @@ router.post("/signup/verify", clientSignUpVerification); // test passed
 router.post("/signin", clientSignIn); // test passed
 router.get("/details", clientAuthMiddleware, fetchClientDetails); // test passed
 router.delete("/logout", clientLogOut); // test passed
-router.post("/details/delete", clientAuthMiddleware, deleteClient); // testing
+router.post("/details/delete", clientAuthMiddleware, deleteClient); // test passed
+router.patch("/profile/update", clientAuthMiddleware, updateClient); // test passed
 router.get("/orders/:email", clientAuthMiddleware, trackOrderDetails); // haven't create a UI for this API
 router.post("/cart/add/:productId", clientAuthMiddleware, addToCart); // test passed
 router.delete("/cart/remove/:productId", clientAuthMiddleware, removeFromCart); // test passed

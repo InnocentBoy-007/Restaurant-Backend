@@ -67,6 +67,19 @@ export const deleteClient = async (req, res) => {
     }
 }
 
+export const updateClient = async (req, res) => {
+    const clientId = req.clientId;
+    const { clientDetails } = req.body;
+    try {
+        const response = await orderService.updateClient(clientId, clientDetails);
+
+        return res.status(200).json(response);
+    } catch (error) {
+        console.log(error);
+        if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
+    }
+}
+
 // (test passed)
 export const trackOrderDetails = async (req, res) => {
     const { email } = req.params;

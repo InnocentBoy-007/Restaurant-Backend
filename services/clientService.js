@@ -126,6 +126,7 @@ export class OrderService {
 
     async deleteClient(clientId, confirmPassword) {
         if (!clientId || !mongoose.Types.ObjectId.isValid(clientId)) throw new CustomError("Invalid clientId! - backend", 400);
+        if (!confirmPassword) throw new CustomError("Invalid confirmation password - backend", 400);
         try {
             const isValidClient = await clientModel.findById(clientId).select("+password");
             if (!isValidClient) throw new CustomError("Account not found! - backend", 404);
@@ -140,6 +141,21 @@ export class OrderService {
 
             if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while trying to delete your account! - backend", 500);
+        }
+    }
+
+    async updateClient(clientId, clientDetails) {
+        if (!clientId) throw new CustomError("Invalid client Id! - backend", 400);
+        if (!clientDetails || typeof clientDetails !== 'object') throw new CustomError("Invalid client details! - backend", 400);
+        try {
+            const isValidClient = await clientModel.findByIdAndUpdate(clientId, clientDetails, { new: true });
+            if (!isValidClient) throw new CustomError("Client not found! - backend", 404);
+
+            return { message: "Account updated successfully! - backend" };
+        } catch (error) {
+            console.log(error);
+            if (error instanceof CustomError) throw error;
+            throw new CustomError("An unexpected error occured while trying to update your account! - backend", 500);
         }
     }
 
