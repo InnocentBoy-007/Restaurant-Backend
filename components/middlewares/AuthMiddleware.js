@@ -12,8 +12,8 @@ export const adminAuthMiddleware = (req, res, next) => {
         next();
     } catch (err) {
         console.error("Error in admin auth middleware", err);
-        if (err.name == 'JsonWebTokenError') return res.status(409).json({ message: "Invalid token! Authorization denied! - backend" });
-        if (err.name == 'TokenExpiredError') return res.status(401).json({ message: "Token expired! Authrorization denied! - backend" })
+        if (err.name == 'JsonWebTokenError') return res.status(409).json({ message: "Invalid token! - backend" });
+        if (err.name == 'TokenExpiredError') return res.status(401).json({ message: "Token expired! - backend" });
         return res.status(500).json({ message: "An unexpected error occured while trying to verify the token - backend" });
     }
 };
@@ -31,8 +31,8 @@ export const clientAuthMiddleware = (req, res, next) => {
         next();
     } catch (err) {
         console.error("Error in admin auth middleware", err);
-        if (err.name == 'JsonWebTokenError') return res.status(409).json({ message: "Invalid token! Authorization denied! - backend" });
-        if (err.name == 'TokenExpiredError') return res.status(401).json({ message: "Token expired! Authrorization denied! - backend" })
+        if (err.name == 'JsonWebTokenError') return res.status(409).json({ message: "Invalid token! - backend" });
+        if (err.name == 'TokenExpiredError') return res.status(401).json({ message: "Token expired! - backend" })
         return res.status(500).json({ message: "An unexpected error occured while trying to verify the token - backend" });
     }
 };

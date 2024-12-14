@@ -3,7 +3,9 @@ import express from 'express'
 import { acceptOrder, rejectOrder, fetchOrders } from '../adminPanel/adminAcceptRejectOrder.js';
 import { adminSignUp, adminSignIn, adminVerification, adminLogOut, deleteAdmin, updateAdmin } from '../adminPanel/adminSignUpSignIn.js';
 import { adminAuthMiddleware } from '../components/middlewares/AuthMiddleware.js';
-import { adminGenerateBackUpJWT } from '../components/middlewares/GenerateBackupJWT.js';
+
+import { generateNewTokenAdmin } from '../components/middlewares/GenerateBackupJWT.js';
+
 import { fetchAdminDetails } from '../components/FetchUserDetails.js';
 import { addProduct, updateProduct, deleteProduct } from '../adminPanel/adminHandleProducts.js';
 import { verifyAdmin, verifyOTPAdmin, changePasswordAdmin } from '../services/passwordManagement/passwordManagement.js';
@@ -11,11 +13,12 @@ import { updateAdminPassword } from '../services/passwordManagement/changePasswo
 
 const router = express.Router();
 
-router.post("/refresh-token", adminGenerateBackUpJWT); // to generate a new refreshed token for admin (not yet testing)
 router.post("/orders/accept/:orderId/:productId", adminAuthMiddleware, acceptOrder); // test passed
 router.delete("/orders/reject/:orderId", adminAuthMiddleware, rejectOrder); // test passed
 router.get("/orders", adminAuthMiddleware, fetchOrders); // test passed
 
+// generate new token using a refresh token
+router.post("/token/:adminId", generateNewTokenAdmin); // testing
 
 router.post("/signup", adminSignUp); // test passed
 router.post("/verify", adminVerification); // test passed

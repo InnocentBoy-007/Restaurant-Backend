@@ -1,77 +1,65 @@
-import Client from '../../model/usermodel/clientModel.js'
-import Admin from '../../model/usermodel/adminModel.js'
-import { CustomError } from '../CustomError.js';
+import ClientModel from '../../model/usermodel/clientModel.js'
+import AdminModel from '../../model/usermodel/adminModel.js'
 import jwt from 'jsonwebtoken'
 
 /**
  * This function is used to generate a new primary token for authorization using the refreshtoken
  */
-export const generateBackUpJWT = async (req, res) => {
-    // the clientId comes from the payload or the token
+
+export const generateNewTokenClient = async (req, res) => {
+    const { clientId } = req.params;
+    if (!clientId) return res.status(200).json({ message: "Admin Id is required! - backend" });
+
+    // token inside the header should be a refresh token/backup token
     const authHeader = req.headers['authorization'];
-    const clientToken = authHeader && authHeader.split(' ')[1]; // refresh token
+    const backupTokenClient = authHeader && authHeader.split(' ')[1];
+    if (!backupTokenClient) return res.status(401).json({ message: 'Access denied. Backup token is not provided! - backend' });
 
-    if (!clientToken) return res.status(401).json({ message: 'Access denied. No client token provided.' });
+    const JWT_SECRET = process.env.JWT_SECRET;
+    const BACKUP_JWT_SECRET = process.env.BACKUP_JWT_SECRET;
+
     try {
-        const isValidToken = jwt.verify(clientToken, process.env.BACKUP_JWT_SECRET);
-        const clientId = isValidToken.clientId;
+        const isValidClient = await ClientModel.findById(adminId);
+        if (!isValidClient) return res.status(404).json({ message: "Invalid admin Id! Admin not found - Authorization denied!" });
 
-        const getTokenFromDB = await Client.findById(clientId).select("refreshToken"); // bug (there is no 'refreshToken' in the model)
-        if (!getTokenFromDB) throw new CustomError("Token not found! - backend", 404);
+        jwt.verify(backupTokenClient, BACKUP_JWT_SECRET);
+        const newToken = jwt.sign({ clientId: isValidClient._id }, JWT_SECRET, { 'expiresIn': '1h' });
 
-        if (clientToken !== getTokenFromDB) throw new CustomError("Incorrect token! New token generation failed! - backend", 500);
-
-        const payload = req.client; // fetching the previous payload
-
-        const token = jwt.sign({ payload }, process.env.JWT_SECRET, { expiresIn: '15m' }); // need testing
-        console.log("New token generated --->", token);
-
-        return res.status(200).json(token);
+        return res.status(200).json({ message: "New token generated successfully! - backend", token: newToken });
     } catch (error) {
-        console.log("Error in the generate backup jwt--->", error);
+        console.error(error);
+        if (error.name === 'JsonWebTokenError') return res.status(409).json({ message: "Invalid token! - backend" });
+        if (error.name === 'TokenExpiredError') return res.status(401).json({ message: "Token exprired! - backend" });
 
-        if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
-        return res.status(500).json({ message: "An unexpected error occured while trying to fetch a refreshed token! - backend" });
+        return res.status(500).json({ message: "An unexpected error occured while trying to verify the token! - backend" });
     }
 }
 
-export const adminGenerateBackUpJWT = async (req, res) => {
-    const authHeader = req.headers['authorization'];
-    const adminToken = authHeader && authHeader.split(' ')[1]; // refresh token
+export const generateNewTokenAdmin = async (req, res) => {
+    const { adminId } = req.params;
+    if (!adminId) return res.status(200).json({ message: "Admin Id is required! - backend" });
 
-    if (!adminToken) return res.status(401).json({ message: 'Access denied. No admin token provided.' });
+    // token inside the header should be a refresh token/backup token
+    const authHeader = req.headers['authorization'];
+    const backupTokenAdmin = authHeader && authHeader.split(' ')[1];
+    if (!backupTokenAdmin) return res.status(401).json({ message: 'Access denied. Backup token is not provided! - backend' });
+
+    const JWT_SECRET = process.env.JWT_SECRET;
+    const BACKUP_JWT_SECRET = process.env.BACKUP_JWT_SECRET;
 
     try {
-        // const isRefreshToken = await Client.findById(clientId).select("refreshToken"); // this query makes sure that only the value of refreshToken is returned
-        // console.log("Refresh Token --->", isRefreshToken.refreshToken);
+        const isValidAdmin = await AdminModel.findById(adminId);
+        if (!isValidAdmin) return res.status(404).json({ message: "Invalid admin Id! Admin not found - Authorization denied!" });
 
-        // if (!isRefreshToken) throw new CustomError("User not found! - backend", 404);
+        jwt.verify(backupTokenAdmin, BACKUP_JWT_SECRET);
+        const newToken = jwt.sign({ adminId: isValidAdmin._id }, JWT_SECRET, { 'expiresIn': '1h' });
 
-        // validating the refresh token to create a new primary token (middleware)
-        // const verifyToken = jwt.verify(isRefreshToken.refreshToken, process.env.JWT_SECRET);
-        // if (!verifyToken) throw new CustomError("Invalid refresh token - backend", 403);
-
-        const isValidToken = jwt.verify(adminToken, process.env.BACKUP_JWT_SECRET); // decoded token
-        const adminId = isValidToken.adminId;
-        console.log("Admin Id--->", adminId);
-
-        req.admin = adminId;
-
-        const getTokenFromDB = await Admin.findById(adminId).select("refreshToken");
-        console.log("Token from DB-->", getTokenFromDB);
-
-        if (!getTokenFromDB) throw new CustomError("Token not found! - backend", 404);
-
-        if (adminToken !== getTokenFromDB) throw new CustomError("Incorrect token! New token generation failed! - backend", 500);
-
-        const token = jwt.sign({ adminId }, process.env.JWT_SECRET, { expiresIn: '15m' }); // the payload contains the adminId
-        console.log("New token generated --->", token);
-
-        return res.status(200).json(token);
+        return res.status(200).json({ message: "New token generated successfully! - backend", token: newToken });
     } catch (error) {
-        console.log("Error in the generate backup jwt--->", error);
+        console.error(error);
+        if (error.name === 'JsonWebTokenError') return res.status(409).json({ message: "Invalid token! - backend" });
+        if (error.name === 'TokenExpiredError') return res.status(401).json({ message: "Token exprired! - backend" });
 
-        if (error instanceof CustomError) return res.status(error.errorCode).json({ message: error.message });
-        return res.status(500).json({ message: "An unexpected error occured while trying to fetch a refreshed token! - backend" });
+        return res.status(500).json({ message: "An unexpected error occured while trying to verify the token! - backend" });
     }
 }

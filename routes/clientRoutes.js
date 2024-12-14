@@ -2,7 +2,7 @@ import express from 'express'
 import { placeOrder, cancelOrder, orderConfirmation, addToCart, removeFromCart, trackOrderDetails, fetchProductsFromCart, clientSignUp, clientSignUpVerification, clientSignIn, clientLogOut, deleteClient, updateClient } from '../controlOrder/placeCancelOrder.js';
 import { clientAuthMiddleware } from '../components/middlewares/AuthMiddleware.js';
 import { fetchClientDetails } from '../components/FetchUserDetails.js';
-import { generateBackUpJWT } from '../components/middlewares/GenerateBackupJWT.js';
+import { generateNewTokenClient } from '../components/middlewares/GenerateBackupJWT.js';
 import { verifyClient, verifyOTPClient, changePasswordClient } from '../services/passwordManagement/passwordManagement.js';
 import { updateClientPassword } from '../services/passwordManagement/changePassword.js';
 
@@ -24,7 +24,7 @@ router.post("/products/placeorder", clientAuthMiddleware, placeOrder); // test p
 router.delete("/products/cancelorder/:orderId", cancelOrder); // (not yet testing)
 router.post("/order/confirm/:orderId/:email", clientAuthMiddleware, orderConfirmation); // test passed
 
-router.post("/refresh-token/:clientId", generateBackUpJWT); // to generate a new refreshed token (not yet testing)
+router.post("/refresh-token/:clientId", generateNewTokenClient); // to generate a new refreshed token (not yet testing)
 
 // routes for changing password(after forgot password) (test passed)
 router.post("/forgot-password/verify/email", verifyClient);
