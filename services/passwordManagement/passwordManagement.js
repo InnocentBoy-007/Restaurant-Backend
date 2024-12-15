@@ -103,7 +103,7 @@ class AdminPasswordManagement {
 
             if (email !== isValidAdmin.email) return res.status(403).json({ message: "Incorrect email! Authorization denied! - backend" });
 
-            const title = (isValidClient.gender === 'male') ? 'Mr' : 'Ms';
+            const title = (isValidAdmin.gender === 'male') ? 'Mr' : 'Ms';
 
             const generatedOTP = Math.floor(100000 + Math.random() * 900000).toString();
             this.otp = generatedOTP;

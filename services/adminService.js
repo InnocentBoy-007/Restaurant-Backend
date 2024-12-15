@@ -24,7 +24,7 @@ export class AdminService {
     }
 
     async generateToken(payload) {
-        return jwt.sign(payload, process.env.JWT_SECRET, { 'expiresIn': '15s' });
+        return jwt.sign(payload, process.env.JWT_SECRET, { 'expiresIn': '15m' });
     }
 
     async generateRefreshToken(payload) {
@@ -272,6 +272,8 @@ export class AdminService {
 
             return { orders };
         } catch (error) {
+            console.log(error);
+
             if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while fetching order details! - backend", 500);
         }
