@@ -24,7 +24,7 @@ export class AdminService {
     }
 
     async generateToken(payload) {
-        return jwt.sign(payload, process.env.JWT_SECRET, { 'expiresIn': '1h' });
+        return jwt.sign(payload, process.env.JWT_SECRET, { 'expiresIn': '15s' });
     }
 
     async generateRefreshToken(payload) {

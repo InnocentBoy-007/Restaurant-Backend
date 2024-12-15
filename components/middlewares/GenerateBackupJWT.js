@@ -27,7 +27,6 @@ export const generateNewTokenClient = async (req, res) => {
 
         return res.status(200).json({ message: "New token generated successfully! - backend", token: newToken });
     } catch (error) {
-        console.error(error);
         if (error.name === 'JsonWebTokenError') return res.status(409).json({ message: "Invalid token! - backend" });
         if (error.name === 'TokenExpiredError') return res.status(401).json({ message: "Token exprired! - backend" });
 
