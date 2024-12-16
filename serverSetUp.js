@@ -37,7 +37,7 @@ class ServerSetUp { // This class encapsulates all the logic related to setting 
 
     async connectDatabase() {
         try {
-            await mongoose.connect(`${this.MONGO_URL}/coffee`);
+            await mongoose.connect(this.MONGO_URL);
             console.log("Database connected succesfully! - backend");
         } catch (error) {
             throw new CustomError("Database cannot be connected! - backend", 400);
