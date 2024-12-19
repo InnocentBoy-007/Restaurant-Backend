@@ -1,5 +1,5 @@
-import AdminModel from '../model/usermodel/adminModel.js'
-import ClientModel from '../model/usermodel/clientModel.js';
+import AdminModel from '../../model/usermodel/adminModel.js'
+import ClientModel from '../../model/usermodel/clientModel.js';
 
 export const fetchAdminDetails = async (req, res) => {
     const adminId = req.adminId;

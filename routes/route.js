@@ -1,5 +1,5 @@
 import express from 'express'
-import { fetchProducts } from '../controlOrder/productControl.js';
+import { fetchProducts } from '../components/globalObjects/FetchProductDetails.js';
 
 const route = express.Router();
 

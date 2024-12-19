@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 const adminSchema = new mongoose.Schema({
-    name: { type: String, required: true },
+    username: { type: String, required: true },
     password: { type: String, required: true, select: false },
     phoneNo: { type: String, required: true },
     email: { type: String, required: true },
@@ -9,6 +9,9 @@ const adminSchema = new mongoose.Schema({
     gender: {
         type: String, required: true,
         enum: ['male', 'female']
+    },
+    title: {
+        type: String
     },
     age: {
         type: Number,
@@ -23,7 +26,19 @@ const adminSchema = new mongoose.Schema({
     updatedAtLocaleTime: {
         type: String,
         default: () => new Date().toLocaleString()
+    },
+    otp: {
+        type: String
     }
 }, { timestamps: true });
+
+adminSchema.pre('save', function (next) {
+    if (this.gender === 'male') {
+        this.title = 'Mr';
+    } else if (this.gender === 'female') {
+        this.title = 'Ms';
+    }
+    next();
+});
 
 export default mongoose.model("Admin", adminSchema);

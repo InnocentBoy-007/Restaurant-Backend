@@ -3,7 +3,6 @@ import bcrypt from 'bcrypt'
 import Products from '../model/productModel.js'
 import OrderDetails from "../model/orderDetailsModel.js";
 import { CustomError } from "../components/CustomError.js";
-import Otp from "../model/otp.js"; // for future use
 import { SentMail } from "../components/middlewares/SentMail.js";
 import Cart from '../model/cardModel.js'
 import jwt from 'jsonwebtoken'

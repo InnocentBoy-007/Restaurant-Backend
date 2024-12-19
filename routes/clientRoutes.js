@@ -1,8 +1,11 @@
 import express from 'express'
-import { placeOrder, cancelOrder, orderConfirmation, addToCart, removeFromCart, trackOrderDetails, fetchProductsFromCart, clientSignUp, clientSignUpVerification, clientSignIn, clientLogOut, deleteClient, updateClient } from '../controlOrder/placeCancelOrder.js';
+import { placeOrder, cancelOrder, orderConfirmation, addToCart, removeFromCart, trackOrderDetails, fetchProductsFromCart, clientSignUp, clientSignUpVerification, clientSignIn, deleteClient, updateClient } from '../controller/placeCancelOrder.js';
+import { clientLogOut } from '../controller/placeCancelOrder.js';
 import { clientAuthMiddleware } from '../components/middlewares/AuthMiddleware.js';
-import { fetchClientDetails } from '../components/FetchUserDetails.js';
-import { generateNewTokenClient } from '../components/middlewares/GenerateBackupJWT.js';
+
+import { fetchClientDetails } from '../components/globalObjects/FetchUserDetails.js';
+
+import { generateNewTokenClient } from '../components/tokens/GenerateBackupJWT.js';
 import { verifyClient, verifyOTPClient, changePasswordClient } from '../services/passwordManagement/passwordManagement.js';
 import { updateClientPassword } from '../services/passwordManagement/changePassword.js';
 
