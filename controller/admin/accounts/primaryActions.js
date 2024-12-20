@@ -28,7 +28,7 @@ class AdminSignIn {
                     { username: adminDetails.username }
                 ]
             }).select("+password");
-            if (!isValidAdmin) return res.status(404).json({ message: `The account with ${adminDetails.email || adminDetails.name} does not exist!` });
+            if (!isValidAdmin) return res.status(404).json({ message: `The account with ${adminDetails.email || adminDetails.username} does not exist!` });
             const title = (isValidAdmin.gender === 'male') ? 'Mr. ' : 'Ms. ';
             /**
              * Or use a different method which has a gender-neutral title

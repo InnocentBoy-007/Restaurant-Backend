@@ -5,7 +5,6 @@ import OrderDetails from "../model/orderDetailsModel.js";
 import { CustomError } from "../components/CustomError.js";
 import { SentMail } from "../components/middlewares/SentMail.js";
 import Cart from '../model/cardModel.js'
-import jwt from 'jsonwebtoken'
 import Client from '../model/usermodel/clientModel.js'
 import clientModel from "../model/usermodel/clientModel.js";
 
@@ -15,112 +14,6 @@ export class OrderService {
         this.clientDetails = null;
         this.product = null;
         this.otp = null;
-    }
-
-    async generateToken(payload) {
-        return jwt.sign(payload, process.env.JWT_SECRET, { 'expiresIn': '1h' }); // it's working
-    }
-
-    async generateRefreshToken(payload) {
-        return jwt.sign(payload, process.env.BACKUP_JWT_SECRET);
-    }
-
-    // (test passed)
-    // endpoint ---> 'user/singup'
-    async clientSignUp(clientDetails) {
-        if (!clientDetails || typeof clientDetails !== 'object') throw new CustomError("All fields required! - backend", 400);
-        try {
-            const isAccountDuplicate = await Client.findOne({ email: clientDetails.email }); // using 'email' as the primary key
-            if (isAccountDuplicate) throw new CustomError(`${isAccountDuplicate.email} is already in used! Please try other email - backend`, 401)
-            this.clientDetails = clientDetails;
-
-            const generateOTP = Math.floor(100000 + Math.random() * 900000).toString();
-            this.otp = generateOTP;
-
-            const mailInfo = {
-                to: clientDetails.email,
-                subject: 'Email verification',
-                text: `Please verify your email by using the ${generateOTP} as the OTP`
-            }
-            this.mailer.setUp();
-            this.mailer.sentMail(mailInfo.to, mailInfo.subject, mailInfo.text);
-
-            return { message: `Email verification OTP is sent to ${clientDetails.email}. Please verify your OTP to complete the signup process! - backend` }
-        } catch (error) {
-            console.log(error);
-
-            if (error instanceof CustomError) throw error;
-            throw new CustomError("An unexpected error occured while trying to signup! - backend", 500);
-        }
-    }
-
-    // (test passed)
-    async clientSignUpVerification(otp) {
-        if (!otp) throw new CustomError("Invalid otp! - backend", 400);
-
-        try {
-            if (otp !== this.otp) throw new CustomError("Wrong otp! - backend", 401); // check if the OTP is correct or not
-            const hashPassword = await bcrypt.hash(this.clientDetails.password, 10);
-
-            const createClient = await Client.create({ ...this.clientDetails, password: hashPassword, signUpAt: new Date().toLocaleString() }); // adding the refresh token as well for future use
-            if (!createClient) throw new CustomError("Account cannot be created! - backend", 500);
-
-            const token = await this.generateToken({ clientId: createClient._id });
-            const refreshToken = await this.generateRefreshToken({ clientId: createClient._id }); // refresh token
-
-            // createClient.refreshToken = refreshToken; // update the refresh token
-            // await createClient.save();
-
-            this.mailer.setUp();
-            this.mailer.sentMail(this.clientDetails.email, "Signup successfully!", `Thanks for signing up, ${this.clientDetails.name}. From Innocent Restaurant`);
-
-            return { message: "Account signup successfully! - backend", token, refreshToken };
-        } catch (error) {
-            console.log(error);
-            if (error instanceof CustomError) throw error;
-            throw new CustomError("An unexpected error occured while signing up! - backend", 500);
-        }
-    }
-
-    //endpoint ---> 'user/signin'
-    async clientSignIn(clientDetails) {
-        if (!clientDetails || typeof clientDetails !== 'object') throw new CustomError("All fields required!- backend");
-        try {
-            const isValidClient = await Client.findOne({ email: clientDetails.email }).select("+password"); // using 'email' as a primary key
-            if (!isValidClient) throw new CustomError("Account not found! - backend", 404);
-
-            const isCorrectPassword = await bcrypt.compare(clientDetails.password, isValidClient.password);
-            if (!isCorrectPassword) throw new CustomError("Wrong password - backend", 401);
-
-            const newClientDetails = await Client.findOne({ name: isValidClient.name }); // use this as a payload for jwt since it doesn't select password
-
-            // adding the refresh token inside the clientDetails
-            const token = await this.generateToken({ clientId: isValidClient._id, name: isValidClient.name }); // send the newClientDetails(only client name) as a token to be used for order placement in frontend (test pending)
-            const refreshToken = await this.generateRefreshToken({ clientId: isValidClient._id }); // refresh token
-
-            this.clientDetails = newClientDetails; // udpate the clientDetails with the latest clientDetails (password not included)
-
-            const signedInAt = new Date().toLocaleString();
-
-            return { message: `Sign in successfully! signed in at ${signedInAt} - backend`, newClientDetails, token, refreshToken }; // needs testing
-        } catch (error) {
-            console.log(error);
-            if (error instanceof CustomError) throw error;
-            throw new CustomError("An unexpected error occured while signing in - backend", 500);
-        }
-    }
-
-    // needs to review(bug)
-    async clientLogout(clientToken) {
-        if (!clientToken) throw new CustomError("Invalid token! - backend", 400);
-
-        try {
-            return { message: "Logout successful! - backend" };
-        } catch (error) {
-            console.log(error);
-            if (error instanceof CustomError) throw error;
-            throw new CustomError("An unexpected error occured while trying to logout! - backend", 500);
-        }
     }
 
     async deleteClient(clientId, confirmPassword) {

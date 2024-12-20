@@ -1,5 +1,8 @@
 import express from 'express'
-import { placeOrder, cancelOrder, orderConfirmation, addToCart, removeFromCart, trackOrderDetails, fetchProductsFromCart, clientSignUp, clientSignUpVerification, clientSignIn, deleteClient, updateClient } from '../controller/placeCancelOrder.js';
+
+import primaryActions from '../controller/client/accounts/primaryActions.js';
+
+import { placeOrder, cancelOrder, orderConfirmation, addToCart, removeFromCart, trackOrderDetails, fetchProductsFromCart, deleteClient, updateClient } from '../controller/placeCancelOrder.js';
 import { clientLogOut } from '../controller/placeCancelOrder.js';
 import { clientAuthMiddleware } from '../components/middlewares/AuthMiddleware.js';
 
@@ -11,10 +14,14 @@ import { updateClientPassword } from '../services/passwordManagement/changePassw
 
 const router = express.Router();
 
-// add an API for FORGET PASSWORD
-router.post("/signup", clientSignUp); // test passed
-router.post("/signup/verify", clientSignUpVerification); // test passed
-router.post("/signin", clientSignIn); // test passed
+// primary actions
+router.post("/account/signup", primaryActions.clientSignUp);
+router.post("/account/signup/verifyOTP", primaryActions.clientConfirmOTP);
+router.post("/account/signin", primaryActions.clientSignIn);
+router.delete("/account/logout", clientAuthMiddleware, primaryActions.clientLogout);
+
+
+
 router.get("/details", clientAuthMiddleware, fetchClientDetails); // test passed
 router.delete("/logout", clientLogOut); // test passed
 router.post("/details/delete", clientAuthMiddleware, deleteClient); // test passed

@@ -20,6 +20,7 @@ const router = express.Router();
 
 // primary actions
 router.post("/account/signup", primaryActions.adminSignUp);
+router.post("/account/signup/verifyOTP", primaryActions.adminConfirmOTP);
 router.post("/account/signin", primaryActions.adminSignIn);
 router.delete("/account/logout", adminAuthMiddleware, primaryActions.adminLogout);
 

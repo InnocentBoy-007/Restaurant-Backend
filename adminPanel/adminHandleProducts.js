@@ -1,4 +1,4 @@
-import { ProductControl } from "../controller/productControl.js";
+import { ProductControl } from "../controller/admin/products/productControl.js";
 import { CustomError } from "../components/CustomError.js";
 
 const productControl = new ProductControl();
