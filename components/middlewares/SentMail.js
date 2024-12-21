@@ -16,7 +16,7 @@ export class SentMail {
             const transporter = nodemailer.createTransport({
                 service: 'gmail',
                 auth: {
-                    user:this.user,
+                    user: this.user,
                     pass: this.pass
                 }
             })

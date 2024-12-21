@@ -5,8 +5,9 @@ import bcrypt from 'bcrypt'
 class DeleteAdmin {
     async delete(req, res) {
         const adminId = req.adminId;
-        const { password } = req.body; // deleting the account requires addition security (needs password for authorization)
         if (!adminId || !mongoose.Types.ObjectId.isValid(adminId)) return res.status(400).json({ message: "Invalid admin Id - backend" });
+        const { password } = req.body; // deleting the account requires addition security (needs password for authorization)
+        if (!password) return res.status(400).json({ message: "New password is required! - baceknd" });
 
         try {
             const isValidAdmin = await AdminModel.findById(adminId).select("+password");
@@ -36,7 +37,7 @@ class UpdateAdmin {
 
         try {
             const isValidAdmin = await AdminModel.findById(adminId);
-            if (!isValidAdmin) return res.status(403).json({ message: "Invalid admin(Authentication failed)! Authorization revoked! - backend" });
+            if (!isValidAdmin) return res.status(403).json({ message: "Invalid admin(Authentication failed)! Authorization denied! - backend" });
 
             if (JSON.stringify(updateDetails) === JSON.stringify(isValidAdmin.toObject())) {
                 return res.status(409).json({ message: "The old details and the new details are same! - backend" })

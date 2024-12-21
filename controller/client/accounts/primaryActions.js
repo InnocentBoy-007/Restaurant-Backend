@@ -6,27 +6,29 @@ import bcrypt from 'bcrypt'
 
 class GenerateToken {
     async generatePrimaryToken(payload) {
-        jwt.sign(payload, process.env.JWT_SECRET, { 'expiresIn': '1h' });
+        return jwt.sign(payload, process.env.JWT_SECRET, { 'expiresIn': '1h' });
     }
 
     async generateRefreshToken(payload) {
-        jwt.sign(payload, process.env.REFRESH_JWT_SECRET);
+        return jwt.sign(payload, process.env.REFRESH_JWT_SECRET);
     }
 }
 
 class ClientSignIn {
     async signIn(req, res) {
         const { clientDetails } = req.body;
+
         if (!clientDetails || typeof clientDetails !== 'object') return res.status(400).json({ message: "User details not provided! - backend" });
         if (!clientDetails.email && !clientDetails.username) return res.status(400).json({ message: "email or username is required! - backend" });
 
         try {
-            const isValidClient = ClientModel.findOne({
+            const isValidClient = await ClientModel.findOne({
                 $or: [
                     { email: clientDetails.email },
                     { username: clientDetails.username }
                 ]
             }).select("+password");
+
             if (!isValidClient) return res.status(404).json({ message: `The account with ${clientDetails.email || clientDetails.username} does not exist!` });
             const title = (isValidClient.gender === 'male') ? 'Mr. ' : 'Ms. ';
             /**
@@ -39,8 +41,8 @@ class ClientSignIn {
             const isValidPassword = await bcrypt.compare(clientDetails.password, isValidClient.password);
             if (!isValidPassword) return res.status(403).json({ message: "Incorrect password! Authorization denied! - backend" });
 
-            const token = generateToken.generatePrimaryToken({ adminId: isValidClient._id });
-            const refreshToken = generateToken.generateRefreshToken({ adminId: isValidClient._id });
+            const token = await generateToken.generatePrimaryToken({ clientId: isValidClient._id });
+            const refreshToken = await generateToken.generateRefreshToken({ clientId: isValidClient._id });
 
             return res.status(200).json({ message: `Login successfull! Welcome to Coffee Restaurant, ${title}${isValidClient.username}`, token, refreshToken });
         } catch (error) {
@@ -51,33 +53,32 @@ class ClientSignIn {
 }
 
 class ClientSignUp {
-    constructor() {
-        this.mailer = new SentMail();
-        this.mailer.setUp();
-        this.generateOTP = Math.floor(100000 + Math.random() * 900000).toString(); // generate otp
-    }
-
     async signUp(req, res) {
-        const clientDetails = req.body;
+        const mailer = new SentMail();
+        const { clientDetails } = req.body;
         if (!clientDetails || typeof clientDetails !== 'object') return res.status(400).json({ message: "Invalid user details! - backend" });
         try {
-            const hashedPassword = await bcrypt.hash(adminDetails.password, 10);
-            const createdAccount = await ClientModel.create({ ...clientDetails, password: hashedPassword });
+            const otp = Math.floor(100000 + Math.random() * 900000).toString(); // generate otp
+            const hashedPassword = await bcrypt.hash(clientDetails.password, 10);
+            const createdAccount = await ClientModel.create({ ...clientDetails, password: hashedPassword, otp });
             if (!createdAccount) return res.status(500).json({ message: "Account cannot be created! - backend" });
 
             const mailBody = {
                 to: `${createdAccount.email}`,
                 subject: "OTP verification - Coffee Restaurant",
-                text: `Dear ${createdAccount.title}. ${createdAccount.username}, please use this OTP: ${this.generateOTP()} to finish up the signup process. Thanks Coffee Restaurant.`
+                text: `Dear ${createdAccount.title}. ${createdAccount.username}, please use this OTP: ${otp} to finish up the signup process. Thanks Coffee Restaurant.`
             }
 
-            const mail = await this.mailer.sentMail(mailBody.to, mailBody.subject, mailBody.text);
+            await mailer.setUp();
+            const mail = await mailer.sentMail(mailBody.to, mailBody.subject, mailBody.text);
             if (!mail) {
                 await createdAccount.deleteOne(); // Delete the account if mail fails
                 return res.status(500).json({ message: "Failed to send OTP. Terminating the sign up process! - backend" });
             }
 
-            return res.status(200).json({ message: `An OTP has been sent to ${createdAccount.email}. Please verify the OTP to complete the signup process.` });
+            const token = await generateToken.generatePrimaryToken({ clientId: createdAccount._id });
+
+            return res.status(200).json({ message: `An OTP has been sent to ${createdAccount.email}. Please verify the OTP to complete the signup process.`, token });
         } catch (error) {
             console.error(error);
             return res.status(500).json({ message: "An unexpected error occurred while trying to signup for an account! Please try again later - backend" });
@@ -101,6 +102,10 @@ class ClientSignUp {
                 delete isValidClient.otp;
                 await isValidClient.save();
             }
+
+            const signUpAtTimestamp = new Date().toLocaleString();
+            isValidClient.signUpAt = signUpAtTimestamp;
+            await isValidClient.save();
 
             const token = generateToken.generatePrimaryToken({ clientId: isValidClient._id });
             const refreshToken = generateToken.generateRefreshToken({ clientId: isValidClient._id });

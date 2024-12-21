@@ -1,6 +1,7 @@
 import express from 'express'
 
 import primaryActions from '../controller/client/accounts/primaryActions.js';
+import secondaryActions from '../controller/client/accounts/secondaryActions.js';
 
 import { placeOrder, cancelOrder, orderConfirmation, addToCart, removeFromCart, trackOrderDetails, fetchProductsFromCart, deleteClient, updateClient } from '../controller/placeCancelOrder.js';
 import { clientLogOut } from '../controller/placeCancelOrder.js';
@@ -16,13 +17,19 @@ const router = express.Router();
 
 // primary actions
 router.post("/account/signup", primaryActions.clientSignUp);
-router.post("/account/signup/verifyOTP", primaryActions.clientConfirmOTP);
-router.post("/account/signin", primaryActions.clientSignIn);
+router.post("/account/signup/verifyOTP/:clientId", primaryActions.clientConfirmOTP);
+router.post("/account/signin", primaryActions.clientSignIn); // test passed
 router.delete("/account/logout", clientAuthMiddleware, primaryActions.clientLogout);
 
 
+// secondary actions
+router.post("/account/details/delete", clientAuthMiddleware, secondaryActions.deleteClient); // test passed
+router.patch("/account/details/update", clientAuthMiddleware, secondaryActions.updateClient);
 
-router.get("/details", clientAuthMiddleware, fetchClientDetails); // test passed
+
+router.get("/details", clientAuthMiddleware, fetchClientDetails);
+
+
 router.delete("/logout", clientLogOut); // test passed
 router.post("/details/delete", clientAuthMiddleware, deleteClient); // test passed
 router.patch("/profile/update", clientAuthMiddleware, updateClient); // test passed

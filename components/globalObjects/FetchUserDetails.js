@@ -17,9 +17,10 @@ export const fetchAdminDetails = async (req, res) => {
 
 export const fetchClientDetails = async (req, res) => {
     const clientId = req.clientId;
+
     try {
         const clientDetails = await ClientModel.findById(clientId);
-        if (!clientDetails) return res.status(404).json({ message: "Client not found! 0 backend" });
+        if (!clientDetails) return res.status(404).json({ message: "Client not found! - backend" });
 
         return res.status(200).json({ clientDetails });
     } catch (error) {
