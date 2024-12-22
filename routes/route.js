@@ -8,6 +8,6 @@ const route = express.Router();
  */
 
 // http://localhost:8000/api/products
-route.get("/products", fetchProducts); // this should be accessible by both admin and client (client side (test passed) | admin side (not yet testing))
+route.get("/product/details", fetchProducts); // this should be accessible by both admin and client (client side (test passed) | admin side (not yet testing))
 
 export default route;

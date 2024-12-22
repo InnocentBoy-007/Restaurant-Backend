@@ -1,10 +1,15 @@
 import mongoose from "mongoose";
 import Products from '../model/productModel.js'
-import OrderDetails from "../model/orderDetailsModel.js";
+
 import { CustomError } from "../components/CustomError.js";
 import { SentMail } from "../components/middlewares/SentMail.js";
 import Cart from '../model/cardModel.js'
 import Client from '../model/usermodel/clientModel.js'
+
+
+import ClientModel from '../model/usermodel/clientModel.js'
+import ProductModel from '../model/productModel.js'
+import OrderDetails from "../model/orderDetailsModel.js";
 
 
 export class OrderService {
@@ -100,53 +105,6 @@ export class OrderService {
     }
 
     // (test passed)
-    async placeOrder(clientId, orderDetails) {
-        if (!clientId || !mongoose.Types.ObjectId.isValid(clientId)) throw new CustomError("Invalid clientId - backend", 401);
-        if (!orderDetails || typeof orderDetails !== 'object') throw new CustomError("Please enter a valid information! - backend", 400);
-        const productId = orderDetails.productId;
-        const productQuantity = orderDetails.productQuantity
-        if (!productId || !mongoose.Types.ObjectId.isValid(productId)) throw new CustomError("Please enter a valid productId! - backend", 400);
-        try {
-            const isValidProduct = await Products.findById(productId);
-            if (!isValidProduct) throw new CustomError("Cannot find the product! - backend", 404);
-            this.product = isValidProduct;
-
-            const isValidClient = await Client.findById(clientId);
-            if (!isValidClient) throw new CustomError("Unauthorized user! - backend", 409);
-
-            // compare the order product quantity and the existing product quantity. If the order product quantity is more than the existing product quantity, throw an error
-            if (orderDetails.productQuantity > isValidProduct.productQuantity) throw new CustomError(`Not enough ${isValidProduct.productName}`, 409);
-
-            const totalPrice = isValidProduct.productPrice * orderDetails.productQuantity;
-
-            await OrderDetails.create({
-                clientId: isValidClient._id,
-                clientName: isValidClient.name,
-                email: isValidClient.email,
-                address: isValidClient.address,
-                phoneNo: isValidClient.phoneNo,
-
-                productId: isValidProduct._id,
-                productName: isValidProduct.productName,
-                productPrice: isValidProduct.productPrice,
-                totalPrice,
-                productQuantity,
-
-                orderTime: new Date().toLocaleString()
-            });
-
-            return {
-                message: `Order placed successfully! Please wait a moment untill the placement process is completed and the order is being dispatched.`,
-            }
-        } catch (error) {
-            console.log(error); // debugging
-            if (error instanceof CustomError) throw error;
-            throw new CustomError("An unexpected error occured while placing an order - backend", 500);
-        }
-    }
-
-
-    // (test passed)
     async cancelOrder(orderId) { // send 'orderProductDetails' as req body
         if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) throw new CustomError("Invalid Id - backend", 400);
         try {
@@ -195,4 +153,76 @@ export class OrderService {
             throw new CustomError("An unexpected error occured while confirming an order - backend", 500);
         }
     }
+}
+
+class ClientServices {
+
+    async placeOrder(req, res) {
+        const clientId = req.clientId;
+        if (!clientId || !mongoose.Types.ObjectId.isValid(clientId)) return res.status(400).json({ message: "Invalid clientId - backend" });
+        const { orderDetails } = req.body;
+        if (!orderDetails || typeof orderDetails !== 'object') return res.status(400).json({ message: "Order details is required! - backend" });
+        if (!mongoose.Types.ObjectId.isValid(orderDetails.productId)) return res.status(409).json({ message: "The product Id is supposed to be a mongoose objectId" });
+
+        try {
+            const isValidClient = await ClientModel.findById(clientId);
+            if (!isValidClient) return res.status(404).json({ message: "Unauthorized user! - backend" });
+
+            const isValidProduct = await ProductModel.findById(orderDetails.productId);
+            if (!isValidProduct) return res.status(404).json({ message: "Product unavailable! - backend" });
+
+            if (orderDetails.productQuantity > isValidProduct.productQuantity) {
+                return res.status(409).json({ message: `Not enough ${isValidProduct.productName}! - backend` });
+            } else {
+                await OrderDetails.create({
+                    // client details
+                    clientId: isValidClient._id,
+                    clientName: isValidClient.username,
+                    email: isValidClient.email,
+                    address: isValidClient.address,
+                    phoneNo: isValidClient.phoneNo,
+
+                    // order details
+                    productId: isValidProduct._id,
+                    productName: isValidProduct.productName,
+                    productPrice: isValidProduct.productPrice,
+                    totalPrice: isValidProduct.productPrice * orderDetails.ProductQuantity,
+                    productQuantity: orderDetails.productQuantity,
+                    orderTime: new Date().toLocaleString()
+                })
+            }
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: "An unexpected error occured while trying to place an order! - baceknd" });
+        }
+    }
+
+    async cancelOrder(req, res) {
+
+    }
+
+    async orderReceivedConfirmation(req, res) {
+
+    }
+
+    async trackOrderDetails(req, res) {
+
+    }
+
+    async addProductsToCart(req, res) {
+
+    }
+
+    async fetchProductsFromCart(req, res) {
+
+    }
+
+    async removeProductsFromCart(req, res) {
+
+    }
+}
+
+const clientServices = new ClientServices();
+export default {
+    placeOrder: clientServices.placeOrder,
 }
