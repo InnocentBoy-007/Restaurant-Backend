@@ -174,6 +174,9 @@ class ClientServices {
             if (orderDetails.productQuantity > isValidProduct.productQuantity) {
                 return res.status(409).json({ message: `Not enough ${isValidProduct.productName}! - backend` });
             } else {
+                isValidProduct.productQuantity -= orderDetails.productQuantity;
+                await isValidProduct.save();
+
                 await OrderDetails.create({
                     // client details
                     clientId: isValidClient._id,
@@ -186,11 +189,13 @@ class ClientServices {
                     productId: isValidProduct._id,
                     productName: isValidProduct.productName,
                     productPrice: isValidProduct.productPrice,
-                    totalPrice: isValidProduct.productPrice * orderDetails.ProductQuantity,
+                    totalPrice: (isValidProduct.productPrice * orderDetails.productQuantity),
                     productQuantity: orderDetails.productQuantity,
                     orderTime: new Date().toLocaleString()
                 })
+
             }
+            return res.status(200).json({ message: `${orderDetails.productQuantity} ${isValidProduct.productName} orderered succesfully!` })
         } catch (error) {
             console.error(error);
             return res.status(500).json({ message: "An unexpected error occured while trying to place an order! - baceknd" });
