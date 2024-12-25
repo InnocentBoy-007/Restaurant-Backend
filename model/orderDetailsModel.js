@@ -22,7 +22,7 @@ const orderDetailsModel = new mongoose.Schema({
     orderTime: { type: String, required: true },
     orderDispatchedTime: { type: String, default: null },
 
-    acceptedByAdmin: {
+    status: {
         type: String,
         enum: ['pending', 'accepted', 'rejected'],
         default: 'pending'

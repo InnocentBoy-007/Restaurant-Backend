@@ -4,8 +4,6 @@ import Products from '../model/productModel.js'
 import { CustomError } from "../components/CustomError.js";
 import { SentMail } from "../components/middlewares/SentMail.js";
 import Cart from '../model/cardModel.js'
-import Client from '../model/usermodel/clientModel.js'
-
 
 import ClientModel from '../model/usermodel/clientModel.js'
 import ProductModel from '../model/productModel.js'
@@ -103,56 +101,6 @@ export class OrderService {
             throw new CustomError("An unexpected error occured while trying to fetch products from cart! - backend", 500);
         }
     }
-
-    // (test passed)
-    async cancelOrder(orderId) { // send 'orderProductDetails' as req body
-        if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) throw new CustomError("Invalid Id - backend", 400);
-        try {
-            const order = await OrderDetails.findById(orderId); // checks if the order is already accepted or not
-            if (!order) throw new CustomError("Order not found! - backend", 404);
-
-            if (order.acceptedByAdmin !== 'pending') throw new CustomError("Order cannot be canceled as it is already processed! - backend", 400);
-
-            // Restoring the product quantity
-            const product = await Products.findOne({ productName: order.orderProductName }); // fixed minor bug(changed findById to findOne)
-
-            product.productQuantity += order.orderQuantity; // (bug fixed)
-            await product.save();
-
-            await OrderDetails.findByIdAndDelete(orderId);
-
-            return { message: "Order canceled successfully! - backend" };
-        } catch (error) {
-            console.log(error);
-            if (error instanceof CustomError) throw error;
-            throw new CustomError("An unexpected error occured while canceling an order! - backend", 500);
-        }
-    }
-
-    // method for client ordered product received confirmation (test pending)
-    async orderConfirmation(orderId, email) { // clientConfirmation has to be either 'true' or 'false'
-        if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) throw new CustomError("Invalid orderId - backend", 401);
-
-        if (!email) throw new CustomError("Invalid email! Authorization revoked! - backend", 401);
-        try {
-            const isValidOrderId = await OrderDetails.findById(orderId);
-            if (!isValidOrderId) throw new Error("Order not found! - backend", 404);
-
-            if (email !== isValidOrderId.email) throw new CustomError("Incorrect email! Authorization denied! - backend", 409);
-
-            const update = isValidOrderId.receivedByClient = true;
-            if (!update) throw new CustomError("Update failed! - backend", 500);
-
-            await isValidOrderId.save();
-
-            return { message: "Product received by client! - backend" };
-
-        } catch (error) {
-            console.log(error);
-            if (error instanceof CustomError) throw error;
-            throw new CustomError("An unexpected error occured while confirming an order - backend", 500);
-        }
-    }
 }
 
 class ClientServices {
@@ -203,11 +151,62 @@ class ClientServices {
     }
 
     async cancelOrder(req, res) {
+        const orderId = req.params;
+        if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) return res.status(400).json({ message: "Invalid order Id! - backend" });
 
+        const clientId = req.clientId;
+        if (!clientId || !mongoose.Types.ObjectId.isValid(clientId)) return res.status(400).json({ message: "Invalid clientId - backend" });
+
+        try {
+            const isValidClient = await ClientModel.findById(clientId);
+            if (!isValidClient) return res.status(409).json({ message: "Invalid clientId! Unauthorized user - backend" });
+
+            const isValidOrder = await OrderDetails.findById(orderId);
+            if (!isValidOrder) return res.status(404).json({ message: "Invalid order Id! Order not found! - backend" });
+
+            const isValidProduct = await ProductModel.findById(isValidOrder.productId);
+            if (!isValidProduct) return res.status(409).json({ message: "Invalid productId! - backend" });
+
+            if (isValidOrder.status === 'pending') {
+                isValidProduct += isValidOrder.productQuantity;
+                await isValidOrder.deleteOne();
+            } else {
+                return res.status(409).json({ message: "Your order cannot be cancelled since it's already processed! - backend" });
+            }
+
+            return res.status(200).json({ message: "Order cancelled successfully! - backend" });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: "An unexpected error occured while trying to cancel the order! - backend" });
+        }
     }
 
     async orderReceivedConfirmation(req, res) {
+        const orderId = req.params;
+        if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) return res.status(400).json({ message: "Invalid order Id - backend" });
 
+        const clientId = req.clientId;
+        if (!clientId || !mongoose.Types.ObjectId.isValid(clientId)) return res.status(400).json({ message: "Invalid clientId! - backend" });
+
+        try {
+            const isValidClient = await ClientModel.findById(clientId);
+            if (!isValidClient) return res.status(409).json({ message: "Invalid clientId! Unauthorized user! - backend" });
+
+            const isValidOrder = await OrderDetails.findById(orderId);
+            if (!isValidOrder) return res.status(404).json({ message: "Invalid order Id! Order not found! - backend" });
+
+            if (isValidOrder.status === 'accepted') {
+                isValidOrder.receivedByClient = true;
+                await isValidOrder.save();
+            } else {
+                return res.status(400).json({ message: "The admin needs to accept the order first! - backend" });
+            }
+
+            return res.status(200).json({ message: "Order received by client successfully! - backend" });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: "An unexpected error occured while trying to confirm an order received status! - backend" });
+        }
     }
 
     async trackOrderDetails(req, res) {
@@ -229,5 +228,5 @@ class ClientServices {
 
 const clientServices = new ClientServices();
 export default {
-    placeOrder: clientServices.placeOrder,
+    placeOrder: clientServices.placeOrder, cancelOrder: clientServices.cancelOrder
 }

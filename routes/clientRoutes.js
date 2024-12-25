@@ -30,6 +30,7 @@ router.patch("/account/details/update", clientAuthMiddleware, secondaryActions.u
 
 // services
 router.post("/v1/customers/orders", clientAuthMiddleware, clientService.placeOrder);
+router.delete("/v1/customers/orders/cancel/:orderId", clientAuthMiddleware, clientService.cancelOrder);
 
 
 router.get("/account/details", clientAuthMiddleware, fetchClientDetails);
@@ -39,7 +40,6 @@ router.get("/orders/:email", clientAuthMiddleware, trackOrderDetails); // haven'
 router.post("/cart/add/:productId", clientAuthMiddleware, addToCart); // test passed
 router.delete("/cart/remove/:productId", clientAuthMiddleware, removeFromCart); // test passed
 router.get("/cart/products", clientAuthMiddleware, fetchProductsFromCart); // test passed
-router.delete("/products/cancelorder/:orderId", cancelOrder); // (not yet testing)
 router.post("/order/confirm/:orderId/:email", clientAuthMiddleware, orderConfirmation); // test passed
 
 router.post("/refresh-token/:clientId", generateNewTokenClient); // to generate a new refreshed token (not yet testing)
