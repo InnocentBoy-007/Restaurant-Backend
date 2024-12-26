@@ -1,5 +1,4 @@
-import mongoose, { isValidObjectId } from "mongoose";
-import Products from '../model/productModel.js'
+import mongoose from "mongoose";
 
 import { CustomError } from "../components/CustomError.js";
 import { SentMail } from "../components/middlewares/SentMail.js";
@@ -18,36 +17,6 @@ export class OrderService {
         this.otp = null;
     }
 
-    //(test passed)
-    // use jwt token for authorization (test pending)
-    async addToCart(clientId, productId) { // using client Email as a primary key
-        if (!clientId || !mongoose.Types.ObjectId.isValid(clientId)) throw new CustomError("Invalid clientId - backend", 400);
-        if (!productId || !mongoose.Types.ObjectId.isValid(productId)) throw new CustomError("Invalid product Id - backend", 400);
-        try {
-            //check if the product is already inside the cart or not
-            const isDuplicateInsideCart = await Cart.findOne({ productId });
-            if (isDuplicateInsideCart) throw new CustomError(`${isDuplicateInsideCart.productName} is already inside the cart! - backend`, 409);
-
-            const product = await Products.findById(productId);
-            if (!product) throw new CustomError("There's a problem while adding checking the product in the product database - backend", 500);
-
-            const isAddedToCart = await Cart.create({
-                clientId,
-                productId,
-                productName: product.productName,
-                productPrice: product.productPrice,
-                productQuantity: product.productQuantity,
-                addedTime: new Date().toLocaleString()
-            })
-
-            return { message: `${isAddedToCart.productName} is added to cart successfully on ${isAddedToCart.addedTime} - backend`, isAddedToCart };
-        } catch (error) {
-            console.log(error);
-            if (error instanceof CustomError) throw error;
-            throw new CustomError("An unexpected error occured while trying to add the product to cart - backend", 500);
-        }
-    }
-
     // test passed
     async removeProductFromCart(productId, clientId) {
         if (!productId || !mongoose.Types.ObjectId.isValid(productId)) throw new CustomError("Invalid product Id - backend", 400);
@@ -64,26 +33,6 @@ export class OrderService {
             console.log(error);
             if (error instanceof CustomError) throw error;
             throw new CustomError("An unexpected error occured while trying to delete products from cart! - backend", 500);
-        }
-    }
-
-    // test passed in postman(partially tested - passed)
-    async fetchProductsFromCart(clientId) { // use token for authorization
-        if (!clientId || !mongoose.Types.ObjectId.isValid(clientId)) throw new CustomError("Invalid clientID - backend", 401);
-        try {
-            const cartDetails = await Cart.find({ clientId });
-
-            if (!cartDetails) throw new CustomError("An unexpected error occured while fetching order details! - backend", 401);
-
-            if (cartDetails.length === 0) {
-                return { message: "No items inside the cart! - backend", cartDetails };
-            }
-
-            return { message: "Product found inside the cart! - backend", cartDetails };
-        } catch (error) {
-            console.log(error);
-            if (error instanceof CustomError) throw error;
-            throw new CustomError("An unexpected error occured while trying to fetch products from cart! - backend", 500);
         }
     }
 }
@@ -227,7 +176,12 @@ class ClientServices {
             if (!isValidProduct) return res.status(404).json({ message: "Invalid productId! Product not found! - backend" });
 
             const addedProduct = await CartModel.create({
-                clientId, productId, productName: isValidProduct.productName, productPrice: isValidProduct.productPrice, productQuantity: isValidProduct.productQuantity, addedTime: new Date().toLocaleString()
+                clientId,
+                productId,
+                productName: isValidProduct.productName,
+                productPrice: isValidProduct.productPrice,
+                productQuantity: isValidProduct.productQuantity,
+                addedTime: new Date().toLocaleString()
             })
             if (!addedProduct) return res.status(500).json({ message: `Failed to add ${isValidProduct.productName} in the cart! - backend` });
 
@@ -238,16 +192,36 @@ class ClientServices {
         }
     }
 
+    // it only needs clientId to process this feature
     async fetchProductsFromCart(req, res) {
+        const clientId = req.clientId;
+        if (!clientId || !mongoose.Types.ObjectId.isValid(clientId)) return res.status(400).json({ message: "Invalid clientId - backend" });
 
+        try {
+            const isValidClient = await ClientModel.findById(clientId);
+            if (!isValidClient) return res.status(404).json({ message: "Invalid clientId! Unauthorized user! - backend" });
+
+            const products_cart = await CartModel.find({ clientId: isValidClient._id });
+            if (!products_cart) return res.status(404).json({ message: "No items inside the cart! - backend" });
+
+            return res.status(200).json({ products: products_cart });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: "An unexpected error occured while trying to fetch products from cart! - backend" });
+        }
     }
 
     async removeProductsFromCart(req, res) {
-
+        // statement
     }
 }
 
 const clientServices = new ClientServices();
 export default {
-    placeOrder: clientServices.placeOrder, cancelOrder: clientServices.cancelOrder, orderReceivedConfirmation: clientServices.orderReceivedConfirmation, addProductsToCart: clientServices.addProductsToCart
+    placeOrder: clientServices.placeOrder,
+    cancelOrder: clientServices.cancelOrder,
+    orderReceivedConfirmation: clientServices.orderReceivedConfirmation,
+    trackOrderDetails: clientServices.trackOrderDetails,
+    addProductsToCart: clientServices.addProductsToCart,
+    fetchProductsFromCart: clientServices.fetchProductsFromCart
 }

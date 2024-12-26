@@ -7,7 +7,7 @@ import clientService from '../services/clientService.js'; // service
 
 
 
-import { removeFromCart, fetchProductsFromCart } from '../controller/placeCancelOrder.js';
+// import { removeFromCart } from '../controller/placeCancelOrder.js';
 import { clientAuthMiddleware } from '../components/middlewares/AuthMiddleware.js';
 
 import { fetchClientDetails } from '../components/globalObjects/FetchUserDetails.js';
@@ -31,19 +31,21 @@ router.patch("/account/details/update", clientAuthMiddleware, secondaryActions.u
 
 
 // services
-router.post("/v1/customers/orders", clientAuthMiddleware, clientService.placeOrder);
+// services (orders)
+router.post("/v1/customers/orders/place_order", clientAuthMiddleware, clientService.placeOrder);
 router.delete("/v1/customers/orders/cancel/:orderId", clientAuthMiddleware, clientService.cancelOrder);
 router.post("/v1/customers/orders/receive_confirm/:orderId", clientAuthMiddleware, clientService.orderReceivedConfirmation);
+router.get("/v1/customers/orders/track_orders", clientAuthMiddleware, clientService.trackOrderDetails);
+// services (cart)
 router.post("/v1/customers/cart/add/:productId", clientAuthMiddleware, clientService.addProductsToCart);
-
+router.get("/v1/customers/cart/fetch", clientAuthMiddleware, clientService.fetchProductsFromCart);
 
 
 
 router.get("/account/details", clientAuthMiddleware, fetchClientDetails);
 
 
-router.delete("/cart/remove/:productId", clientAuthMiddleware, removeFromCart); // test passed
-router.get("/cart/products", clientAuthMiddleware, fetchProductsFromCart); // test passed
+// router.delete("/cart/remove/:productId", clientAuthMiddleware, removeFromCart); // test passed
 
 router.post("/refresh-token/:clientId", generateNewTokenClient); // to generate a new refreshed token (not yet testing)
 
