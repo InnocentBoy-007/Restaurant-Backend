@@ -1,9 +1,9 @@
-import mongoose from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 import Products from '../model/productModel.js'
 
 import { CustomError } from "../components/CustomError.js";
 import { SentMail } from "../components/middlewares/SentMail.js";
-import Cart from '../model/cardModel.js'
+import CartModel from '../model/cartModel.js'
 
 import ClientModel from '../model/usermodel/clientModel.js'
 import ProductModel from '../model/productModel.js'
@@ -16,21 +16,6 @@ export class OrderService {
         this.clientDetails = null;
         this.product = null;
         this.otp = null;
-    }
-
-    // (test passed)
-    async trackOrderDetails(email) {
-        if (!email) throw new CustomError("Invalid email! - backend", 409);
-        try {
-            const orderDetails = await OrderDetails.find({ email });
-            if (!orderDetails) throw new CustomError("No orders found! - backend", 404);
-            return { message: "Orders found! - backend", orderDetails };
-        } catch (error) {
-            console.log(error);
-
-            if (error instanceof CustomError) throw error;
-            throw new CustomError("An unexpected error occured while trying to fetch orderDetails - backend", 500);
-        }
     }
 
     //(test passed)
@@ -210,11 +195,47 @@ class ClientServices {
     }
 
     async trackOrderDetails(req, res) {
+        const clientId = req.clientId;
+        if (!clientId || !mongoose.Types.ObjectId.isValid(clientId)) return res.status(400).json({ message: "Invalid clientId - backend" });
 
+        try {
+            const isValidClient = await ClientModel.findById(clientId);
+            if (!isValidClient) return res.status(404).json({ message: "Invalid clientId! Unauthorized user! - baceknd" });
+
+            const orders = await OrderDetails.find({ clientId: isValidClient._id });
+            if (!orders) return res.status(404).json({ message: "No orders found! - backend" });
+
+            return res.status(200).json({ orders });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: "An unexpected error occured while trying to track your order details! - backend" });
+        }
     }
 
     async addProductsToCart(req, res) {
+        const clientId = req.clientId;
+        if (!clientId || !mongoose.Types.ObjectId.isValid(clientId)) return res.status(400).json({ message: "Invalid clientId - backend" });
 
+        const { productId } = req.params;
+        if (!productId || !mongoose.Types.ObjectId.isValid(productId)) return res.status(400).json({ message: "Invalid productId - backend" });
+
+        try {
+            const isValidClient = await ClientModel.findById(clientId);
+            if (!isValidClient) return res.status(404).json({ message: "Invalid clientId! Unauthorized user! - backend" });
+
+            const isValidProduct = await ProductModel.findById(productId);
+            if (!isValidProduct) return res.status(404).json({ message: "Invalid productId! Product not found! - backend" });
+
+            const addedProduct = await CartModel.create({
+                clientId, productId, productName: isValidProduct.productName, productPrice: isValidProduct.productPrice, productQuantity: isValidProduct.productQuantity, addedTime: new Date().toLocaleString()
+            })
+            if (!addedProduct) return res.status(500).json({ message: `Failed to add ${isValidProduct.productName} in the cart! - backend` });
+
+            return res.status(201).json({ message: `${addedProduct.productName} added to cart successfully! - backend`, addedProduct });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: "An unexpected error occured while trying to add your product to the cart! - backend" });
+        }
     }
 
     async fetchProductsFromCart(req, res) {
@@ -228,5 +249,5 @@ class ClientServices {
 
 const clientServices = new ClientServices();
 export default {
-    placeOrder: clientServices.placeOrder, cancelOrder: clientServices.cancelOrder
+    placeOrder: clientServices.placeOrder, cancelOrder: clientServices.cancelOrder, orderReceivedConfirmation: clientServices.orderReceivedConfirmation, addProductsToCart: clientServices.addProductsToCart
 }
