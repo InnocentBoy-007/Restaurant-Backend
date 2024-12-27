@@ -37,15 +37,15 @@ router.delete("/v1/customers/orders/cancel/:orderId", clientAuthMiddleware, clie
 router.post("/v1/customers/orders/receive_confirm/:orderId", clientAuthMiddleware, clientService.orderReceivedConfirmation);
 router.get("/v1/customers/orders/track_orders", clientAuthMiddleware, clientService.trackOrderDetails);
 // services (cart)
-router.post("/v1/customers/cart/add/:productId", clientAuthMiddleware, clientService.addProductsToCart);
+router.post("/v1/customers/cart/:productId/add", clientAuthMiddleware, clientService.addProductsToCart);
 router.get("/v1/customers/cart/fetch", clientAuthMiddleware, clientService.fetchProductsFromCart);
+router.delete("/v1/customers/cart/:productId/delete", clientAuthMiddleware, clientService.removeProductsFromCart);
 
 
 
 router.get("/account/details", clientAuthMiddleware, fetchClientDetails);
 
 
-// router.delete("/cart/remove/:productId", clientAuthMiddleware, removeFromCart); // test passed
 
 router.post("/refresh-token/:clientId", generateNewTokenClient); // to generate a new refreshed token (not yet testing)
 

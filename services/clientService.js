@@ -9,36 +9,7 @@ import ProductModel from '../model/productModel.js'
 import OrderDetails from "../model/orderDetailsModel.js";
 
 
-export class OrderService {
-    constructor() {
-        this.mailer = new SentMail();
-        this.clientDetails = null;
-        this.product = null;
-        this.otp = null;
-    }
-
-    // test passed
-    async removeProductFromCart(productId, clientId) {
-        if (!productId || !mongoose.Types.ObjectId.isValid(productId)) throw new CustomError("Invalid product Id - backend", 400);
-        if (!clientId || !mongoose.Types.ObjectId.isValid(clientId)) throw new CustomError("Invalid clientId - backend", 400);
-
-        try {
-            const product = await Cart.findOne({ productId, clientId }); // using productId and clientId for validating
-            if (!product) throw new CustomError("Product not found! - backend", 404);
-
-            await product.deleteOne();
-
-            return { message: `${product.productName} deleted from cart successfully! - backend` }
-        } catch (error) {
-            console.log(error);
-            if (error instanceof CustomError) throw error;
-            throw new CustomError("An unexpected error occured while trying to delete products from cart! - backend", 500);
-        }
-    }
-}
-
 class ClientServices {
-
     async placeOrder(req, res) {
         const clientId = req.clientId;
         if (!clientId || !mongoose.Types.ObjectId.isValid(clientId)) return res.status(400).json({ message: "Invalid clientId - backend" });
@@ -46,6 +17,8 @@ class ClientServices {
         if (!orderDetails || typeof orderDetails !== 'object') return res.status(400).json({ message: "Order details is required! - backend" });
         if (!mongoose.Types.ObjectId.isValid(orderDetails.productId)) return res.status(409).json({ message: "The product Id is supposed to be a mongoose objectId" });
 
+        const mailer = new SentMail();
+        await mailer.setUp()
         try {
             const isValidClient = await ClientModel.findById(clientId);
             if (!isValidClient) return res.status(404).json({ message: "Unauthorized user! - backend" });
@@ -59,7 +32,7 @@ class ClientServices {
                 isValidProduct.productQuantity -= orderDetails.productQuantity;
                 await isValidProduct.save();
 
-                await OrderDetails.create({
+                var orders = await OrderDetails.create({
                     // client details
                     clientId: isValidClient._id,
                     clientName: isValidClient.username,
@@ -77,6 +50,16 @@ class ClientServices {
                 })
 
             }
+
+            const mailbody = {
+                subject: 'Order placed successfully!',
+                to: isValidClient.email,
+                text: `Thanks ${isValidClient.title}. ${orders.clientName}, for ordering ${orders.productQuantity} ${orders.productName} from our Restaurant. From Coffee Restaurant.
+                Order Time: ${orders.orderTime}
+                `
+            }
+            await mailer.sentMail(mailbody.to, mailbody.subject, mailbody.text);
+
             return res.status(200).json({ message: `${orderDetails.productQuantity} ${isValidProduct.productName} orderered succesfully!` })
         } catch (error) {
             console.error(error);
@@ -175,6 +158,10 @@ class ClientServices {
             const isValidProduct = await ProductModel.findById(productId);
             if (!isValidProduct) return res.status(404).json({ message: "Invalid productId! Product not found! - backend" });
 
+            // check if the newly added product already exist in the cart or not
+            const productExisted = await CartModel.findOne({ productId: isValidProduct._id });
+            if (productExisted) return res.status(409).json({ message: `${isValidProduct.productName} is already inside the cart!` });
+
             const addedProduct = await CartModel.create({
                 clientId,
                 productId,
@@ -202,7 +189,9 @@ class ClientServices {
             if (!isValidClient) return res.status(404).json({ message: "Invalid clientId! Unauthorized user! - backend" });
 
             const products_cart = await CartModel.find({ clientId: isValidClient._id });
-            if (!products_cart) return res.status(404).json({ message: "No items inside the cart! - backend" });
+            if (!products_cart) {
+                return res.status(404).json({ message: "No items inside the cart! - backend" })
+            } else if (products_cart.length === 0) return res.status(200).json({ products: [] })
 
             return res.status(200).json({ products: products_cart });
         } catch (error) {
@@ -213,6 +202,30 @@ class ClientServices {
 
     async removeProductsFromCart(req, res) {
         // statement
+        const clientId = req.clientId;
+        if (!clientId || !mongoose.Types.ObjectId.isValid(clientId)) return res.status(400).json({ message: "Invalid clientId! - backend" });
+
+        const { productId } = req.params;
+        if (!productId || !mongoose.Types.ObjectId.isValid(productId)) return res.status(400).json({ message: "Invalid productId! - backend" });
+
+        try {
+            const isValidClient = await ClientModel.findById(clientId);
+            if (!isValidClient) return res.status(404).json({ message: "Invalid clientId! Unauthorized user! - backend" });
+
+            const isValidProduct = await CartModel.findOne({ productId });
+            if (!isValidProduct) {
+                return res.status(404).json({ message: "Invalid productId! Product not found! - backned" })
+            } else {
+                await isValidProduct.deleteOne();
+                console.log("Deleted successfully!");
+
+            }
+
+            return res.status(200).json({ message: `${isValidProduct.productName} is removed from cart successfully! - backend` });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: "An unexpected error occured while trying to remove the product! - backend" });
+        }
     }
 }
 
@@ -223,5 +236,6 @@ export default {
     orderReceivedConfirmation: clientServices.orderReceivedConfirmation,
     trackOrderDetails: clientServices.trackOrderDetails,
     addProductsToCart: clientServices.addProductsToCart,
-    fetchProductsFromCart: clientServices.fetchProductsFromCart
+    fetchProductsFromCart: clientServices.fetchProductsFromCart,
+    removeProductsFromCart: clientServices.removeProductsFromCart
 }
