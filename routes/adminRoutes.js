@@ -3,10 +3,9 @@ import express from 'express'
 import primaryActions from '../controller/admin/accounts/primaryActions.js'; // manages primary actions for admin accounts
 import secondaryActions from '../controller/admin/accounts/secondaryActions.js'; // manages secondary actions for admin accounts
 
+import adminService from '../services/adminService.js';
 
-import { acceptOrder, rejectOrder, fetchOrders } from '../adminPanel/adminAcceptRejectOrder.js';
 import { adminAuthMiddleware } from '../components/middlewares/AuthMiddleware.js';
-
 import { generateNewTokenAdmin } from '../components/tokens/GenerateBackupJWT.js';
 
 import { fetchAdminDetails } from '../components/globalObjects/FetchUserDetails.js';
@@ -30,10 +29,10 @@ router.delete("/account/details/delete", adminAuthMiddleware, secondaryActions.d
 router.patch("/account/details/update", adminAuthMiddleware, secondaryActions.updateAdmin);
 
 
-
-router.post("/orders/accept/:orderId/:productId", adminAuthMiddleware, acceptOrder); // test passed
-router.delete("/orders/reject/:orderId", adminAuthMiddleware, rejectOrder); // test passed
-router.get("/orders", adminAuthMiddleware, fetchOrders); // test passed
+// admin services
+router.post("v1/admin/orders/accept_order/:orderId", adminAuthMiddleware, adminService.acceptOrder);
+router.delete("v1/admin/orders/reject_order/:orderId", adminAuthMiddleware, adminService.rejectOrder);
+router.get("/v1/admin/orders/fetch_orders", adminAuthMiddleware, adminService.fetchOrderDetails);
 
 // generate new token using a refresh token
 router.post("/token/:adminId", generateNewTokenAdmin); // testing

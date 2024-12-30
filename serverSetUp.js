@@ -6,7 +6,6 @@ import AdminRoute from './routes/adminRoutes.js';
 import ClientRoute from './routes/clientRoutes.js';
 import route from './routes/route.js';
 import cookieParser from 'cookie-parser';
-import { CustomError } from './components/CustomError.js';
 /**
  * The CustomError class extends the built-in Error class.
     It adds an additional property errorCode to provide more context about the error.
@@ -40,7 +39,7 @@ class ServerSetUp { // This class encapsulates all the logic related to setting 
             await mongoose.connect(this.MONGO_URL);
             console.log("Database connected succesfully! - backend");
         } catch (error) {
-            throw new CustomError("Database cannot be connected! - backend", 400);
+            console.error("Database cannot be connected! - backend");
         }
     }
 
@@ -79,7 +78,7 @@ class ServerSetUp { // This class encapsulates all the logic related to setting 
             console.log("Server setup successfully! - backend");
         } catch (error) {
             console.log(error);
-            throw new CustomError("Server cannot be created! - backend", 500);
+            return res.status(500).json({ message: "Server cannot be created! - backend" });
         }
     }
 }

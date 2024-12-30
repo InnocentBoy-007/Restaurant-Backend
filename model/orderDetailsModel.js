@@ -7,21 +7,25 @@ import mongoose from "mongoose";
 // client confirmation
 
 const orderDetailsModel = new mongoose.Schema({
+    // client details
     clientId: { type: mongoose.Types.ObjectId, required: true },
     clientName: { type: String, required: true },
     email: { type: String, required: true },
     address: { type: String, required: true },
     phoneNo: { type: String, required: true },
 
+    // product details
     productId: { type: mongoose.Types.ObjectId, required: true },
     productName: { type: String, required: true },
     productPrice: { type: Number, required: true },
     totalPrice: { type: Number, required: true },
     productQuantity: { type: Number, required: true }, // * only this property needs to be fetched from frontend
 
+    // timestamps
     orderTime: { type: String, required: true },
     orderDispatchedTime: { type: String, default: null },
 
+    // admin details
     status: {
         type: String,
         enum: ['pending', 'accepted', 'rejected'],

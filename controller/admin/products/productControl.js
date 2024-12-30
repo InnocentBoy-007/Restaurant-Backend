@@ -1,3 +1,6 @@
+// Custom error needs to be changed (Custom error file deleted)
+
+
 import mongoose from 'mongoose';
 import ProductModel from '../../../model/productModel.js'
 import { CustomError } from '../../../components/CustomError.js';

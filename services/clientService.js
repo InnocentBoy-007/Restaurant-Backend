@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 
-import { CustomError } from "../components/CustomError.js";
 import { SentMail } from "../components/middlewares/SentMail.js";
 import CartModel from '../model/cartModel.js'
 
