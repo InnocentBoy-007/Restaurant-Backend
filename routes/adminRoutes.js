@@ -5,13 +5,13 @@ import secondaryActions from '../controller/admin/accounts/secondaryActions.js';
 
 import adminService from '../services/adminService.js';
 
+import productControl from '../controller/admin/products/productControl.js';
+
 import { adminAuthMiddleware } from '../components/middlewares/AuthMiddleware.js';
 import { generateNewTokenAdmin } from '../components/tokens/GenerateBackupJWT.js';
 
 import { fetchAdminDetails } from '../components/globalObjects/FetchUserDetails.js';
 
-
-import { addProduct, updateProduct, deleteProduct } from '../adminPanel/adminHandleProducts.js';
 import { verifyAdmin, verifyOTPAdmin, changePasswordAdmin } from '../services/passwordManagement/passwordManagement.js';
 import { updateAdminPassword } from '../services/passwordManagement/changePassword.js';
 
@@ -30,19 +30,25 @@ router.patch("/account/details/update", adminAuthMiddleware, secondaryActions.up
 
 
 // admin services
-router.post("v1/admin/orders/accept_order/:orderId", adminAuthMiddleware, adminService.acceptOrder);
-router.delete("v1/admin/orders/reject_order/:orderId", adminAuthMiddleware, adminService.rejectOrder);
+router.post("/v1/admin/orders/accept_order/:orderId", adminAuthMiddleware, adminService.acceptOrder);
+router.delete("/v1/admin/orders/reject_order/:orderId", adminAuthMiddleware, adminService.rejectOrder);
 router.get("/v1/admin/orders/fetch_orders", adminAuthMiddleware, adminService.fetchOrderDetails);
+
+
+// admin product controller routes
+router.post("/v1/admin/products/add_product", adminAuthMiddleware, productControl.addProduct);
+router.patch("/v1/admin/products/update_product/:productId", adminAuthMiddleware, productControl.updateProduct);
+router.delete("/v1/admin/products/delete_product/:productId", adminAuthMiddleware, productControl.deleteProduct);
+
+
+
+
 
 // generate new token using a refresh token
 router.post("/token/:adminId", generateNewTokenAdmin); // testing
 
 router.get("/details", adminAuthMiddleware, fetchAdminDetails); // test passed
 
-
-router.post("/products/add", adminAuthMiddleware, addProduct); // test passed
-router.patch("/products/update/:productId", adminAuthMiddleware, updateProduct); // (testing)
-router.delete("/products/delete/:productId", adminAuthMiddleware, deleteProduct); // test passed
 
 // APIs for changing password after forgotten password (testing)
 router.post("/forgot-password/verify/email", verifyAdmin);

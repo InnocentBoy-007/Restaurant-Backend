@@ -40,8 +40,8 @@ class AdminSignIn {
             const isValidPassword = await bcrypt.compare(adminDetails.password, isValidAdmin.password);
             if (!isValidPassword) return res.status(403).json({ message: "Incorrect password! Authorization denied! - backend" });
 
-            const token = generateToken.generatePrimaryToken({ adminId: isValidAdmin._id });
-            const refreshToken = generateToken.generateRefreshToken({ adminId: isValidAdmin._id });
+            const token = await generateToken.generatePrimaryToken({ adminId: isValidAdmin._id });
+            const refreshToken = await generateToken.generateRefreshToken({ adminId: isValidAdmin._id });
 
             return res.status(200).json({ message: `Login successfull! Welcome to Coffee Restaurant, ${title}${isValidAdmin.username}`, token, refreshToken });
         } catch (error) {
