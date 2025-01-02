@@ -67,7 +67,7 @@ class ProductController {
 
             const timestamp = new Date().toLocaleString();
 
-            return { message: `Product deleted successfully on ${timestamp} - backend` };
+            return res.status(200).json({ message: `Product deleted successfully on ${timestamp} - backend` });
         } catch (error) {
             console.error(error);
             return res.status(500).json({ message: "An unexpected error occured while trying to delete the product! - backend" });

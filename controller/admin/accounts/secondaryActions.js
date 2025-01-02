@@ -7,7 +7,7 @@ class DeleteAdmin {
         const adminId = req.adminId;
         if (!adminId || !mongoose.Types.ObjectId.isValid(adminId)) return res.status(400).json({ message: "Invalid admin Id - backend" });
         const { password } = req.body; // deleting the account requires addition security (needs password for authorization)
-        if (!password) return res.status(400).json({ message: "New password is required! - baceknd" });
+        if (!password) return res.status(400).json({ message: "Ppassword is required! - baceknd" });
 
         try {
             const isValidAdmin = await AdminModel.findById(adminId).select("+password");

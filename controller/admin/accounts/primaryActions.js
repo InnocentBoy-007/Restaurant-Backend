@@ -52,33 +52,42 @@ class AdminSignIn {
 }
 
 class AdminSignUp {
-    constructor() {
-        this.mailer = new SentMail();
-        this.mailer.setUp();
-        this.generateOTP = Math.floor(100000 + Math.random() * 900000).toString(); // generate otp
-    }
+    // generateOTP() {
+    //     const otp = Math.floor(100000 + Math.random() * 900000).toString(); // generate otp
+    //     return otp;
+    // }
 
     async signUp(req, res) {
-        const adminDetails = req.body;
+        // mail setUp
+        const mailer = new SentMail();
+        await mailer.setUp();
+
+        const { adminDetails } = req.body;
         if (!adminDetails || typeof adminDetails !== 'object') return res.status(400).json({ message: "Invalid user details! - backend" });
+        const otp = Math.floor(100000 + Math.random() * 900000).toString(); // generate otp
+
         try {
             const hashedPassword = await bcrypt.hash(adminDetails.password, 10);
-            const createdAccount = await AdminModel.create({ ...adminDetails, password: hashedPassword });
+            const createdAccount = await AdminModel.create({ ...adminDetails, password: hashedPassword, otp });
             if (!createdAccount) return res.status(500).json({ message: "Account cannot be created! - backend" });
 
             const mailBody = {
                 to: `${createdAccount.email}`,
                 subject: "OTP verification - Coffee Restaurant",
-                text: `Dear ${createdAccount.title}. ${createdAccount.username}, please use this OTP: ${this.generateOTP()} to finish up the signup process. Thanks Coffee Restaurant.`
+                text: `Dear ${createdAccount.title}. ${createdAccount.username}, please use this OTP: ${otp} to finish up the signup process. Thanks Coffee Restaurant.`
             }
 
-            const mail = await this.mailer.sentMail(mailBody.to, mailBody.subject, mailBody.text);
+            const mail = await mailer.sentMail(mailBody.to, mailBody.subject, mailBody.text);
             if (!mail) {
                 await createdAccount.deleteOne(); // Delete the account if mail fails
                 return res.status(500).json({ message: "Failed to send OTP. Terminating the sign up process! - backend" });
             }
 
-            return res.status(200).json({ message: `An OTP has been sent to ${createdAccount.email}. Please verify the OTP to complete the signup process.` });
+            // generate token
+            const token = await generateToken.generatePrimaryToken({ adminId: createdAccount._id });
+            const refreshToken = await generateToken.generateRefreshToken({ adminId: createdAccount._id });
+
+            return res.status(200).json({ message: `An OTP has been sent to ${createdAccount.email}. Please verify the OTP to complete the signup process.`, token, refreshToken });
         } catch (error) {
             console.error(error);
             return res.status(500).json({ message: "An unexpected error occurred while trying to signup for an account! Please try again later - backend" });
@@ -86,8 +95,8 @@ class AdminSignUp {
     }
 
     async confirmOTP(req, res) {
-        const otp = req.body;
-        const adminId = req.params;
+        const { otp } = req.body;
+        const adminId = req.adminId;
         if (!adminId || !mongoose.Types.ObjectId.isValid(adminId)) return res.status(400).json({ message: "Invalid admin Id! - backend" });
         if (!otp || typeof otp !== 'string') return res.status(400).json({ message: "OTP is invalid! - backend" });
         try {
@@ -103,10 +112,9 @@ class AdminSignUp {
                 await isValidAdmin.save();
             }
 
-            const token = generateToken.generatePrimaryToken({ adminId: isValidAdmin._id });
-            const refreshToken = generateToken.generateRefreshToken({ adminId: isValidAdmin._id });
+            const timestamp = new Date().toLocaleString();
 
-            return res.status(201).json({ message: `Sign up successfully! Welcome to Coffee Restaurant  ${isValidAdmin.title}. ${isValidAdmin.username}.`, token, refreshToken })
+            return res.status(201).json({ message: `Sign up successfully! Welcome to Coffee Restaurant  ${isValidAdmin.title}. ${isValidAdmin.username}.`, verification: timestamp });
 
         } catch (error) {
             console.error(error);

@@ -19,13 +19,13 @@ const router = express.Router();
 
 // primary actions
 router.post("/account/signup", primaryActions.adminSignUp);
-router.post("/account/signup/verifyOTP", primaryActions.adminConfirmOTP);
+router.post("/account/signup/verifyOTP", adminAuthMiddleware, primaryActions.adminConfirmOTP);
 router.post("/account/signin", primaryActions.adminSignIn);
 router.delete("/account/logout", adminAuthMiddleware, primaryActions.adminLogout);
 
 
 // secondary actions
-router.delete("/account/details/delete", adminAuthMiddleware, secondaryActions.deleteAdmin);
+router.post("/account/details/delete", adminAuthMiddleware, secondaryActions.deleteAdmin);
 router.patch("/account/details/update", adminAuthMiddleware, secondaryActions.updateAdmin);
 
 
