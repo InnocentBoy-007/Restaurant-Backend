@@ -13,7 +13,7 @@ import { clientAuthMiddleware } from '../components/middlewares/AuthMiddleware.j
 import { fetchClientDetails } from '../components/globalObjects/FetchUserDetails.js';
 
 import { generateNewTokenClient } from '../components/tokens/GenerateBackupJWT.js';
-import { verifyClient, verifyOTPClient, changePasswordClient } from '../services/passwordManagement/passwordManagement.js';
+import { verifyClient, verifyOTPClient, changePasswordClient } from '../services/passwordManagement/forgetPassword.js';
 import { updateClientPassword } from '../services/passwordManagement/changePassword.js';
 
 const router = express.Router();
@@ -56,7 +56,7 @@ router.post("/refresh-token/:clientId", generateNewTokenClient); // to generate 
 // routes for changing password(after forgot password) (test passed)
 router.post("/forgot-password/verify/email", verifyClient);
 router.post("/forgot-password/verify/otp", verifyOTPClient);
-router.post("/forget-password/change-password", changePasswordClient);
+router.post("/forgot-password/change-password", changePasswordClient);
 
 router.patch("/change-password", clientAuthMiddleware, updateClientPassword);
 

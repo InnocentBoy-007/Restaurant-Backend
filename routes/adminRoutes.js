@@ -12,7 +12,7 @@ import { generateNewTokenAdmin } from '../components/tokens/GenerateBackupJWT.js
 
 import { fetchAdminDetails } from '../components/globalObjects/FetchUserDetails.js';
 
-import { verifyAdmin, verifyOTPAdmin, changePasswordAdmin } from '../services/passwordManagement/passwordManagement.js';
+import { verifyAdmin, verifyOTPAdmin, changePasswordAdmin } from '../services/passwordManagement/forgetPassword.js';
 import { updateAdminPassword } from '../services/passwordManagement/changePassword.js';
 
 const router = express.Router();

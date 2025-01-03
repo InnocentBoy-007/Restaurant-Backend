@@ -11,6 +11,7 @@ class ClientPasswordManagement {
         this.clientDetails = null;
     }
 
+    // there is a bug here (undefined username)
     verifyClient = async (req, res) => {
         const { email } = req.body;
         if (!email) return res.status(400).json({ message: "Invalid email! - backend" });
