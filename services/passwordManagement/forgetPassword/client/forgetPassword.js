@@ -1,5 +1,5 @@
-import ClientModel from "../../../../model/usermodel/clientModel";
-import { SentMail } from "../../../../components/middlewares/SentMail";
+import ClientModel from "../../../../model/usermodel/clientModel.js";
+import { SentMail } from "../../../../components/middlewares/SentMail.js";
 import bcrypt from 'bcrypt'
 import mongoose from "mongoose";
 import jwt from 'jsonwebtoken'
@@ -71,7 +71,7 @@ class ClientPasswordManagement {
         }
     }
 
-    changePassword = async (req, res) => {
+    setNewPassword = async (req, res) => {
         const clientId = req.clientId;
         if (!clientId || !mongoose.Types.ObjectId.isValid(clientId)) return res.status(400).json({ message: "Invalid client Id! - backend" });
 

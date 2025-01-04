@@ -1,5 +1,5 @@
 import AdminModel from '../../../../model/usermodel/adminModel.js'
-import { SentMail } from "../../components/middlewares/SentMail.js"
+import { SentMail } from '../../../../components/middlewares/SentMail.js';
 import bcrypt from 'bcrypt'
 import mongoose from 'mongoose';
 import jwt from 'jsonwebtoken'

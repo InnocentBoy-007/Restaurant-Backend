@@ -46,9 +46,9 @@ router.post("/refresh-token/:clientId", generateNewTokenClient); // to generate 
 
 
 // routes for changing password(after forgot password) (test passed)
-router.post("/v1/customers/password/forgot-password/verify/email", verifyClient);
+router.post("/v1/customers/password/forgot-password/verify/email", clientPasswordManagement.verifyClient);
 router.post("/v1/customers/password/forgot-password/verify/otp", clientAuthMiddleware, clientPasswordManagement.verifyOTP);
-router.post("/v1/customers/password/forgot-password/change-password", clientAuthMiddleware, clientPasswordManagement.changePassword);
+router.post("/v1/customers/password/forgot-password/change-password", clientAuthMiddleware, clientPasswordManagement.setNewPassword);
 
 router.patch("/change-password", clientAuthMiddleware, updateClientPassword);
 
