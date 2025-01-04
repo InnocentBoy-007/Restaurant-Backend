@@ -1,19 +1,11 @@
 import express from 'express'
-
 import primaryActions from '../controller/client/accounts/primaryActions.js'; // accounts
 import secondaryActions from '../controller/client/accounts/secondaryActions.js'; // accounts
-
 import clientService from '../services/clientService.js'; // service
-
-
-
-// import { removeFromCart } from '../controller/placeCancelOrder.js';
+import clientPasswordManagement from '../services/passwordManagement/forgetPassword/client/forgetPassword.js';
 import { clientAuthMiddleware } from '../components/middlewares/AuthMiddleware.js';
-
 import { fetchClientDetails } from '../components/globalObjects/FetchUserDetails.js';
-
 import { generateNewTokenClient } from '../components/tokens/GenerateBackupJWT.js';
-import { verifyClient, verifyOTPClient, changePasswordClient } from '../services/passwordManagement/forgetPassword.js';
 import { updateClientPassword } from '../services/passwordManagement/changePassword.js';
 
 const router = express.Router();
@@ -54,9 +46,9 @@ router.post("/refresh-token/:clientId", generateNewTokenClient); // to generate 
 
 
 // routes for changing password(after forgot password) (test passed)
-router.post("/forgot-password/verify/email", verifyClient);
-router.post("/forgot-password/verify/otp", verifyOTPClient);
-router.post("/forgot-password/change-password", changePasswordClient);
+router.post("/v1/customers/password/forgot-password/verify/email", verifyClient);
+router.post("/v1/customers/password/forgot-password/verify/otp", clientAuthMiddleware, clientPasswordManagement.verifyOTP);
+router.post("/v1/customers/password/forgot-password/change-password", clientAuthMiddleware, clientPasswordManagement.changePassword);
 
 router.patch("/change-password", clientAuthMiddleware, updateClientPassword);
 

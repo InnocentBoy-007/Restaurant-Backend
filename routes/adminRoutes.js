@@ -1,18 +1,12 @@
 import express from 'express'
-
 import primaryActions from '../controller/admin/accounts/primaryActions.js'; // manages primary actions for admin accounts
 import secondaryActions from '../controller/admin/accounts/secondaryActions.js'; // manages secondary actions for admin accounts
-
 import adminService from '../services/adminService.js';
-
 import productControl from '../controller/admin/products/productControl.js';
-
 import { adminAuthMiddleware } from '../components/middlewares/AuthMiddleware.js';
 import { generateNewTokenAdmin } from '../components/tokens/GenerateBackupJWT.js';
-
 import { fetchAdminDetails } from '../components/globalObjects/FetchUserDetails.js';
-
-import { verifyAdmin, verifyOTPAdmin, changePasswordAdmin } from '../services/passwordManagement/forgetPassword.js';
+import adminPasswordManagement from '../services/passwordManagement/forgetPassword/admin/forgetPassword.js';
 import { updateAdminPassword } from '../services/passwordManagement/changePassword.js';
 
 const router = express.Router();
@@ -51,9 +45,9 @@ router.get("/details", adminAuthMiddleware, fetchAdminDetails); // test passed
 
 
 // APIs for changing password after forgotten password (testing)
-router.post("/forgot-password/verify/email", verifyAdmin);
-router.post("/forgot-password/verify/otp", verifyOTPAdmin);
-router.patch("/forgot-password/change-password", changePasswordAdmin);
+router.post("/v1/admin/password/forgot-password/verify/email", adminPasswordManagement.verifyAdmin);
+router.post("/v1/admin/password/forgot-password/verify/otp", adminAuthMiddleware, adminPasswordManagement.verifyOTP);
+router.patch("/v1/admin/password/forgot-password/change-password", adminAuthMiddleware, adminPasswordManagement.changePassword);
 
 // normal password change
 router.patch("/change-password", adminAuthMiddleware, updateAdminPassword);
