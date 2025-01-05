@@ -1,8 +1,6 @@
 import mongoose from "mongoose";
-
 import { SentMail } from "../components/middlewares/SentMail.js";
 import CartModel from '../model/cartModel.js'
-
 import ClientModel from '../model/usermodel/clientModel.js'
 import ProductModel from '../model/productModel.js'
 import OrderDetails from "../model/orderDetailsModel.js";
@@ -136,7 +134,7 @@ class ClientServices {
             const orders = await OrderDetails.find({ clientId: isValidClient._id });
             if (!orders) return res.status(404).json({ message: "No orders found! - backend" });
 
-            return res.status(200).json({ orders });
+            return res.status(200).json({ orderDetails: orders });
         } catch (error) {
             console.error(error);
             return res.status(500).json({ message: "An unexpected error occured while trying to track your order details! - backend" });

@@ -30,7 +30,7 @@ class AdminPasswordManagement {
             const mailBody = {
                 to: isValidAdmin.email,
                 subject: "Changing password",
-                text: `Hi ${title}. ${isValidAdmin.username}, your OTP for changing password is ${generatedOTP}. Use the OTP to change your password one time. Thanks, Coffee Team.`
+                text: `Hi ${isValidAdmin.title}. ${isValidAdmin.username}, your OTP for changing password is ${generatedOTP}. Use the OTP to change your password one time. Thanks, Coffee Team.`
             }
 
             mailer.setUp();
@@ -80,7 +80,7 @@ class AdminPasswordManagement {
         if (!newPassword) return res.status(400).json({ message: "Invalid password!- backend" });
 
         try {
-            const isValidAdmin = await AdminModel.findById(clientId).select("+password");
+            const isValidAdmin = await AdminModel.findById(adminId).select("+password");
             if (!isValidAdmin) return res.status(404).json({ message: "Invalid admin Id! User not found! - backend" });
 
             const duplicatePassword = await bcrypt.compare(newPassword, isValidAdmin.password); // check if the new password is same as the old password

@@ -13,7 +13,7 @@ const router = express.Router();
 // primary actions (accounts)
 router.post("/account/signup", primaryActions.clientSignUp);
 router.post("/account/signup/verifyOTP", primaryActions.clientConfirmOTP);
-router.post("/account/signin", primaryActions.clientSignIn); // test passed
+router.post("/v1/customers/account/signIn", primaryActions.clientSignIn); // test passed
 router.delete("/account/logout", clientAuthMiddleware, primaryActions.clientLogout);
 
 
