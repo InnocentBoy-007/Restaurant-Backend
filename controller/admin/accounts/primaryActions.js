@@ -106,12 +106,14 @@ class AdminSignUp {
             if (otp !== isValidAdmin.otp) {
                 await isValidAdmin.deleteOne();
                 return res.status(403).json({ message: "Incorrect otp! - backend" });
-            } else {
-                // if the otp is verified, delete the otp from the model
-                delete isValidAdmin.otp;
-                await isValidAdmin.save();
             }
+            // if the otp is verified, delete the otp from the model
+            // Option 1: Set otp to undefined and save
+            isValidAdmin.otp = undefined;
+            await isValidAdmin.save();
 
+            // Option 2: Use $unset to remove the otp field directly
+            // await AdminModel.updateOne({ _id: adminId }, { $unset: { otp: 1 } });
             const timestamp = new Date().toLocaleString();
 
             return res.status(201).json({ message: `Sign up successfully! Welcome to Coffee Restaurant  ${isValidAdmin.title}. ${isValidAdmin.username}.`, verification: timestamp });
