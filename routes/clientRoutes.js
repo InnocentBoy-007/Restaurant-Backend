@@ -11,15 +11,15 @@ import { updateClientPassword } from '../services/passwordManagement/changePassw
 const router = express.Router();
 
 // primary actions (accounts)
-router.post("/account/signup", primaryActions.clientSignUp);
-router.post("/account/signup/verifyOTP", primaryActions.clientConfirmOTP);
+router.post("/v1/customers/account/signup", primaryActions.clientSignUp);
+router.post("/v1/customers/account/signup/verifyOTP", primaryActions.clientConfirmOTP);
 router.post("/v1/customers/account/signIn", primaryActions.clientSignIn); // test passed
-router.delete("/account/logout", clientAuthMiddleware, primaryActions.clientLogout);
+router.delete("/v1/customers/account/logout", clientAuthMiddleware, primaryActions.clientLogout);
 
 
 // secondary actions (accounts)
-router.post("/account/details/delete", clientAuthMiddleware, secondaryActions.deleteClient); // test passed
-router.patch("/account/details/update", clientAuthMiddleware, secondaryActions.updateClient);
+router.post("/v1/customers/account/details/delete", clientAuthMiddleware, secondaryActions.deleteClient); // test passed
+router.patch("/v1/customers/account/details/update", clientAuthMiddleware, secondaryActions.updateClient);
 
 
 // services
@@ -37,11 +37,11 @@ router.delete("/v1/customers/cart/:productId/delete", clientAuthMiddleware, clie
 
 
 
-router.get("/account/details", clientAuthMiddleware, fetchClientDetails);
+router.get("/v1/customers/account/details", clientAuthMiddleware, fetchClientDetails);
 
 
 
-router.post("/refresh-token/:clientId", generateNewTokenClient); // to generate a new refreshed token (not yet testing)
+router.post("/v1/customers/token/refresh-token/:clientId", generateNewTokenClient); // to generate a new refreshed token (not yet testing)
 
 
 
@@ -50,6 +50,6 @@ router.post("/v1/customers/password/forgot-password/verify/email", clientPasswor
 router.post("/v1/customers/password/forgot-password/verify/otp", clientAuthMiddleware, clientPasswordManagement.verifyOTP);
 router.post("/v1/customers/password/forgot-password/change-password", clientAuthMiddleware, clientPasswordManagement.setNewPassword);
 
-router.patch("/change-password", clientAuthMiddleware, updateClientPassword);
+router.patch("/v1/customers/change-password", clientAuthMiddleware, updateClientPassword);
 
 export default router;
