@@ -1,7 +1,7 @@
 import express from 'express'
 import primaryActions from '../controller/admin/accounts/primaryActions.js'; // manages primary actions for admin accounts
 import secondaryActions from '../controller/admin/accounts/secondaryActions.js'; // manages secondary actions for admin accounts
-import adminService from '../services/adminService.js';
+import adminServices from '../services/adminService.js';
 import productControl from '../controller/admin/products/productControl.js';
 import { adminAuthMiddleware } from '../components/middlewares/AuthMiddleware.js';
 import { generateNewTokenAdmin } from '../components/tokens/GenerateBackupJWT.js';
@@ -24,9 +24,9 @@ router.patch("/account/details/update", adminAuthMiddleware, secondaryActions.up
 
 
 // admin services
-router.post("/v1/admin/orders/accept_order/:orderId", adminAuthMiddleware, adminService.acceptOrder);
-router.delete("/v1/admin/orders/reject_order/:orderId", adminAuthMiddleware, adminService.rejectOrder);
-router.get("/v1/admin/orders/fetch_orders", adminAuthMiddleware, adminService.fetchOrderDetails);
+router.post("/v1/admin/orders/accept_order/:orderId", adminAuthMiddleware, adminServices.acceptOrder);
+router.delete("/v1/admin/orders/reject_order/:orderId", adminAuthMiddleware, adminServices.rejectOrder);
+router.get("/v1/admin/orders/fetch_orders", adminAuthMiddleware, adminServices.fetchOrderDetails);
 
 
 // admin product controller routes
