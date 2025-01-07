@@ -25,7 +25,6 @@ const adminSchema = new mongoose.Schema({
     },
     updatedAtLocaleTime: {
         type: String,
-        default: () => new Date().toLocaleString()
     },
     otp: {
         type: String

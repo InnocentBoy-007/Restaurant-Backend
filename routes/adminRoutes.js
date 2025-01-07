@@ -19,8 +19,8 @@ router.delete("/account/logout", adminAuthMiddleware, primaryActions.adminLogout
 
 
 // secondary actions
-router.post("/account/details/delete", adminAuthMiddleware, secondaryActions.deleteAdmin);
-router.patch("/account/details/update", adminAuthMiddleware, secondaryActions.updateAdmin);
+router.post("/account/details/delete", adminAuthMiddleware, secondaryActions.DeleteAdmin);
+router.patch("/account/details/update", adminAuthMiddleware, secondaryActions.UpdateAdmin);
 
 
 // admin services
@@ -41,7 +41,7 @@ router.delete("/v1/admin/products/delete_product/:productId", adminAuthMiddlewar
 // generate new token using a refresh token
 router.post("/token/:adminId", generateNewTokenAdmin); // testing
 
-router.get("/details", adminAuthMiddleware, fetchAdminDetails); // test passed
+router.get("/v1/admin/user-details", adminAuthMiddleware, fetchAdminDetails); // test passed
 
 
 // APIs for changing password after forgotten password (testing)

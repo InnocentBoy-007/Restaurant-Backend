@@ -2,8 +2,8 @@ import mongoose from 'mongoose';
 import AdminModel from '../../../model/usermodel/adminModel.js'
 import bcrypt from 'bcrypt'
 
-class DeleteAdmin {
-    async delete(req, res) {
+class SecondaryActions {
+    async DeleteAdmin(req, res) {
         const adminId = req.adminId;
         if (!adminId || !mongoose.Types.ObjectId.isValid(adminId)) return res.status(400).json({ message: "Invalid admin Id - backend" });
         const { password } = req.body; // deleting the account requires addition security (needs password for authorization)
@@ -26,10 +26,8 @@ class DeleteAdmin {
             return res.status(500).json({ message: "An unexpected error occured while trying to delete your account! - backend" });
         }
     }
-}
 
-class UpdateAdmin {
-    async update(req, res) {
+    async UpdateAdmin(req, res) {
         const adminId = req.adminId;
         if (!adminId || !mongoose.Types.ObjectId.isValid(adminId)) return res.status(400).json({ message: "Invalid admin Id - backend" });
         const { updateDetails } = req.body;
@@ -43,6 +41,7 @@ class UpdateAdmin {
                 return res.status(409).json({ message: "The old details and the new details are same! - backend" })
             } else {
                 Object.assign(isValidAdmin, updateDetails);
+                isValidAdmin.updatedAtLocaleTime = new Date().toLocaleString();
                 await isValidAdmin.save();
             }
 
@@ -54,11 +53,5 @@ class UpdateAdmin {
     }
 }
 
-
-const deleteAdmin = new DeleteAdmin();
-const updateAdmin = new UpdateAdmin();
-
-export default {
-    deleteAdmin: deleteAdmin.delete,
-    updateAdmin: updateAdmin.update
-}
+const secondaryActions = new SecondaryActions();
+export default secondaryActions;
