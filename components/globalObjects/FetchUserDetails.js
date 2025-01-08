@@ -4,7 +4,7 @@ import ClientModel from '../../model/usermodel/clientModel.js';
 export const fetchAdminDetails = async (req, res) => {
     const adminId = req.adminId;
     try {
-        const adminDetails = await AdminModel.findById(adminId).select("+password");
+        const adminDetails = await AdminModel.findById(adminId);
         if (!adminDetails) return res.status(404).json({ message: "Admin not found! - backend" });
 
         return res.status(200).json({ adminDetails }); // can send the full adminDetails as well

@@ -6,7 +6,7 @@ import clientPasswordManagement from '../services/passwordManagement/forgetPassw
 import { clientAuthMiddleware } from '../components/middlewares/AuthMiddleware.js';
 import { fetchClientDetails } from '../components/globalObjects/FetchUserDetails.js';
 import { generateNewTokenClient } from '../components/tokens/GenerateBackupJWT.js';
-import { updateClientPassword } from '../services/passwordManagement/changePassword.js';
+import changePassword from '../services/passwordManagement/changePassword.js';
 
 const router = express.Router();
 
@@ -50,6 +50,6 @@ router.post("/v1/customers/password/forgot-password/verify/email", clientPasswor
 router.post("/v1/customers/password/forgot-password/verify/otp", clientAuthMiddleware, clientPasswordManagement.verifyOTP);
 router.post("/v1/customers/password/forgot-password/change-password", clientAuthMiddleware, clientPasswordManagement.setNewPassword);
 
-router.patch("/v1/customers/change-password", clientAuthMiddleware, updateClientPassword);
+router.patch("/v1/customers/change-password", clientAuthMiddleware, changePassword.ClientChangePassword);
 
 export default router;

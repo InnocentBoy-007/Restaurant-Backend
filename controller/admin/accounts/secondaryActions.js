@@ -29,26 +29,44 @@ class SecondaryActions {
 
     async UpdateAdmin(req, res) {
         const adminId = req.adminId;
-        if (!adminId || !mongoose.Types.ObjectId.isValid(adminId)) return res.status(400).json({ message: "Invalid admin Id - backend" });
+        if (!adminId || !mongoose.Types.ObjectId.isValid(adminId)) {
+            return res.status(400).json({ message: "Invalid admin Id - backend" });
+        }
+
         const { updateDetails } = req.body;
-        if (!updateDetails || typeof updateDetails !== 'object') return res.status(400).json({ message: "New details is required! - backend" });
+        if (!updateDetails || typeof updateDetails !== 'object') {
+            return res.status(400).json({ message: "New details are required! - backend" });
+        }
 
         try {
-            const isValidAdmin = await AdminModel.findById(adminId);
-            if (!isValidAdmin) return res.status(403).json({ message: "Invalid admin(Authentication failed)! Authorization denied! - backend" });
-
-            if (JSON.stringify(updateDetails) === JSON.stringify(isValidAdmin.toObject())) {
-                return res.status(409).json({ message: "The old details and the new details are same! - backend" })
-            } else {
-                Object.assign(isValidAdmin, updateDetails);
-                isValidAdmin.updatedAtLocaleTime = new Date().toLocaleString();
-                await isValidAdmin.save();
+            const isValidAdmin = await AdminModel.findById(adminId).select("+password");
+            if (!isValidAdmin) {
+                return res.status(403).json({ message: "Invalid admin (Authentication failed)! Authorization denied! - backend" });
             }
+
+            // Check if all fields in updateDetails are the same as the existing details in isValidAdmin
+            let isSame = true;
+            for (const key in updateDetails) {
+                if (updateDetails[key] !== isValidAdmin[key]) {
+                    isSame = false;
+                    break; // Exit the loop as soon as a difference is found
+                }
+            }
+
+            // If all fields are the same, return a conflict error
+            if (isSame) {
+                return res.status(409).json({ message: "The old details and the new details are the same! - backend" });
+            }
+
+            // Update the admin details
+            Object.assign(isValidAdmin, updateDetails);
+            isValidAdmin.updatedAtLocaleTime = new Date().toLocaleString();
+            await isValidAdmin.save();
 
             return res.status(200).json({ message: "Account updated successfully! - backend" });
         } catch (error) {
             console.error(error);
-            return res.status(500).json({ message: "An unexpected error occured while trying to update your account! - backend" });
+            return res.status(500).json({ message: "An unexpected error occurred while trying to update your account! - backend" });
         }
     }
 }

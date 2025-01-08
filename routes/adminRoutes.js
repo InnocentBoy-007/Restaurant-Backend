@@ -7,7 +7,7 @@ import { adminAuthMiddleware } from '../components/middlewares/AuthMiddleware.js
 import { generateNewTokenAdmin } from '../components/tokens/GenerateBackupJWT.js';
 import { fetchAdminDetails } from '../components/globalObjects/FetchUserDetails.js';
 import adminPasswordManagement from '../services/passwordManagement/forgetPassword/admin/forgetPassword.js';
-import { updateAdminPassword } from '../services/passwordManagement/changePassword.js';
+import changePassword from '../services/passwordManagement/changePassword.js';
 
 const router = express.Router();
 
@@ -50,6 +50,6 @@ router.post("/v1/admin/password/forgot-password/verify/otp", adminAuthMiddleware
 router.patch("/v1/admin/password/forgot-password/change-password", adminAuthMiddleware, adminPasswordManagement.changePassword);
 
 // normal password change
-router.patch("/change-password", adminAuthMiddleware, updateAdminPassword);
+router.patch("/v1/admin/password/change-password", adminAuthMiddleware, changePassword.AdminChangePassword);
 
 export default router;
