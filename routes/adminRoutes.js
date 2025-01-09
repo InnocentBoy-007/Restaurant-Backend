@@ -19,8 +19,9 @@ router.delete("/account/logout", adminAuthMiddleware, primaryActions.adminLogout
 
 
 // secondary actions
-router.post("/account/details/delete", adminAuthMiddleware, secondaryActions.DeleteAdmin);
-router.patch("/account/details/update", adminAuthMiddleware, secondaryActions.UpdateAdmin);
+router.post("/v1/admin/account/details/delete", adminAuthMiddleware, secondaryActions.DeleteAdmin);
+router.patch("/v1/admin/account/details/update", adminAuthMiddleware, secondaryActions.UpdateAdmin);
+router.post("/v1/admin/account/details/confirm-otp", adminAuthMiddleware, secondaryActions.confirmOTP);
 
 
 // admin services

@@ -5,6 +5,7 @@ const adminSchema = new mongoose.Schema({
     password: { type: String, required: true, select: false },
     phoneNo: { type: String, required: true },
     email: { type: String, required: true },
+    pendingEmail: {type:String},
     address: { type: String, required: true },
     gender: {
         type: String, required: true,
@@ -28,7 +29,8 @@ const adminSchema = new mongoose.Schema({
     },
     otp: {
         type: String
-    }
+    },
+    otpExpiresAt: { type: String }
 }, { timestamps: true });
 
 adminSchema.pre('save', function (next) {

@@ -64,7 +64,7 @@ class ServerSetUp { // This class encapsulates all the logic related to setting 
 
             // Global error handler
             app.use((err, req, res, next) => {
-                if (err instanceof CustomError) {
+                if (err) {
                     return res.status(err.errorCode).json({ message: err.message });
                 } else {
                     console.log("Global error ----> ", err);
