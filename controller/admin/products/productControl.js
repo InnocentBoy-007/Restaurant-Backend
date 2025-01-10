@@ -28,26 +28,36 @@ class ProductController {
 
     async updateProduct(req, res) {
         const adminId = req.adminId;
-        if (!adminId || !mongoose.Types.ObjectId.isValid(adminId)) return res.status(400).json({ message: "Invalid admin Id! - backend" });
+        if (!adminId || !mongoose.Types.ObjectId.isValid(adminId)) {
+            return res.status(400).json({ message: "Invalid admin Id! - backend" });
+        }
+
         const { productId } = req.params;
-        if (!productId || !mongoose.Types.ObjectId.isValid(productId)) return res.status(400).json({ message: "Invalid product Id! - backend" });
+        if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
+            return res.status(400).json({ message: "Invalid product Id! - backend" });
+        }
+
         const { newDetails } = req.body;
+        if (!newDetails || typeof newDetails !== 'object') {
+            return res.status(400).json({ message: "Invalid new details body or is not an object! - backend" });
+        }
+
         try {
             const isValidAdmin = await AdminModel.findById(adminId);
-            if (!isValidAdmin) return res.status(404).json({ message: "Invalid admin Id! Authorization revoked! - backend" });
+            if (!isValidAdmin) {
+                return res.status(404).json({ message: "Invalid admin Id! Authorization revoked! - backend" });
+            }
 
-            const isValidProduct = await ProductModel.findById(productId);
+            const isValidProduct = await ProductModel.findByIdAndUpdate(productId, {...newDetails});
             if (!isValidProduct) return res.status(404).json({ message: "Invalid product Id! Product not found! - backend" });
-
-            const updatedProduct = isValidProduct.updateOne({ ...newDetails });
-            await updatedProduct.save();
-
-            if (!updatedProduct) return res.status(500).json({ message: `${isValidProduct.productName} cannot be updated! - backend` });
+            isValidProduct.productUpdatedBy = isValidAdmin.username;
+            isValidProduct.productUpdatedOn = new Date().toLocaleString();
+            await isValidProduct.save();
 
             return res.status(200).json({ message: `${isValidProduct.productName} updated successfully! - backend` });
         } catch (error) {
             console.error(error);
-            return res.status(500).json({ message: "An unexpected error occured while trying to update the product! - backend" });
+            return res.status(500).json({ message: "An unexpected error occurred while trying to update the product! - backend" });
         }
     }
 
