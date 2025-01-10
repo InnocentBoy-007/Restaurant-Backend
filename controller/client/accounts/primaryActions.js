@@ -19,13 +19,13 @@ class ClientSignIn {
         const { clientDetails } = req.body;
 
         if (!clientDetails || typeof clientDetails !== 'object') return res.status(400).json({ message: "User details not provided! - backend" });
-        if (!clientDetails.email && !clientDetails.username) return res.status(400).json({ message: "email or username is required! - backend" });
+        if (!clientDetails.email && !clientDetails.phoneNo) return res.status(400).json({ message: "email or username is required! - backend" });
 
         try {
             const isValidClient = await ClientModel.findOne({
                 $or: [
                     { email: clientDetails.email },
-                    { username: clientDetails.username }
+                    { phoneNo: clientDetails.phoneNo }
                 ]
             }).select("+password");
 

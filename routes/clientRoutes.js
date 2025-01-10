@@ -18,8 +18,9 @@ router.delete("/v1/customers/account/logout", clientAuthMiddleware, primaryActio
 
 
 // secondary actions (accounts)
-router.post("/v1/customers/account/details/delete", clientAuthMiddleware, secondaryActions.deleteClient); // test passed
-router.patch("/v1/customers/account/details/update", clientAuthMiddleware, secondaryActions.updateClient);
+router.post("/v1/customers/account/details/delete", clientAuthMiddleware, secondaryActions.DeleteClient); // test passed
+router.patch("/v1/customers/account/details/update", clientAuthMiddleware, secondaryActions.UpdateAdmin);
+router.post("/v1/customers/account/details/confirm-otp", clientAuthMiddleware, secondaryActions.confirmOTP);
 
 
 // services

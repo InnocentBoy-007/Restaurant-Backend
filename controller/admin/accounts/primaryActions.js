@@ -18,14 +18,14 @@ class AdminSignIn {
     async signIn(req, res) {
         const { adminDetails } = req.body;
         if (!adminDetails || typeof adminDetails !== 'object') return res.status(400).json({ message: "User details not provided! - backend" });
-        if (!adminDetails.email && !adminDetails.username) return res.status(400).json({ message: "email or username is required! - backend" });
+        if (!adminDetails.email && !adminDetails.phoneNo) return res.status(400).json({ message: "email or username is required! - backend" });
         // password field should be set to 'required' in frontend
         try {
             // check either email or username
             const isValidAdmin = await AdminModel.findOne({
                 $or: [
                     { email: adminDetails.email },
-                    { username: adminDetails.username }
+                    { phoneNo: adminDetails.phoneNo }
                 ]
             }).select("+password");
             if (!isValidAdmin) return res.status(404).json({ message: `The account with ${adminDetails.email || adminDetails.username} does not exist!` });

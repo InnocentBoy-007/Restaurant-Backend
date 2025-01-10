@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const clientSchema = new mongoose.Schema({
     username: { type: String, required: true },
     email: { type: String, required: true },
+    pendingEmail: { type: String },
     gender: {
         type: String, required: true,
         enum: ['male', 'female']
@@ -14,7 +15,8 @@ const clientSchema = new mongoose.Schema({
     phoneNo: { type: String, required: true },
     address: { type: String, required: true },
     signUpAt: { type: String },
-    otp: { type: String }
+    otp: { type: String },
+    otpExpiresAt: { type: String }
 });
 
 clientSchema.pre('save', function (next) {
