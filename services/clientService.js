@@ -188,7 +188,7 @@ class ClientServices {
             const products_cart = await CartModel.find({ clientId: isValidClient._id });
             if (!products_cart) {
                 return res.status(404).json({ message: "No items inside the cart! - backend" })
-            } else if (products_cart.length === 0) return res.status(200).json({ products: [] })
+            } else if (products_cart.length === 0) return res.status(200).json({ message: "No items inside the cart!" })
 
             return res.status(200).json({ products: products_cart });
         } catch (error) {
