@@ -51,6 +51,6 @@ router.post("/v1/customers/password/forgot-password/verify/email", clientPasswor
 router.post("/v1/customers/password/forgot-password/verify/otp", clientAuthMiddleware, clientPasswordManagement.verifyOTP);
 router.post("/v1/customers/password/forgot-password/change-password", clientAuthMiddleware, clientPasswordManagement.setNewPassword);
 
-router.patch("/v1/customers/change-password", clientAuthMiddleware, changePassword.ClientChangePassword);
+router.patch("/v1/customers/password/change-password", clientAuthMiddleware, changePassword.ClientChangePassword);
 
 export default router;

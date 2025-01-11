@@ -96,7 +96,7 @@ class ClientServices {
     }
 
     async orderReceivedConfirmation(req, res) {
-        const orderId = req.params;
+        const { orderId } = req.params;
         if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) return res.status(400).json({ message: "Invalid order Id - backend" });
 
         const clientId = req.clientId;
@@ -132,7 +132,7 @@ class ClientServices {
             if (!isValidClient) return res.status(404).json({ message: "Invalid clientId! Unauthorized user! - baceknd" });
 
             const orders = await OrderDetails.find({ clientId: isValidClient._id });
-            if (!orders) return res.status(404).json({ message: "No orders found! - backend" });
+            if (!orders || orders.length === 0) return res.status(404).json({ message: "No orders found! - backend" });
 
             return res.status(200).json({ orderDetails: orders });
         } catch (error) {
@@ -186,9 +186,7 @@ class ClientServices {
             if (!isValidClient) return res.status(404).json({ message: "Invalid clientId! Unauthorized user! - backend" });
 
             const products_cart = await CartModel.find({ clientId: isValidClient._id });
-            if (!products_cart) {
-                return res.status(404).json({ message: "No items inside the cart! - backend" })
-            } else if (products_cart.length === 0) return res.status(200).json({ products: [] })
+            if (!products_cart || products_cart.length === 0) return res.status(404).json({ message: "No items inside the cart! - backend" });
 
             return res.status(200).json({ products: products_cart });
         } catch (error) {
@@ -214,8 +212,6 @@ class ClientServices {
                 return res.status(404).json({ message: "Invalid productId! Product not found! - backned" })
             } else {
                 await isValidProduct.deleteOne();
-                console.log("Deleted successfully!");
-
             }
 
             return res.status(200).json({ message: `${isValidProduct.productName} is removed from cart successfully! - backend` });
