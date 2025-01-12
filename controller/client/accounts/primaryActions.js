@@ -16,6 +16,8 @@ class GenerateToken {
 
 class ClientSignIn {
     async signIn(req, res) {
+        console.log("you are activating the signin function");
+
         const { clientDetails } = req.body;
 
         if (!clientDetails || typeof clientDetails !== 'object') return res.status(400).json({ message: "User details not provided! - backend" });
