@@ -6,7 +6,7 @@ import mongoose from 'mongoose';
 
 class GenerateToken {
     async generatePrimaryToken(payload) {
-        return jwt.sign(payload, process.env.JWT_SECRET, { 'expiresIn': '1h' });
+        return jwt.sign(payload, process.env.JWT_SECRET, { 'expiresIn': '15s' });
     }
 
     async generateRefreshToken(payload) {
