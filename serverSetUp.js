@@ -53,10 +53,25 @@ class ServerSetUp { // This class encapsulates all the logic related to setting 
 
             app.use(cookieParser());
 
+            const allowedOrigins = [process.env.ORIGIN1, process.env.ORIGIN2];
+
+            // CORS setup
             app.use(cors({
+                origin: (origin, callback) => {
+                    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+                        callback(null, true);
+                    } else {
+                        callback(new Error('Not allowed by CORS'));
+                    }
+                },
+                credentials: true,
+            }));
+
+            // Handle preflight requests for all routes
+            app.options('*', cors({
                 origin: true,
                 credentials: true,
-            })); // enables CORS for the application
+            }));
 
             app.use("/api", route); // Sets up routing for the API
             app.use("/api/client", ClientRoute);
