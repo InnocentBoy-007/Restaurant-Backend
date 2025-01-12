@@ -1,45 +1,26 @@
-import express from 'express'
-import mongoose from "mongoose"; //ODM (Object Data Modeling) library for MongoDB and NodeJs
-import cors from 'cors'
-import dotenv from 'dotenv'
+import express from 'express';
+import mongoose from "mongoose";
+import cors from 'cors';
+import dotenv from 'dotenv';
 import AdminRoute from './routes/adminRoutes.js';
 import ClientRoute from './routes/clientRoutes.js';
 import route from './routes/route.js';
 import cookieParser from 'cookie-parser';
-/**
- * The CustomError class extends the built-in Error class.
-    It adds an additional property errorCode to provide more context about the error.
- */
 
-class ServerSetUp { // This class encapsulates all the logic related to setting up the server and connecting to the database (encapsulates the main methods)
-    /**
-     * the constructor can be used to declare and initialize instance variables (or "global variables" within the context of the class) that will be accessible throughout the class methods.
-     * However, these variables are not global in the broader sense (like global variables in JavaScript); they are scoped to the instance of the ServerSetUp class.
-     */
+class ServerSetUp {
     constructor() {
-        dotenv.config(); // loads environment variables using 'dotenv.config()'
-
-        // instance variables
-        /**
-         * Instance variables (this.PORT, this.MONGO_URL) are used to store configuration values, keeping them private to the instance of the class.
-         * Initializes this.PORT and this.MONGO_URL with values from the environment.
-         */
+        dotenv.config();
         this.PORT = process.env.PORT;
         this.MONGO_URL = process.env.MONGO_URL;
-
-        /**
-         * The instance method 'this.connectServer()' will be automatically called when the instance of the dependant class is created
-         */
-        this.connectServer(); // instance method
-        // this.allowedOrigins = [process.env.ORIGIN1, process.env.ORIGIN2]; // allowing multiple origins
+        this.connectServer();
     }
 
     async connectDatabase() {
         try {
             await mongoose.connect(this.MONGO_URL);
-            console.log("Database connected succesfully! - backend");
+            console.log("Database connected successfully!");
         } catch (error) {
-            console.error("Database cannot be connected! - backend");
+            console.error("Database connection failed!");
         }
     }
 
@@ -48,17 +29,12 @@ class ServerSetUp { // This class encapsulates all the logic related to setting 
             await this.connectDatabase();
             const app = express();
 
-            // middlewares
-            app.use(express.json()); // parses incoming JSON requests
-
-            app.use(cookieParser());
-
-            const allowedOrigins = [process.env.ORIGIN1, process.env.ORIGIN2];
-
             // CORS setup
+            const allowedOrigins = [process.env.ORIGIN1, process.env.ORIGIN2];
             app.use(cors({
                 origin: (origin, callback) => {
-                    if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+                    // Allow all requests if the origin is in allowedOrigins
+                    if (allowedOrigins.includes(origin) || !origin) {
                         callback(null, true);
                     } else {
                         callback(new Error('Not allowed by CORS'));
@@ -67,40 +43,41 @@ class ServerSetUp { // This class encapsulates all the logic related to setting 
                 credentials: true,
             }));
 
-            // Handle preflight requests for all routes
+            // Middleware setup
+            app.use(express.json());
+            app.use(cookieParser());
+
+            // Route setup
+            app.use("/api", route);
+            app.use("/api/client", ClientRoute);
+            app.use("/api/admin", AdminRoute);
+
+            // Handle preflight requests (OPTIONS)
             app.options('*', cors({
                 origin: true,
                 credentials: true,
             }));
 
-            app.use("/api", route); // Sets up routing for the API
-            app.use("/api/client", ClientRoute);
-            app.use("/api/admin", AdminRoute);
-
             // Global error handler
             app.use((err, req, res, next) => {
                 if (err) {
-                    return res.status(err.errorCode).json({ message: err.message });
+                    return res.status(500).json({ message: err.message });
                 } else {
                     console.log("Global error ----> ", err);
                     return res.status(500).json({ message: "Internal Server Error - global error" });
                 }
             });
 
-            app.listen(this.PORT || 3000, `0.0.0.0`, () => {
-                console.log(`Database connected at port: ${this.PORT}`)
-            })
-            console.log("Server setup successfully! - backend");
+            // Server listen
+            app.listen(this.PORT || 8000, `0.0.0.0`, () => {
+                console.log(`Server is running on port ${this.PORT}`);
+            });
+            console.log("Server setup successfully!");
         } catch (error) {
-            console.log(error);
-            return res.status(500).json({ message: "Server cannot be created! - backend" });
+            console.error("Server setup failed", error);
         }
     }
 }
 
-/**
- * The constructor method (constructor()) is called when an instance of the class is created. It initializes the instance variables and starts the server setup process by calling this.connectServer().
- */
-
-// directly calling the class
-new ServerSetUp(); // instance of the class ServerSetUp
+// Start server setup
+new ServerSetUp();
