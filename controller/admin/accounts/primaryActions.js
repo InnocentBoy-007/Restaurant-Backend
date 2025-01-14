@@ -28,14 +28,13 @@ class AdminSignIn {
                     { phoneNo: adminDetails.phoneNo }
                 ]
             }).select("+password");
-            if (!isValidAdmin) return res.status(404).json({ message: `The account with ${adminDetails.email || adminDetails.username} does not exist!` });
-            const title = (isValidAdmin.gender === 'male') ? 'Mr. ' : 'Ms. ';
-            /**
-             * Or use a different method which has a gender-neutral title
-             * const title = (admin.gender === 'male') ? 'Mr. ' :
-              (admin.gender === 'female') ? 'Ms. ' :
-              'Mx. '; // Mx. is a gender-neutral title
-             */
+            if (!isValidAdmin) {
+                if (adminDetails.phoneNo) {
+                    return res.status(404).json({ message: `The account with phone number, ${adminDetails.phoneNo} does not exist!` });
+                } else {
+                    return res.status(404).json({ message: `The account with an email, ${adminDetails.email} does not exist!` });
+                }
+            }
 
             const isValidPassword = await bcrypt.compare(adminDetails.password, isValidAdmin.password);
             if (!isValidPassword) return res.status(403).json({ message: "Incorrect password! Authorization denied! - backend" });
@@ -43,7 +42,7 @@ class AdminSignIn {
             const token = await generateToken.generatePrimaryToken({ adminId: isValidAdmin._id });
             const refreshToken = await generateToken.generateRefreshToken({ adminId: isValidAdmin._id });
 
-            return res.status(200).json({ message: `Login successfull! Welcome to Coffee Restaurant, ${title}${isValidAdmin.username}`, token, refreshToken });
+            return res.status(200).json({ message: `Login successfull! Welcome to Coffee Restaurant, ${isValidAdmin.title}${isValidAdmin.username}`, token, refreshToken });
         } catch (error) {
             console.error(error);
             return res.status(500).json({ message: "An unexpected error occured while trying to sign in! - backend" });

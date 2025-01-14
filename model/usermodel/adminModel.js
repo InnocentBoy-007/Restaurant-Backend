@@ -35,9 +35,9 @@ const adminSchema = new mongoose.Schema({
 
 adminSchema.pre('save', function (next) {
     if (this.gender === 'male') {
-        this.title = 'Mr';
+        this.title = 'Mr. ';
     } else if (this.gender === 'female') {
-        this.title = 'Ms';
+        this.title = 'Ms. ';
     }
     next();
 });
