@@ -6,7 +6,7 @@ import bcrypt from 'bcrypt'
 
 class GenerateToken {
     async generatePrimaryToken(payload) {
-        return jwt.sign(payload, process.env.JWT_SECRET, { 'expiresIn': '1h' });
+        return jwt.sign(payload, process.env.JWT_SECRET, { 'expiresIn': '15s' });
     }
 
     async generateRefreshToken(payload) {
@@ -16,10 +16,7 @@ class GenerateToken {
 
 class ClientSignIn {
     async signIn(req, res) {
-        console.log("you are activating the signin function");
-
         const { clientDetails } = req.body;
-
         if (!clientDetails || typeof clientDetails !== 'object') return res.status(400).json({ message: "User details not provided! - backend" });
         if (!clientDetails.email && !clientDetails.phoneNo) return res.status(400).json({ message: "email or username is required! - backend" });
 

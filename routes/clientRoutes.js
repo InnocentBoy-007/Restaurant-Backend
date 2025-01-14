@@ -42,7 +42,7 @@ router.get("/v1/customers/account/details", clientAuthMiddleware, fetchClientDet
 
 
 
-router.post("/v1/customers/token/refresh-token", generateNewTokenClient); // to generate a new refreshed token (not yet testing)
+router.post("/v1/customers/token/refresh-token/:adminId", generateNewTokenClient); // to generate a new refreshed token (not yet testing)
 
 
 

@@ -8,20 +8,24 @@ import mongoose from 'mongoose';
  */
 
 export const generateNewTokenClient = async (req, res) => {
-    const clientId = req.clientId;
+    const { clientId } = req.params;
     if (!clientId || !mongoose.Types.ObjectId.isValid(clientId)) return res.status(200).json({ message: "Client  Id is required! - backend" });
 
+    const authHeader = req.headers['authorization'];
+    const refreshTokenClient = authHeader && authHeader.split(' ')[1];
+    if (!refreshTokenClient || typeof refreshTokenClient !== 'string') return res.status(400).json({ message: "Access denied! Refresh token is either invalid or is not a string!" });
+
     const JWT_SECRET = process.env.JWT_SECRET;
-    const BACKUP_JWT_SECRET = process.env.BACKUP_JWT_SECRET;
+    const REFRESH_JWT_SECRET = process.env.REFRESH_JWT_SECRET;
 
     try {
-        const isValidClient = await ClientModel.findById(adminId);
+        const isValidClient = await ClientModel.findById(clientId);
         if (!isValidClient) return res.status(404).json({ message: "Invalid client Id! Client not found - Authorization denied!" });
 
-        jwt.verify(backupTokenClient, BACKUP_JWT_SECRET);
-        const newToken = jwt.sign({ clientId: isValidClient._id }, JWT_SECRET, { 'expiresIn': '1h' });
+        jwt.verify(refreshTokenClient, REFRESH_JWT_SECRET);
+        const newToken = jwt.sign({ clientId: isValidClient._id }, JWT_SECRET, { 'expiresIn': '15s' });
 
-        return res.status(200).json({ message: "New token generated successfully! - backend", token: newToken });
+        return res.status(200).json({ token: newToken });
     } catch (error) {
         if (error.name === 'JsonWebTokenError') return res.status(409).json({ message: "Invalid token! - backend" });
         if (error.name === 'TokenExpiredError') return res.status(401).json({ message: "Token exprired! - backend" });
@@ -48,7 +52,7 @@ export const generateNewTokenAdmin = async (req, res) => {
         if (!isValidAdmin) return res.status(404).json({ message: "Invalid admin Id! Admin not found - Authorization denied!" });
 
         jwt.verify(backupTokenAdmin, REFRESH_JWT_SECRET);
-        const newToken = jwt.sign({ adminId: isValidAdmin._id }, JWT_SECRET, { 'expiresIn': '15s' }); // change the expire duration later
+        const newToken = jwt.sign({ adminId: isValidAdmin._id }, JWT_SECRET, { 'expiresIn': '15m' }); // change the expire duration later
 
         return res.status(200).json({ token: newToken });
     } catch (error) {
