@@ -28,14 +28,13 @@ class ClientSignIn {
                 ]
             }).select("+password");
 
-            if (!isValidClient) return res.status(404).json({ message: `The account with ${clientDetails.email || clientDetails.username} does not exist!` });
-            const title = (isValidClient.gender === 'male') ? 'Mr. ' : 'Ms. ';
-            /**
-             * Or use a different method which has a gender-neutral title
-             * const title = (client.gender === 'male') ? 'Mr. ' :
-              (client.gender === 'female') ? 'Ms. ' :
-              'Mx. '; // Mx. is a gender-neutral title
-             */
+            if (!isValidClient) {
+                if (clientDetails.phoneNo) {
+                    return res.status(404).json({ message: `The account with phone number, ${clientDetails.phoneNo} does not exist!` });
+                } else {
+                    return res.status(404).json({ message: `The account with email, ${clientDetails.email} does not exist!` });
+                }
+            }
 
             const isValidPassword = await bcrypt.compare(clientDetails.password, isValidClient.password);
             if (!isValidPassword) return res.status(403).json({ message: "Incorrect password! Authorization denied! - backend" });
@@ -43,7 +42,7 @@ class ClientSignIn {
             const token = await generateToken.generatePrimaryToken({ clientId: isValidClient._id });
             const refreshToken = await generateToken.generateRefreshToken({ clientId: isValidClient._id });
 
-            return res.status(200).json({ message: `Login successfull! Welcome to Coffee Restaurant, ${title}${isValidClient.username}`, token, refreshToken });
+            return res.status(200).json({ message: `Login successfull! Welcome to Coffee Restaurant, ${isValidClient.title}${isValidClient.username}`, token, refreshToken });
         } catch (error) {
             console.error(error);
             return res.status(500).json({ message: "An unexpected error occured while trying to sign in! - backend" });

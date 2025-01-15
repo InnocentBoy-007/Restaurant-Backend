@@ -28,7 +28,13 @@ class AdminSignIn {
                     { phoneNo: adminDetails.phoneNo }
                 ]
             }).select("+password");
-            if (!isValidAdmin) return res.status(404).json({ message: `The account with ${adminDetails.email || adminDetails.username} does not exist!` });
+            if (!isValidAdmin) {
+                if (adminDetails.phoneNo) {
+                    return res.status(404).json({ message: `The account with phone number, ${adminDetails.phoneNo} does not exist!` });
+                } else {
+                    return res.status(404).json({ message: `The account with an email, ${adminDetails.email} does not exist!` });
+                }
+            }
 
             const isValidPassword = await bcrypt.compare(adminDetails.password, isValidAdmin.password);
             if (!isValidPassword) return res.status(403).json({ message: "Incorrect password! Authorization denied! - backend" });
