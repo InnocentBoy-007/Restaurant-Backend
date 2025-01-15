@@ -6,7 +6,7 @@ import mongoose from 'mongoose';
 
 class GenerateToken {
     async generatePrimaryToken(payload) {
-        return jwt.sign(payload, process.env.JWT_SECRET, { 'expiresIn': '15m' });
+        return jwt.sign(payload, process.env.JWT_SECRET, { 'expiresIn': '10s' });
     }
 
     async generateRefreshToken(payload) {
@@ -29,13 +29,6 @@ class AdminSignIn {
                 ]
             }).select("+password");
             if (!isValidAdmin) return res.status(404).json({ message: `The account with ${adminDetails.email || adminDetails.username} does not exist!` });
-            const title = (isValidAdmin.gender === 'male') ? 'Mr. ' : 'Ms. ';
-            /**
-             * Or use a different method which has a gender-neutral title
-             * const title = (admin.gender === 'male') ? 'Mr. ' :
-              (admin.gender === 'female') ? 'Ms. ' :
-              'Mx. '; // Mx. is a gender-neutral title
-             */
 
             const isValidPassword = await bcrypt.compare(adminDetails.password, isValidAdmin.password);
             if (!isValidPassword) return res.status(403).json({ message: "Incorrect password! Authorization denied! - backend" });
@@ -43,7 +36,7 @@ class AdminSignIn {
             const token = await generateToken.generatePrimaryToken({ adminId: isValidAdmin._id });
             const refreshToken = await generateToken.generateRefreshToken({ adminId: isValidAdmin._id });
 
-            return res.status(200).json({ message: `Login successfull! Welcome to Coffee Restaurant, ${title}${isValidAdmin.username}`, token, refreshToken });
+            return res.status(200).json({ message: `Login successfull! Welcome to Coffee Restaurant, ${isValidAdmin.title}${isValidAdmin.username}`, token, refreshToken });
         } catch (error) {
             console.error(error);
             return res.status(500).json({ message: "An unexpected error occured while trying to sign in! - backend" });
@@ -52,11 +45,6 @@ class AdminSignIn {
 }
 
 class AdminSignUp {
-    // generateOTP() {
-    //     const otp = Math.floor(100000 + Math.random() * 900000).toString(); // generate otp
-    //     return otp;
-    // }
-
     async signUp(req, res) {
         // mail setUp
         const mailer = new SentMail();
@@ -68,13 +56,14 @@ class AdminSignUp {
 
         try {
             const hashedPassword = await bcrypt.hash(adminDetails.password, 10);
-            const createdAccount = await AdminModel.create({ ...adminDetails, password: hashedPassword, otp });
+            const otpExpiration = Date.now().toLocaleString();
+            const createdAccount = await AdminModel.create({ ...adminDetails, password: hashedPassword, otp, otpExpiresAt: otpExpiration });
             if (!createdAccount) return res.status(500).json({ message: "Account cannot be created! - backend" });
 
             const mailBody = {
                 to: `${createdAccount.email}`,
                 subject: "OTP verification - Coffee Restaurant",
-                text: `Dear ${createdAccount.title}. ${createdAccount.username}, please use this OTP: ${otp} to finish up the signup process. Thanks Coffee Restaurant.`
+                text: `Dear ${createdAccount.title}${createdAccount.username}, please use this OTP: ${otp} to finish up the signup process. Thanks Coffee Restaurant.`
             }
 
             const mail = await mailer.sentMail(mailBody.to, mailBody.subject, mailBody.text);
@@ -99,24 +88,29 @@ class AdminSignUp {
         const adminId = req.adminId;
         if (!adminId || !mongoose.Types.ObjectId.isValid(adminId)) return res.status(400).json({ message: "Invalid admin Id! - backend" });
         if (!otp || typeof otp !== 'string') return res.status(400).json({ message: "OTP is invalid! - backend" });
+
         try {
             const isValidAdmin = await AdminModel.findById(adminId);
             if (!isValidAdmin) return res.status(404).json({ message: "Account not found! - backend" });
 
-            if (otp !== isValidAdmin.otp) {
+            if (Date.now() > isValidAdmin.otpExpiresAt) {
                 await isValidAdmin.deleteOne();
-                return res.status(403).json({ message: "Incorrect otp! - backend" });
+                return res.status(400).json({ message: "OTP has expired! Please request a new one!" });
+            } else if (otp !== isValidAdmin.otp) {
+                await isValidAdmin.deleteOne();
+                return res.status(409).json({ message: "Incorrect otp! - backend" });
             }
             // if the otp is verified, delete the otp from the model
             // Option 1: Set otp to undefined and save
             isValidAdmin.otp = undefined;
+            isValidAdmin.otpExpiresAt = undefined;
             await isValidAdmin.save();
 
             // Option 2: Use $unset to remove the otp field directly
             // await AdminModel.updateOne({ _id: adminId }, { $unset: { otp: 1 } });
             const timestamp = new Date().toLocaleString();
 
-            return res.status(201).json({ message: `Sign up successfully! Welcome to Coffee Restaurant  ${isValidAdmin.title}. ${isValidAdmin.username}.`, verification: timestamp });
+            return res.status(201).json({ message: `Sign up successfully! Welcome to Coffee Restaurant  ${isValidAdmin.title}${isValidAdmin.username}. Signed up at ${timestamp}` });
 
         } catch (error) {
             console.error(error);

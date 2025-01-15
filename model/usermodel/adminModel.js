@@ -5,7 +5,7 @@ const adminSchema = new mongoose.Schema({
     password: { type: String, required: true, select: false },
     phoneNo: { type: String, required: true },
     email: { type: String, required: true },
-    pendingEmail: {type:String},
+    pendingEmail: { type: String },
     address: { type: String, required: true },
     gender: {
         type: String, required: true,
@@ -35,9 +35,9 @@ const adminSchema = new mongoose.Schema({
 
 adminSchema.pre('save', function (next) {
     if (this.gender === 'male') {
-        this.title = 'Mr';
+        this.title = 'Mr. ';
     } else if (this.gender === 'female') {
-        this.title = 'Ms';
+        this.title = 'Ms. ';
     }
     next();
 });

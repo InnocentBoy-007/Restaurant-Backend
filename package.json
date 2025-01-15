@@ -5,7 +5,8 @@
     "main": "server.js",
     "type": "module",
     "scripts": {
-        "start": "nodemon serverSetUp.js"
+        "start": "node serverSetUp.js",
+        "dev": "nodemon serverSetUp.js"
     },
     "author": "InnocentBoy",
     "license": "ISC",

@@ -10,7 +10,7 @@ import cookieParser from 'cookie-parser';
 class ServerSetUp {
     constructor() {
         dotenv.config();
-        this.PORT = process.env.PORT;
+        this.PORT = process.env.PORT || 8000; // Default to 8000 if PORT is not set
         this.MONGO_URL = process.env.MONGO_URL;
         this.connectServer();
     }
@@ -30,10 +30,13 @@ class ServerSetUp {
             const app = express();
 
             // CORS setup
-            const allowedOrigins = [process.env.ORIGIN1, process.env.ORIGIN2];
-            app.use(cors({
+            const allowedOrigins = [
+                'https://innocentboy-restaurant-admin.netlify.app', // Production URL
+                'http://localhost:4000', // Local URL for development
+            ];
+
+            const corsOptions = {
                 origin: (origin, callback) => {
-                    // Allow all requests if the origin is in allowedOrigins
                     if (allowedOrigins.includes(origin) || !origin) {
                         callback(null, true);
                     } else {
@@ -41,7 +44,11 @@ class ServerSetUp {
                     }
                 },
                 credentials: true,
-            }));
+                methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+                allowedHeaders: ['Content-Type', 'Authorization'],
+            };
+
+            app.use(cors(corsOptions)); // Enable CORS middleware
 
             // Middleware setup
             app.use(express.json());
@@ -53,10 +60,7 @@ class ServerSetUp {
             app.use("/api/admin", AdminRoute);
 
             // Handle preflight requests (OPTIONS)
-            app.options('*', cors({
-                origin: true,
-                credentials: true,
-            }));
+            app.options('*', cors(corsOptions));
 
             // Global error handler
             app.use((err, req, res, next) => {
@@ -69,7 +73,7 @@ class ServerSetUp {
             });
 
             // Server listen
-            app.listen(this.PORT || 8000, `0.0.0.0`, () => {
+            app.listen(this.PORT, `0.0.0.0`, () => {
                 console.log(`Server is running on port ${this.PORT}`);
             });
             console.log("Server setup successfully!");
