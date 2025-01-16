@@ -40,7 +40,7 @@ router.delete("/v1/admin/products/delete_product/:productId", adminAuthMiddlewar
 
 
 // generate new token using a refresh token
-router.post("/v1/admin/token/refresh-token/:adminId", generateNewTokenAdmin); // testing
+router.post("/v1/admin/token/refresh-token", generateNewTokenAdmin); // testing
 
 router.get("/v1/admin/user-details", adminAuthMiddleware, fetchAdminDetails); // test passed
 
