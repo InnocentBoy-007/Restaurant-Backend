@@ -6,7 +6,7 @@ import mongoose from 'mongoose';
 
 class GenerateToken {
     async generatePrimaryToken(payload) {
-        return jwt.sign(payload, process.env.JWT_SECRET, { 'expiresIn': '10s' });
+        return jwt.sign(payload, process.env.JWT_SECRET, { 'expiresIn': '15m' });
     }
 
     async generateRefreshToken(payload) {
@@ -57,8 +57,9 @@ class AdminSignUp {
         await mailer.setUp();
 
         const { adminDetails } = req.body;
-        if (!adminDetails || typeof adminDetails !== 'object') return res.status(400).json({ message: "Invalid user details! - backend" });
+        if (!adminDetails || typeof adminDetails !== 'object') return res.status(401).json({ message: "Invalid user details! - backend" });
         const otp = Math.floor(100000 + Math.random() * 900000).toString(); // generate otp
+        adminDetails.age = Number(adminDetails.age);
 
         try {
             const hashedPassword = await bcrypt.hash(adminDetails.password, 10);

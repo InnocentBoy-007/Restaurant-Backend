@@ -55,7 +55,7 @@ export const generateNewTokenAdmin = async (req, res) => {
         const isValidAdmin = await AdminModel.findById(adminId).select("_id");
         if (!isValidAdmin) return res.status(404).json({ message: "Invalid admin Id! Admin not found - Authorization denied!" });
 
-        const newToken = jwt.sign({ adminId: isValidAdmin._id }, JWT_SECRET, { expiresIn: '10s' }); // change the expire duration later
+        const newToken = jwt.sign({ adminId: isValidAdmin._id }, JWT_SECRET, { expiresIn: '15m' }); // change the expire duration later
 
         return res.status(200).json({ token: newToken });
     } catch (error) {

@@ -75,7 +75,7 @@ class SecondaryActions {
                 await isValidAdmin.save();
                 await mailer.sentMail(mailBody.to, mailBody.subject, mailBody.text);
 
-                return res.status(200).json({ message: `OTP sent to ${updateDetails.email}. Please verify to complete the update.`, otp: true });
+                return res.status(200).json({ message: `OTP sent to ${updateDetails.email}. Please verify to complete the update.` });
             }
 
             // Update the admin details
