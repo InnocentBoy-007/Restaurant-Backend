@@ -1,5 +1,5 @@
 import express from 'express'
-import primaryActions from '../controller/admin/accounts/primaryActions.js'; // manages primary actions for admin accounts
+import primaryActions from '../controller/admin/accounts/primaryActions.js';
 import secondaryActions from '../controller/admin/accounts/secondaryActions.js'; // manages secondary actions for admin accounts
 import adminServices from '../services/adminService.js';
 import productControl from '../controller/admin/products/productControl.js';
@@ -12,10 +12,10 @@ import changePassword from '../services/passwordManagement/changePassword.js';
 const router = express.Router();
 
 // primary actions
-router.post("/account/signup", primaryActions.adminSignUp);
-router.post("/account/signup/verifyOTP", adminAuthMiddleware, primaryActions.adminConfirmOTP);
-router.post("/account/signin", primaryActions.adminSignIn);
-router.delete("/account/logout", adminAuthMiddleware, primaryActions.adminLogout);
+router.post("/account/signup", primaryActions.signUp);
+router.post("/account/signup/verifyOTP", adminAuthMiddleware, primaryActions.confirmOTP);
+router.post("/account/signin", primaryActions.signIn);
+router.delete("/account/logout", adminAuthMiddleware, primaryActions.logout);
 
 
 // secondary actions

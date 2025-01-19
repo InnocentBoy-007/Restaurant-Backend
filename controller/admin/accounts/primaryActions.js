@@ -14,7 +14,7 @@ class GenerateToken {
     }
 }
 
-class AdminSignIn {
+class PrimaryActions {
     async signIn(req, res) {
         const { adminDetails } = req.body;
         if (!adminDetails || typeof adminDetails !== 'object') return res.status(400).json({ message: "User details not provided! - backend" });
@@ -48,9 +48,7 @@ class AdminSignIn {
             return res.status(500).json({ message: "An unexpected error occured while trying to sign in! - backend" });
         }
     }
-}
 
-class AdminSignUp {
     async signUp(req, res) {
         // mail setUp
         const mailer = new SentMail();
@@ -93,24 +91,24 @@ class AdminSignUp {
     async confirmOTP(req, res) {
         const { otp } = req.body;
         const adminId = req.adminId;
-        if (!adminId || !mongoose.Types.ObjectId.isValid(adminId)) return res.status(400).json({ message: "Invalid admin Id! - backend" });
-        if (!otp || typeof otp !== 'string') return res.status(400).json({ message: "OTP is invalid! - backend" });
+        if (!adminId || !mongoose.Types.ObjectId.isValid(adminId)) return res.status(401).json({ message: "Invalid admin Id! - backend" });
+        if (!otp || typeof otp !== 'string') return res.status(401).json({ message: "OTP is invalid! - backend" });
 
         try {
             const isValidAdmin = await AdminModel.findById(adminId);
             if (!isValidAdmin) return res.status(404).json({ message: "Account not found! - backend" });
 
-            if (Date.now() > isValidAdmin.otpExpiresAt) {
+            if (Date.now() > isValidAdmin.otpExpiresAt) { // if token is expired, delete the created account
                 await isValidAdmin.deleteOne();
                 return res.status(400).json({ message: "OTP has expired! Please request a new one!" });
-            } else if (otp !== isValidAdmin.otp) {
+            } else if (otp !== isValidAdmin.otp) { // if the request token is not same as the saved otp, delete the created account
                 await isValidAdmin.deleteOne();
                 return res.status(409).json({ message: "Incorrect otp! - backend" });
             }
             // if the otp is verified, delete the otp from the model
             // Option 1: Set otp to undefined and save
-            isValidAdmin.otp = undefined;
-            isValidAdmin.otpExpiresAt = undefined;
+            isValidAdmin.otp = undefined; // following the option 1
+            isValidAdmin.otpExpiresAt = undefined; // following the option 1
             await isValidAdmin.save();
 
             // Option 2: Use $unset to remove the otp field directly
@@ -124,9 +122,7 @@ class AdminSignUp {
             return res.status(500).json({ message: "An unexpected error occured while trying to verify the OTP!" });
         }
     }
-}
 
-class AdminLogout {
     async logout(req, res) {
         const adminId = req.adminId;
         if (!adminId || !mongoose.Types.ObjectId.isValid(adminId)) return res.status(400).json({ message: "Invalid admin Id! - backend" });
@@ -140,16 +136,11 @@ class AdminLogout {
             return res.status(500).json({ message: "An unexpected error occured while trying to logout! - backend" });
         }
     }
+
 }
 
-const generateToken = new GenerateToken();
-const adminSignIn = new AdminSignIn();
-const adminSignUp = new AdminSignUp();
-const adminLogout = new AdminLogout();
 
-export default {
-    adminSignIn: adminSignIn.signIn,
-    adminSignUp: adminSignUp.signUp,
-    adminConfirmOTP: adminSignUp.confirmOTP,
-    adminLogout: adminLogout.logout
-};
+const generateToken = new GenerateToken();
+const primaryActions = new PrimaryActions();
+
+export default primaryActions;

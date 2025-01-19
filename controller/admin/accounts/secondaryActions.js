@@ -6,9 +6,9 @@ import { SentMail } from "../../../components/middlewares/SentMail.js";
 class SecondaryActions {
     async DeleteAdmin(req, res) {
         const adminId = req.adminId;
-        if (!adminId || !mongoose.Types.ObjectId.isValid(adminId)) return res.status(400).json({ message: "Invalid admin Id - backend" });
+        if (!adminId || !mongoose.Types.ObjectId.isValid(adminId)) return res.status(401).json({ message: "Invalid admin Id - backend" });
         const { password } = req.body; // deleting the account requires addition security (needs password for authorization)
-        if (!password) return res.status(400).json({ message: "Password is required! - baceknd" });
+        if (!password || typeof password !== 'string') return res.status(401).json({ message: "Password is required! - baceknd" });
 
         try {
             const isValidAdmin = await AdminModel.findById(adminId).select("+password");
