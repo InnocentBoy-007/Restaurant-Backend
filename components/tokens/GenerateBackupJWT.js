@@ -8,22 +8,25 @@ import mongoose from 'mongoose';
  */
 
 export const generateNewTokenClient = async (req, res) => {
-    const { clientId } = req.params;
-    if (!clientId || !mongoose.Types.ObjectId.isValid(clientId)) return res.status(200).json({ message: "Client  Id is required! - backend" });
-
     const authHeader = req.headers['authorization'];
-    const refreshTokenClient = authHeader && authHeader.split(' ')[1];
-    if (!refreshTokenClient || typeof refreshTokenClient !== 'string') return res.status(400).json({ message: "Access denied! Refresh token is either invalid or is not a string!" });
+    if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ message: "Access denied! Invalid authorization header format! - backend" });
+
+    const refreshToken = authHeader && authHeader.split(' ')[1];
+    if (!refreshToken || typeof refreshToken !== 'string') return res.status(400).json({ message: "Access denied! Refresh token is either invalid or is not a string!" });
 
     const JWT_SECRET = process.env.JWT_SECRET;
     const REFRESH_JWT_SECRET = process.env.REFRESH_JWT_SECRET;
+    if (!JWT_SECRET || !REFRESH_JWT_SECRET) return res.status(500).json({ message: "Server configuration error! - JWT secrets are not defined!" });
 
     try {
-        const isValidClient = await ClientModel.findById(clientId);
-        if (!isValidClient) return res.status(404).json({ message: "Invalid client Id! Client not found - Authorization denied!" });
+        const decodedToken = jwt.verify(refreshToken, REFRESH_JWT_SECRET)
+        const clientId = decodedToken.clientId;
+        if (!clientId || !mongoose.Types.ObjectId.isValid(clientId)) return res.status(401).json({ message: "The provided token does not have a valid client Id! - backend" });
 
-        jwt.verify(refreshTokenClient, REFRESH_JWT_SECRET);
-        const newToken = jwt.sign({ clientId: isValidClient._id }, JWT_SECRET, { 'expiresIn': '15s' });
+        const isValidClient = await ClientModel.findById(clientId).select("_id");
+        if (!isValidClient) return res.status(404).json({ message: "Invalid client Id! Client not found! - Authorization denied!" });
+
+        const newToken = jwt.sign({ clientId: isValidClient._id }, JWT_SECRET, { 'expiresIn': '15m' });
 
         return res.status(200).json({ token: newToken });
     } catch (error) {
@@ -37,14 +40,14 @@ export const generateNewTokenClient = async (req, res) => {
 export const generateNewTokenAdmin = async (req, res) => {
     // token inside the header should be a refresh token/backup token
     const authHeader = req.headers['authorization'];
-    if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ message: 'Access denied. Invalid authorization header format! - backend' });
+    if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ message: 'Access denied! Invalid authorization header format! - backend' });
 
     const refreshToken = authHeader && authHeader.split(' ')[1];
-    if (!refreshToken || typeof refreshToken !== 'string') return res.status(401).json({ message: 'Access denied. Backup token is either not provided or is not a string! - backend' });
+    if (!refreshToken || typeof refreshToken !== 'string') return res.status(401).json({ message: 'Access denied! Backup token is either not provided or is not a string! - backend' });
 
     const JWT_SECRET = process.env.JWT_SECRET;
     const REFRESH_JWT_SECRET = process.env.REFRESH_JWT_SECRET;
-    if (!JWT_SECRET || !REFRESH_JWT_SECRET) return res.status(500).json({ message: "Server configuration error - JWT secrets are not defined!" });
+    if (!JWT_SECRET || !REFRESH_JWT_SECRET) return res.status(500).json({ message: "Server configuration error! - JWT secrets are not defined!" });
 
 
     try {
