@@ -6,7 +6,7 @@ import bcrypt from 'bcrypt'
 
 class GenerateToken {
     async generatePrimaryToken(payload) {
-        return jwt.sign(payload, process.env.JWT_SECRET, { 'expiresIn': '15s' });
+        return jwt.sign(payload, process.env.JWT_SECRET, { 'expiresIn': '15m' });
     }
 
     async generateRefreshToken(payload) {

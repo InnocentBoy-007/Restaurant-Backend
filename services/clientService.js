@@ -65,7 +65,7 @@ class ClientServices {
     }
 
     async cancelOrder(req, res) {
-        const orderId = req.params;
+        const { orderId } = req.params;
         if (!orderId || !mongoose.Types.ObjectId.isValid(orderId)) return res.status(400).json({ message: "Invalid order Id! - backend" });
 
         const clientId = req.clientId;
@@ -79,13 +79,14 @@ class ClientServices {
             if (!isValidOrder) return res.status(404).json({ message: "Invalid order Id! Order not found! - backend" });
 
             const isValidProduct = await ProductModel.findById(isValidOrder.productId);
-            if (!isValidProduct) return res.status(409).json({ message: "Invalid productId! - backend" });
+            if (!isValidProduct) return res.status(401).json({ message: "Invalid productId! - backend" });
 
-            if (isValidOrder.status === 'pending') {
-                isValidProduct += isValidOrder.productQuantity;
-                await isValidOrder.deleteOne();
-            } else {
+            if (isValidOrder.status === 'accepted') {
                 return res.status(409).json({ message: "Your order cannot be cancelled since it's already processed! - backend" });
+            } else {
+                isValidProduct.productQuantity += isValidOrder.productQuantity;
+                await isValidProduct.save();
+                await isValidOrder.deleteOne();
             }
 
             return res.status(200).json({ message: "Order cancelled successfully! - backend" });
