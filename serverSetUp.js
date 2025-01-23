@@ -59,6 +59,10 @@ class ServerSetUp {
             app.use("/api/client", ClientRoute);
             app.use("/api/admin", AdminRoute);
 
+            app.use("/", (req, res) => {
+                res.send("Welcome to the server home page!");
+            }); // for testing purpose
+
             // Handle preflight requests (OPTIONS)
             app.options('*', cors(corsOptions));
 
