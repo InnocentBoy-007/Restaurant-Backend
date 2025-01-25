@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import ProductModel from '../../../model/productModel.js'
 import AdminModel from '../../../model/usermodel/adminModel.js'
+import CartModel from '../../../model/cartModel.js'
 
 class ProductController {
     async addProduct(req, res) {
@@ -53,6 +54,12 @@ class ProductController {
             isValidProduct.productUpdatedBy = isValidAdmin.username;
             isValidProduct.productUpdatedOn = new Date().toLocaleString();
             await isValidProduct.save();
+
+            if(newDetails.productQuantity) {
+                const isProductAvailableInClientCart = await CartModel.findOne({productId});
+                isProductAvailableInClientCart.productQuantity = newDetails.productQuantity;
+                await isProductAvailableInClientCart.save();
+            }
 
             return res.status(200).json({ message: `${isValidProduct.productName} updated successfully! - backend` });
         } catch (error) {

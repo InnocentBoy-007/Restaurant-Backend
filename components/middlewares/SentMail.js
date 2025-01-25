@@ -5,7 +5,7 @@ dotenv.config();
 
 export class SentMail {
     constructor() {
-        this.host = process.env.MAILHOST;
+        // this.host = process.env.MAILHOST;
         this.user = process.env.SENDERMAIL;
         this.pass = process.env.MAILPASS;
         this.from = process.env.MAILFROM;
@@ -27,6 +27,7 @@ export class SentMail {
         }
     }
 
+    // try adding from
     async sentMail(to, subject, text) {
         try {
             const info = await this.transporter.sendMail({

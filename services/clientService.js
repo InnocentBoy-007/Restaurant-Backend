@@ -5,6 +5,7 @@ import ClientModel from '../model/usermodel/clientModel.js'
 import ProductModel from '../model/productModel.js'
 import OrderDetails from "../model/orderDetailsModel.js";
 
+// there is an error in product quantity while adding the product in a cart
 
 class ClientServices {
     async placeOrder(req, res) {

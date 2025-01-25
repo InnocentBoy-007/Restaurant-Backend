@@ -31,9 +31,8 @@ class ServerSetUp {
 
             // CORS setup
             const allowedOrigins = [
-                'https://innocentboy-restaurant-admin.netlify.app', // Production URL
-                'http://localhost:3000',
-                'http://localhost:4000', // Local URL for development
+                process.env.ORIGIN1, // client
+                process.env.ORIGIN2 // admin
             ];
 
             const corsOptions = {
@@ -59,6 +58,10 @@ class ServerSetUp {
             app.use("/api", route);
             app.use("/api/client", ClientRoute);
             app.use("/api/admin", AdminRoute);
+
+            app.use("/", (req, res) => {
+                res.send("Welcome to the server home page!");
+            }); // for testing purpose
 
             // Handle preflight requests (OPTIONS)
             app.options('*', cors(corsOptions));
